@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { jwtDecode } from 'jwt-decode';
 
 @Injectable({
   providedIn: 'root'
@@ -39,5 +40,22 @@ export class AuthService {
   // Método para saber si estamos logueados
   isLoggedIn(): boolean {
     return !!localStorage.getItem('token');
+  }
+
+  getUserData() {
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const decoded: any = jwtDecode(token);
+        return {
+          nombre: decoded.name,
+          foto: decoded.picture,
+          email: decoded.sub
+        };
+      } catch (error) {
+        return null;
+      }
+    }
+    return null;
   }
 }

@@ -3,6 +3,12 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
 
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: str | None = None
 # Datos enviados
 class UserBase(BaseModel):
     email: EmailStr
@@ -20,5 +26,9 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+class Config:
+    from_attributes = True
+
+class GoogleLoginRequest(BaseModel):
+    credential: str
+

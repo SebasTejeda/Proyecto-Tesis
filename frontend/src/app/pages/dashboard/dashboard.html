@@ -6,6 +6,14 @@
           <div class="logo-text">NeuroMind AI</div>
       </div>
 
+      <div class="user-profile">
+          <img [src]="userPhoto" alt="Perfil" class="avatar">
+          <div class="user-info">
+              <span class="user-name">{{ userName | titlecase }}</span>
+              <span class="user-role">Doctor</span>
+          </div>
+      </div>
+
       <nav>
           <ul class="nav-menu">
               <li class="nav-item">

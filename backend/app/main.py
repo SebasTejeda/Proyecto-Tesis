@@ -6,9 +6,14 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from datetime import timedelta
 
 # Crear las tablas en la base de datos
 models.Base.metadata.create_all(bind=engine)
+
+GOOGLE_CLIENT_ID = "122329310552-6f3g3hn3fuj6fngiqfnef1aknddqi01v.apps.googleusercontent.com"
 
 app = FastAPI(title="API Tesis de Salud Mental")
 
@@ -27,6 +32,8 @@ app.add_middleware(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -44,6 +51,52 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+@app.post("/auth/google", response_model=schemas.Token)
+def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(get_db)):
+    try:
+        id_info = id_token.verify_oauth2_token(
+            login_data.credential, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+
+        email = id_info["email"]
+        nombre_google = id_info.get("given_name", "")
+        apellido_google = id_info.get("family_name", "")
+        foto = id_info.get("picture", "")
+        google_id = id_info["sub"]
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Token de Google no válido")
+    
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+        user = models.User(
+            email=email,
+            nombres=nombre_google,
+            apellidos=apellido_google,
+            google_id=google_id,
+            picture=foto,
+            password=None,  
+            role = "doctor"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        if not user.google_id:
+            user.google_id = google_id
+        user.picture = foto
+        db.commit()
+
+    # Guardamos datos extra en el token para que el frontend no tenga que pedirlos
+    token_data = {
+        "sub": user.email,
+        "name": f"{user.nombres} {user.apellidos}",   # <--- Nuevo
+        "picture": user.picture # <--- Nuevo
+    }
+    access_token = utils.HashUtils.create_access_token(data=token_data)
+
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/usuarios/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db)):

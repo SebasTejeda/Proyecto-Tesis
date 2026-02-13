@@ -151,3 +151,40 @@ tr:last-child td { border-bottom: none; }
 /* Animación Simple */
 .fade-in { animation: fadeIn 0.5s ease-in; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Estilos del Perfil de Usuario en el Sidebar */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 20px 20px 20px; /* Un poco de aire */
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0; /* Línea separadora gris suave */
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #0d9488; /* Un borde color "Teal" para combinar con tu logo */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 👇 AQUÍ ESTÁ EL CAMBIO IMPORTANTE 👇 */
+.user-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #1e293b; /* Color oscuro (casi negro) para que se lea bien */
+}
+
+.user-role {
+    font-size: 0.8rem;
+    color: #64748b; /* Color gris medio para el subtítulo */
+    font-weight: 500;
+}

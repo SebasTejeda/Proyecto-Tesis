@@ -16,8 +16,21 @@ export class DashboardComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-
+  userName: string = 'Usuario';
+  userPhoto: string = 'https://ui-avatars.com/api/?name=U&background=random';
   currentSection: string = 'resumen'; 
+
+  constructor() {
+    // Apenas carga el dashboard, pedimos los datos
+    const userData = this.authService.getUserData();
+    if (userData) {
+      this.userName = userData.nombre;
+      // Si tiene foto de Google la usamos, si no, dejamos la por defecto
+      if (userData.foto) {
+        this.userPhoto = userData.foto;
+      }
+    }
+  }
 
   // Datos de prueba para que la tabla no se vea vacía
   pacientesRecientes = [
