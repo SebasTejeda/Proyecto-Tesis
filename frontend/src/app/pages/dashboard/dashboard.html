@@ -1,0 +1,125 @@
+<div class="app-container">
+  
+  <aside class="sidebar">
+      <div class="logo">
+          <div class="logo-icon">N</div>
+          <div class="logo-text">NeuroMind AI</div>
+      </div>
+
+      <nav>
+          <ul class="nav-menu">
+              <li class="nav-item">
+                  <a class="nav-link" [class.active]="currentSection === 'resumen'" (click)="cambiarSeccion('resumen')">
+                      <span class="nav-icon">📊</span>
+                      <span>Dashboard</span>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" [class.active]="currentSection === 'registro'" (click)="cambiarSeccion('registro')">
+                      <span class="nav-icon">👤</span>
+                      <span>Registrar Paciente</span>
+                  </a>
+              </li>
+              <li class="nav-item">
+                  <a class="nav-link" [class.active]="currentSection === 'evaluacion'" (click)="cambiarSeccion('evaluacion')">
+                      <span class="nav-icon">🧠</span>
+                      <span>Nueva Evaluación</span>
+                  </a>
+              </li>
+          </ul>
+
+          <div class="nav-divider"></div>
+
+          <ul class="nav-menu logout-section">
+              <li class="nav-item">
+                  <a class="nav-link logout" (click)="logout()">
+                      <span class="nav-icon">🚪</span>
+                      <span>Cerrar Sesión</span>
+                  </a>
+              </li>
+          </ul>
+      </nav>
+  </aside>
+
+  <main class="main-content">
+      
+      <div *ngIf="currentSection === 'resumen'" class="page-section fade-in">
+          <div class="page-header">
+              <h1 class="welcome-text">Bienvenido, Doctor</h1>
+              <p class="page-subtitle">Resumen de actividad del día</p>
+          </div>
+
+          <div class="stats-grid">
+              <div class="stat-card">
+                  <div class="stat-header">
+                      <div class="stat-label">Pacientes Totales</div>
+                      <div class="stat-icon blue">👥</div>
+                  </div>
+                  <div class="stat-value">247</div>
+                  <div class="stat-change">↑ 12% vs mes anterior</div>
+              </div>
+
+              <div class="stat-card">
+                  <div class="stat-header">
+                      <div class="stat-label">Evaluaciones Hoy</div>
+                      <div class="stat-icon teal">📝</div>
+                  </div>
+                  <div class="stat-value">18</div>
+                  <div class="stat-change">↑ 6 completadas</div>
+              </div>
+
+              <div class="stat-card">
+                  <div class="stat-header">
+                      <div class="stat-label">Casos Alto Riesgo</div>
+                      <div class="stat-icon coral">⚠️</div>
+                  </div>
+                  <div class="stat-value">12</div>
+                  <div class="stat-change warn-text">Atención prioritaria</div>
+              </div>
+          </div>
+
+          <div class="section-card">
+              <div class="section-header">
+                  <h2 class="section-title">Últimos Pacientes Evaluados</h2>
+                  <a href="#" class="section-action">Ver todos →</a>
+              </div>
+
+              <div class="table-container">
+                  <table>
+                      <thead>
+                          <tr>
+                              <th>Paciente</th>
+                              <th>Fecha</th>
+                              <th>Edad</th>
+                              <th>Probabilidad</th>
+                              <th>Estado</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          <tr *ngFor="let p of pacientesRecientes">
+                              <td class="patient-name">{{ p.nombre }}</td>
+                              <td>{{ p.fecha }}</td>
+                              <td>{{ p.edad }} años</td>
+                              <td>{{ p.prob }}%</td>
+                              <td>
+                                <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
+                                  {{ p.riesgo }}
+                                </span>
+                              </td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </div>
+          </div>
+      </div>
+
+      <div *ngIf="currentSection === 'registro'" class="page-section fade-in">
+          <app-register></app-register>
+      </div>
+
+      <div *ngIf="currentSection === 'evaluacion'" class="page-section fade-in">
+          <app-evaluation></app-evaluation>
+      </div>
+
+  </main>
+</div>

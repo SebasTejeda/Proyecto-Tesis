@@ -1,0 +1,65 @@
+<div class="auth-page">
+  
+  <div class="auth-container">
+    
+    <div class="auth-card">
+      
+      <div class="logo-container">
+        <div class="logo-icon">N</div>
+        <div class="logo-text">NeuroMind AI</div>
+      </div>
+
+      <h2 class="auth-title">Iniciar Sesión</h2>
+      <p class="auth-subtitle">Accede a tu cuenta profesional</p>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+        
+        <div class="form-group">
+          <label class="form-label">Correo Electrónico</label>
+          <input 
+            type="email" 
+            class="form-input" 
+            formControlName="email"
+            placeholder="doctor@ejemplo.com">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input 
+            type="password" 
+            class="form-input" 
+            formControlName="password"
+            placeholder="••••••••">
+        </div>
+
+        <div *ngIf="errorMessage" class="error-alert">
+          ⚠️ {{ errorMessage }}
+        </div>
+
+        <div class="auth-options">
+          <label class="checkbox-label">
+            <input type="checkbox">
+            <span>Recordarme</span>
+          </label>
+          <a href="#" class="auth-link">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">
+          Iniciar Sesión
+        </button>
+
+      </form>
+
+      <div class="auth-footer">
+        <p>¿No tienes una cuenta? <a href="#" class="auth-link">Regístrate aquí</a></p>
+      </div>
+    </div>
+
+    <div class="auth-decorative">
+      <div class="decorative-circle circle-1"></div>
+      <div class="decorative-circle circle-2"></div>
+      <div class="decorative-circle circle-3"></div>
+    </div>
+
+  </div>
+</div>

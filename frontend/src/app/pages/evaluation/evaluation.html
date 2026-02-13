@@ -1,0 +1,80 @@
+<div class="eval-container">
+    <div class="page-header">
+        <h1 class="welcome-text">Nueva Evaluación con IA</h1>
+        <p class="page-subtitle">Ingresa los síntomas para que el modelo estime el riesgo.</p>
+    </div>
+
+    <div class="eval-card">
+        <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
+            
+            <div class="sliders-section">
+                
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>😰 Nivel de Ansiedad</label>
+                        <span class="slider-value">{{ evalForm.get('ansiedad')?.value }}/10</span>
+                    </div>
+                    <input type="range" min="1" max="10" formControlName="ansiedad" class="range-slider">
+                    <div class="slider-labels">
+                        <span>Muy bajo</span>
+                        <span>Muy alto</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>😴 Calidad de Sueño</label>
+                        <span class="slider-value">{{ evalForm.get('sueno')?.value }}/10</span>
+                    </div>
+                    <input type="range" min="1" max="10" formControlName="sueno" class="range-slider">
+                    <div class="slider-labels">
+                        <span>Pésimo</span>
+                        <span>Excelente</span>
+                    </div>
+                </div>
+
+                <div class="slider-group">
+                    <div class="slider-header">
+                        <label>⚡ Nivel de Estrés</label>
+                        <span class="slider-value">{{ evalForm.get('estres')?.value }}/10</span>
+                    </div>
+                    <input type="range" min="1" max="10" formControlName="estres" class="range-slider">
+                    <div class="slider-labels">
+                        <span>Relajado</span>
+                        <span>Colapsado</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="divider">
+
+            <div class="questions-grid">
+                <div class="form-group">
+                    <label class="form-label">¿Tristeza persistente?</label>
+                    <select class="form-input" formControlName="tristeza">
+                        <option value="0">No</option>
+                        <option value="1">A veces</option>
+                        <option value="2">Frecuentemente</option>
+                        <option value="3">Siempre</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">¿Historial Familiar?</label>
+                    <select class="form-input" formControlName="historial">
+                        <option value="0">No</option>
+                        <option value="1">Sí</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="action-area">
+                <button type="submit" class="btn-ai" [disabled]="evalForm.invalid">
+                    ✨ Analizar Paciente
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>

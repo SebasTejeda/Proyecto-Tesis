@@ -1,0 +1,28 @@
+/* frontend/src/styles.css */
+
+/* 1. Importamos las fuentes de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap');
+
+/* 2. Definimos las variables globales (Colores del Mockup) */
+:root {
+  --primary-dark: #1A4D6D;
+  --primary: #2E7D9A;
+  --primary-light: #4DA8C7;
+  --accent-teal: #3FBFAD;
+  --text-secondary: #64748B;
+  --card-bg: #FFFFFF;
+  --radius-xl: 24px;
+  --radius-md: 12px;
+}
+
+/* 3. Reseteo básico */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: #FAFBFD;
+}
