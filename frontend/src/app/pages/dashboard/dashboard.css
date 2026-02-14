@@ -188,3 +188,37 @@ tr:last-child td { border-bottom: none; }
     color: #64748b; /* Color gris medio para el subtítulo */
     font-weight: 500;
 }
+
+/* Estilo base para ambos (Imagen y Círculo con letra) */
+.avatar, .avatar-circle {
+  width: 50px;           /* Ancho fijo */
+  height: 50px;          /* Alto EXACTAMENTE igual al ancho */
+  min-width: 50px;       /* OBLIGATORIO: Evita que Flexbox lo aplaste */
+  min-height: 50px;      /* OBLIGATORIO: Evita que Flexbox lo aplaste */
+  border-radius: 50%;    /* Esto lo hace redondo */
+  margin-right: 12px;    /* Separación con el texto */
+  
+  /* Para que no se deforme */
+  object-fit: cover;     
+  flex-shrink: 0;        /* IMPORTANTE: Le dice al navegador "No me encojas" */
+}
+
+/* Estilo específico para la bolita con letra */
+.avatar-circle {
+  background: linear-gradient(135deg, #E0F2F1 0%, #B2DFDB 100%);
+  color: #00695C;
+  
+  /* Centrar la letra perfectamente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  font-size: 20px;
+  font-weight: bold;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.avatar {
+  object-fit: cover;
+}
+

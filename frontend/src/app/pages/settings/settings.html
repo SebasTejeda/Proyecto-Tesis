@@ -1,0 +1,87 @@
+<div class="dashboard-layout">
+  <div class="settings-container">
+    
+    <div class="settings-header">
+      <a routerLink="/dashboard" class="back-btn">⬅️</a>
+      <div>
+        <h1 style="font-family: 'Playfair Display', serif; color: #1E293B; margin: 0;">Configuración</h1>
+        <p style="color: #64748B; margin: 0;">Gestiona tu perfil profesional</p>
+      </div>
+    </div>
+
+    <div class="settings-grid">
+      
+      <div class="profile-card">
+        <img *ngIf="userPhoto" [src]="userPhoto" alt="Foto de perfil" class="avatar-large" style="object-fit: cover; padding: 0; background: none;">
+        
+        <div *ngIf="!userPhoto" class="avatar-large">
+          {{ initial }}
+        </div>
+        <h2 style="margin: 0; color: #1E293B; font-size: 20px;">{{ nombres }}</h2>
+        <p style="margin: 4px 0 0 0; color: #64748B; font-size: 14px;">{{ email }}</p>
+        <div class="profile-role">{{ role }}</div>
+
+        <div style="margin-top: 30px; width: 100%;">
+          <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Estado</div>
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px; color: #059669; font-weight: 600; font-size: 14px;">
+            <span style="width: 8px; height: 8px; background: #10B981; border-radius: 50%;"></span>
+            Cuenta Verificada
+          </div>
+        </div>
+      </div>
+
+      <div class="form-card">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+          <h3 style="margin: 0; color: #334155;">Información Personal</h3>
+          
+          <button *ngIf="!isEditing" (click)="activarEdicion()" class="btn-secondary" style="border-color: #3B82F6; color: #3B82F6;">
+            ✏️ Editar Datos
+          </button>
+        </div>
+
+        <form (ngSubmit)="guardarCambios()">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+              <label class="form-label">Nombres</label>
+              <input type="text" [(ngModel)]="nombres" name="nombres" class="form-input" [disabled]="!isEditing">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellidos</label>
+              <input type="text" [(ngModel)]="apellidos" name="apellidos" class="form-input" [disabled]="!isEditing">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">N° Colegiatura (CMP/CPP)</label>
+            <input type="text" [(ngModel)]="codigo_colegiatura" name="colegiatura" class="form-input" [disabled]="!isEditing" placeholder="Ingresa tu código">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" [value]="email" disabled class="form-input" style="background-color: #F1F5F9; cursor: not-allowed;">
+            <small style="color: #94A3B8; margin-top: 5px; display: block;">El correo electrónico no se puede modificar por seguridad.</small>
+          </div>
+
+          <div class="action-buttons" *ngIf="isEditing">
+            <button type="button" (click)="cancelarEdicion()" class="btn-secondary">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="isLoading">
+              {{ isLoading ? 'Guardando...' : 'Guardar Cambios' }}
+            </button>
+          </div>
+
+        </form>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #F1F5F9;">
+           <h3 style="margin: 0 0 15px 0; color: #334155; font-size: 16px;">Seguridad</h3>
+           <button type="button" style="width: 100%; text-align: left; padding: 15px; border: 1px solid #E2E8F0; background: white; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#94A3B8'" onmouseout="this.style.borderColor='#E2E8F0'">
+             <span style="font-weight: 500; color: #475569;">🔒 Cambiar Contraseña</span>
+             <span style="color: #94A3B8;">➡️</span>
+           </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

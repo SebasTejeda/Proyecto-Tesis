@@ -3,11 +3,15 @@ import { LoginComponent } from './pages/login/login';
 import { DashboardComponent } from './pages/dashboard/dashboard';
 import { RecoveryComponent } from './pages/recovery/recovery';
 import { RegisterAccountComponent } from './pages/register-account/register-account';
+import { SettingsComponent } from './pages/settings/settings';
 
 export const routes: Routes = [
     {path: 'login', component: LoginComponent},
     {path: '', redirectTo: 'login', pathMatch: 'full'},
     {path: 'dashboard', component: DashboardComponent},
     {path: 'recovery', component: RecoveryComponent},
-    {path: 'register', component: RegisterAccountComponent}
+    {path: 'register', component: RegisterAccountComponent},
+    {path: 'settings', component: SettingsComponent},
+    {path: '**', redirectTo: 'login'},
+    
 ];

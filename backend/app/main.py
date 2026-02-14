@@ -149,7 +149,10 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
             google_id=google_id,
             picture=foto,
             password=None,  
-            role = "doctor"
+            role = "doctor",
+            codigo_colegiatura = None,
+            is_verified=True,
+            is_active=True
         )
         db.add(user)
         db.commit()
@@ -157,6 +160,7 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
     else:
         if not user.google_id:
             user.google_id = google_id
+            user.is_verified = True
         user.picture = foto
         db.commit()
 
@@ -247,6 +251,19 @@ def login_para_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db
 
 @app.get("/users/me/", response_model=schemas.UserResponse)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
+    return current_user
+
+@app.put("/users/me/", response_model=schemas.UserResponse)
+def update_user_me(user_update: schemas.UserUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if user_update.nombres:
+        current_user.nombres = user_update.nombres
+    if user_update.apellidos:
+        current_user.apellidos = user_update.apellidos
+    if user_update.codigo_colegiatura:
+        current_user.codigo_colegiatura = user_update.codigo_colegiatura
+    
+    db.commit()
+    db.refresh(current_user)
     return current_user
 
 @app.post("/auth/verify-account")

@@ -26,6 +26,13 @@ class UserResponse(UserBase):
     is_active: bool
     created_at: datetime
 
+    nombres: Optional[str] = None
+    apellidos: Optional[str] = None
+    codigo_colegiatura: Optional[str] = None
+
+    picture: Optional[str] = None
+    is_verified: bool = False
+
 class Config:
     from_attributes = True
 
@@ -43,4 +50,9 @@ class NewPasswordRequest(BaseModel):
     email: str
     codigo: str
     new_password: str
+
+class UserUpdate(BaseModel):
+    nombres: Optional[str] = None
+    apellidos: Optional[str] = None
+    codigo_colegiatura: Optional[str] = None
 

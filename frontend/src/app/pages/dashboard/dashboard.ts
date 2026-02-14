@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Importante para *ngIf y *ngFor
 import { AuthService } from '../../services/auth/auth';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { RegisterComponent } from '../register/register';
 import { EvaluationComponent } from '../evaluation/evaluation';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RegisterComponent, EvaluationComponent], 
+  imports: [CommonModule, RegisterComponent, EvaluationComponent, RouterModule], 
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -17,7 +17,8 @@ export class DashboardComponent {
   private router = inject(Router);
 
   userName: string = 'Usuario';
-  userPhoto: string = 'https://ui-avatars.com/api/?name=U&background=random';
+  userPhoto: string = '';
+  userInitial: string = '';
   currentSection: string = 'resumen'; 
 
   constructor() {
@@ -25,6 +26,8 @@ export class DashboardComponent {
     const userData = this.authService.getUserData();
     if (userData) {
       this.userName = userData.nombre;
+
+      this.userInitial = this.userName.charAt(0).toUpperCase();
       // Si tiene foto de Google la usamos, si no, dejamos la por defecto
       if (userData.foto) {
         this.userPhoto = userData.foto;

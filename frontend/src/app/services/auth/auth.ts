@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
@@ -73,6 +73,27 @@ export class AuthService {
       }
     }
     return null;
+  }
+
+  getProfile(): Observable<any> {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    if (!token) return new Observable(observer => {
+      observer.error('No hay token');
+    });
+
+    const headers = new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+    })
+
+    return this.http.get(`${this.apiUrl}/users/me/`, { headers });
+  }
+
+  updateProfile(data: {nombre: string, apellidos:string, codigo_colegiatura: string}): Observable<any> {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+
+    return this.http.put(`${this.apiUrl}/users/me/`, data, { headers });
   }
 
   // ... imports y variables anteriores ...
