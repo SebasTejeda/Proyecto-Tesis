@@ -33,10 +33,6 @@
                     <button type="submit" [disabled]="codeForm.invalid || isLoading" class="btn-primary">
     {{ isLoading ? 'Verificando...' : 'Verificar Código' }}
 </button>
-
-<button type="submit" [disabled]="passwordForm.invalid || isLoading" class="btn-primary">
-    {{ isLoading ? 'Actualizando...' : 'Cambiar Contraseña' }}
-</button>
                     <button type="button" class="btn-link" (click)="currentStep = 1">Cambiar correo</button>
                 </form>
             </div>

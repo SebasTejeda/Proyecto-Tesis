@@ -50,6 +50,8 @@ sendCode() {
   
   this.isLoading = true;
   const email = this.emailForm.value.email!;
+  this.errorMessage = '';
+  this.successMessage = '';
 
   this.authService.requestRecovery(email).pipe(finalize(()=>{
       this.isLoading = false; // Cambiamos el estado
@@ -59,11 +61,20 @@ sendCode() {
     next: () => {
       this.emailGuardado = email;
       this.currentStep = 2;
+      this.successMessage = 'Código enviado. Revisa tu correo.';
+      this.cdr.detectChanges(); // Refrescamos para mostrar el nuevo paso y mensaje de éxito
       
     },
-    error: () => {
-      this.isLoading = false;
-      this.errorMessage = 'Error al enviar el código.';
+    error: (err) => {
+      if (err.status === 403) {
+        this.errorMessage = 'Esta cuenta usa Google para iniciar sesión. Intenta con Google.';
+      }
+      else if (err.status === 404) {
+        this.errorMessage = 'Correo no registrado.';
+      }
+      else{
+          this.errorMessage = 'Error al enviar el código. Intenta nuevamente.';
+      }
       this.cdr.detectChanges(); // También en el error
     }
   });

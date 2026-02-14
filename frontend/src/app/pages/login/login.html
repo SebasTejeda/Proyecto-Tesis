@@ -38,7 +38,7 @@
 
         <div class="auth-options">
           <label class="checkbox-label">
-            <input type="checkbox">
+            <input type="checkbox" formControlName="rememberMe">
             <span>Recordarme</span>
           </label>
           <a routerLink="/recovery" class="auth-link">¿Olvidaste tu contraseña?</a>
@@ -58,7 +58,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>¿No tienes una cuenta? <a href="#" class="auth-link">Regístrate aquí</a></p>
+        <p>¿No tienes una cuenta? <a routerLink="/register" class="auth-link">Regístrate aquí</a></p>
       </div>
     </div>
 

@@ -23,12 +23,17 @@ export class LoginComponent implements OnInit {
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]]
+    password: ['', [Validators.required]],
+    rememberMe: [false]
   });
 
   errorMessage: string = '';
 
   ngOnInit() {
+    const savedEmail = localStorage.getItem('saved_email');
+    if (savedEmail) {
+      this.loginForm.patchValue({ email: savedEmail, rememberMe: true });
+    }
     // Verificamos si la librería de Google ya cargó
     if (typeof google !== 'undefined' && google.accounts) {
       this.initGoogleBtn();
@@ -80,10 +85,16 @@ export class LoginComponent implements OnInit {
 
   onSubmit() {
     if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
+      const { email, password, rememberMe } = this.loginForm.value;
+
+      if (rememberMe){
+        localStorage.setItem('saved_email', email);
+      } else{
+        localStorage.removeItem('saved_email');
+      }
       
       // Llamamos al servicio de autenticación
-      this.authService.login(email, password).subscribe({
+      this.authService.login(email, password, rememberMe).subscribe({
         next: (res) => {
           console.log('Login exitoso!', res);
           
@@ -94,7 +105,11 @@ export class LoginComponent implements OnInit {
         error: (err) => {
           console.error(err);
           // Si falla, mostramos el mensaje de error en rojo
-          this.errorMessage = 'Correo o contraseña incorrectos';
+          if (err.status === 400 && err.error?.detail) {
+            this.errorMessage = err.error.detail;
+          } else {
+            this.errorMessage = 'Correo o contraseña incorrectos';
+          }
         }
       });
     }

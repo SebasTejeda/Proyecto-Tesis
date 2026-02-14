@@ -4,6 +4,14 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 
+export interface RegisterData {
+  nombres: string;
+  apellidos: string;
+  email: string;
+  password: string;
+  codigo_colegiatura: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -16,7 +24,11 @@ export class AuthService {
 
   constructor() { }
 
-  login(correo: string, contrasena: string): Observable<any> {
+  register(data: RegisterData): Observable<any> {
+    return this.http.post(`${this.apiUrl}/usuarios/`, data);
+  }
+
+  login(correo: string, contrasena: string, recordarme: boolean): Observable<any> {
     // Truco: FastAPI con OAuth2 espera 'FormData', no un JSON normal.
     const payload = new FormData();
     payload.append('username', correo); // FastAPI siempre busca el campo 'username', aunque mandemos email
@@ -26,7 +38,10 @@ export class AuthService {
       tap((response: any) => {
         // Guardamos el token en el navegador apenas llegue
         if (response.access_token) {
-          localStorage.setItem('token', response.access_token);
+          if (recordarme) {
+            localStorage.setItem('token', response.access_token);
+          }
+            sessionStorage.setItem('token', response.access_token);
         }
       })
     );
@@ -35,15 +50,16 @@ export class AuthService {
   // Método útil para cerrar sesión
   logout() {
     localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
   }
 
   // Método para saber si estamos logueados
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+    return !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
   }
 
   getUserData() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
@@ -79,4 +95,9 @@ export class AuthService {
       new_password 
     });
   }
+
+  verifyAccount(email: string, codigo: string) {
+    return this.http.post(`${this.apiUrl}/auth/verify-account`, { email, codigo });
+  }
+
 }

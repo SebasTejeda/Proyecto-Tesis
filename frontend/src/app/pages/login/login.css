@@ -209,11 +209,6 @@
   animation: float 15s infinite reverse ease-in-out;
 }
 
-@keyframes float {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-30px, 30px); }
-}
-
 .separator{
   margin: 20px 0;
   text-align: center;

@@ -21,3 +21,6 @@ class User(Base):
     picture = Column(String, nullable=True)
     recovery_code = Column(String, nullable=True)
 
+    is_verified = Column(Boolean, default=False)
+    verification_code = Column(String, nullable=True)
+

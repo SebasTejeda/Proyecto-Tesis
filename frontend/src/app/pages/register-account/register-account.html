@@ -1,0 +1,104 @@
+<div class="auth-page">
+  <div class="auth-container">
+    
+    <div class="auth-card fade-in">
+      
+      <div class="auth-header">
+        <div class="logo-icon">N</div>
+        <h1 class="app-name">NeuroMind AI</h1>
+      </div>
+
+      <div *ngIf="currentStep === 1">
+        <h2 class="auth-title">Crear Cuenta</h2>
+        <p class="auth-subtitle">Únete a nuestra red de especialistas</p>
+
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+          
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Nombres</label>
+              <input type="text" class="form-input" formControlName="nombres" placeholder="Juan"
+                [class.input-error]="registerForm.get('nombres')?.invalid && registerForm.get('nombres')?.touched">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Apellidos</label>
+              <input type="text" class="form-input" formControlName="apellidos" placeholder="Pérez"
+                [class.input-error]="registerForm.get('apellidos')?.invalid && registerForm.get('apellidos')?.touched">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">N° Colegiatura (CMP/CPP)</label>
+            <input type="text" class="form-input" formControlName="codigo_colegiatura" placeholder="Ej: 12345">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" class="form-input" formControlName="email" placeholder="doctor@ejemplo.com"
+              [class.input-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-input" formControlName="password" placeholder="Mínimo 6 caracteres">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirmar Contraseña</label>
+            <input type="password" class="form-input" formControlName="confirmPassword" placeholder="Repite tu contraseña">
+            <div *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched" class="error-msg">
+              Las contraseñas no coinciden.
+            </div>
+          </div>
+
+          <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+          <button type="submit" class="btn-submit" [disabled]="registerForm.invalid || isLoading">
+            <span *ngIf="!isLoading">Registrarse</span>
+            <span *ngIf="isLoading">Enviando...</span>
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          <p>¿Ya tienes cuenta? <a routerLink="/login" class="link-primary">Inicia Sesión</a></p>
+        </div>
+      </div>
+
+      <div *ngIf="currentStep === 2" class="fade-in">
+        <h2 class="auth-title">Verifica tu Cuenta</h2>
+        <p class="auth-subtitle">Hemos enviado un código a <br><strong>{{ emailRegistrado }}</strong></p>
+
+        <div class="auth-form">
+          <div class="form-group">
+            <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
+            <input 
+              #codeInput 
+              type="text" 
+              class="form-input" 
+              placeholder="0000" 
+              maxlength="4" 
+              style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
+            >
+          </div>
+
+          <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
+
+          <button (click)="onVerifyCode(codeInput.value)" class="btn-submit" [disabled]="isLoading">
+            <span *ngIf="!isLoading">Verificar y Entrar</span>
+            <span *ngIf="isLoading">Verificando...</span>
+          </button>
+          
+          <div class="auth-footer">
+            <p>¿No recibiste el código? <a href="#" (click)="currentStep=1" class="link-primary">Intentar de nuevo</a></p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="auth-decorative">
+      <div class="decorative-circle circle-1"></div>
+      <div class="decorative-circle circle-2"></div>
+    </div>
+  </div>
+</div>

@@ -40,18 +40,26 @@ async def forgot_password(request: schemas.EmailRequest, db: Session = Depends(g
     user = db.query(models.User).filter(models.User.email == request.email).first()
 
     if not user:
-        # Por seguridad, no decimos "no existe", decimos que enviamos el correo
-        # (así los hackers no saben qué correos son reales)
+        # Por seguridad, respondemos genérico
         return {"message": "Si el correo existe, se envió un código."}
+
+    # --- NUEVA LÓGICA: Verificar si es usuario de Google ---
+    # Si el usuario tiene un google_id, significa que entró con Google
+    if user.google_id:
+        raise HTTPException(
+            status_code=403, # Forbidden
+            detail="Esta cuenta está vinculada a Google. Por favor inicia sesión con el botón de Google."
+        )
+    # -------------------------------------------------------
 
     # 2. Generamos un código simple de 4 dígitos
     codigo = str(random.randint(1000, 9999))
 
-    # 3. Guardamos el código en la base de datos para verificarlo luego
+    # 3. Guardamos el código
     user.recovery_code = codigo
     db.commit()
 
-    # 4. Enviamos el correo (usando tu archivo email_utils)
+    # 4. Enviamos el correo
     try:
         await email_utils.enviar_correo_recuperacion(user.email, codigo)
     except Exception as e:
@@ -59,7 +67,6 @@ async def forgot_password(request: schemas.EmailRequest, db: Session = Depends(g
         raise HTTPException(status_code=500, detail="Error al enviar el correo")
 
     return {"message": "Correo enviado correctamente"}
-
 # 1. Ruta para verificar si el código es correcto (Paso intermedio)
 @app.post("/auth/verify-code")
 def verify_recovery_code(request: schemas.VerifyCodeRequest, db: Session = Depends(get_db)):
@@ -164,11 +171,14 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/usuarios/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Verificar si el correo electrónico ya existe
+async def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado.")
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
+    
+    hashed_password = utils.HashUtils.get_password_hash(user.password)
+    
+    codigo = str(random.randint(1000, 9999))
     
     # Hashear la contraseña
     hashed_password = utils.HashUtils.get_password_hash(user.password)
@@ -179,13 +189,24 @@ def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db)):
         password=hashed_password,
         nombres=user.nombres,
         apellidos=user.apellidos,
-        codigo_colegiatura=user.codigo_colegiatura
+        codigo_colegiatura=user.codigo_colegiatura,
+        is_verified=False,
+        verification_code=codigo
     )
     
-    # Agregar el nuevo usuario a la base de datos
-    db.add(nuevo_usuario)
-    db.commit()
-    db.refresh(nuevo_usuario)
+    try:
+        # Agregar el nuevo usuario a la base de datos
+        db.add(nuevo_usuario)
+        db.commit()
+        db.refresh(nuevo_usuario)
+
+        await email_utils.enviar_correo_verificacion(user.email, codigo)
+    
+    except Exception as e:
+        db.delete(nuevo_usuario)
+        db.commit()
+
+        raise HTTPException(status_code=500, detail=f"Error al crear el usuario: {str(e)}")
     
     return nuevo_usuario
 
@@ -211,12 +232,38 @@ def login_para_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db
             detail="Correo electrónico o contraseña incorrectos.",
             headers={"WWW-Authenticate": "Bearer"},)
     
-    if not utils.HashUtils.verify_password(form_data.password, user.password):
-        raise HTTPException(status_code=400, detail="Correo electrónico o contraseña incorrectos.")
+    if not user.is_verified:
+        raise HTTPException(status_code=400, detail="Cuenta no verificada. Por favor revisa tu correo para verificar tu cuenta.")
     
-    access_token = utils.HashUtils.create_access_token(data={"sub": user.email})
+    token_data = {
+        "sub": user.email,
+        "name": f"{user.nombres} {user.apellidos}",
+        "picture": user.picture if user.picture else ""
+    }
+
+
+    access_token = utils.HashUtils.create_access_token(data=token_data)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me/", response_model=schemas.UserResponse)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
+
+@app.post("/auth/verify-account")
+def verify_account(request: schemas.VerifyCodeRequest, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == request.email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+    if user.is_verified:
+        return {"message": "Cuenta ya verificada"}
+
+    if user.verification_code != request.codigo:
+        raise HTTPException(status_code=400, detail="Código de verificación incorrecto")
+
+    user.is_verified = True
+    user.verification_code = None
+    db.commit()
+
+    return {"message": "Cuenta verificada correctamente"}
