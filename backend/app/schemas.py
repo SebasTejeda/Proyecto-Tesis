@@ -32,3 +32,15 @@ class Config:
 class GoogleLoginRequest(BaseModel):
     credential: str
 
+class EmailRequest(BaseModel):
+    email: str
+
+class VerifyCodeRequest(BaseModel):
+    email: str
+    codigo: str
+
+class NewPasswordRequest(BaseModel):
+    email: str
+    codigo: str
+    new_password: str
+

@@ -1,0 +1,67 @@
+<div class="recovery-container">
+    <div class="recovery-card fade-in">
+        
+        <div class="card-header">
+            <h2 class="title">Recuperar Cuenta</h2>
+            <p class="subtitle">Sigue los pasos para restablecer tu acceso</p>
+        </div>
+
+        <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+        <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+
+        <div [ngSwitch]="currentStep">
+
+            <div *ngSwitchCase="1">
+                <form [formGroup]="emailForm" (ngSubmit)="sendCode()">
+                    <div class="form-group">
+                        <label>Correo Electrónico</label>
+                        <input type="email" formControlName="email" placeholder="ejemplo@correo.com">
+                    </div>
+                    <button type="submit" [disabled]="emailForm.invalid || isLoading" class="btn-primary">
+                        {{ isLoading ? 'Enviando...' : 'Enviar Código' }}
+                    </button>
+                </form>
+            </div>
+
+            <div *ngSwitchCase="2">
+                <p class="instruction">Hemos enviado un código de 4 dígitos a <strong>{{ emailGuardado }}</strong></p>
+                <form [formGroup]="codeForm" (ngSubmit)="verifyCode()">
+                    <div class="form-group">
+                        <label>Código de Verificación</label>
+                        <input type="text" formControlName="code" placeholder="Ej: 1234" maxlength="4" class="code-input">
+                    </div>
+                    <button type="submit" [disabled]="codeForm.invalid || isLoading" class="btn-primary">
+    {{ isLoading ? 'Verificando...' : 'Verificar Código' }}
+</button>
+
+<button type="submit" [disabled]="passwordForm.invalid || isLoading" class="btn-primary">
+    {{ isLoading ? 'Actualizando...' : 'Cambiar Contraseña' }}
+</button>
+                    <button type="button" class="btn-link" (click)="currentStep = 1">Cambiar correo</button>
+                </form>
+            </div>
+
+            <div *ngSwitchCase="3">
+                <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+                    <div class="form-group">
+                        <label>Nueva Contraseña</label>
+                        <input type="password" formControlName="newPassword" placeholder="Mínimo 6 caracteres">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar Contraseña</label>
+                        <input type="password" formControlName="confirmPassword" placeholder="Repite la contraseña">
+                    </div>
+                    <button type="submit" [disabled]="passwordForm.invalid || isLoading" class="btn-primary">
+                        Cambiar Contraseña
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <div class="card-footer">
+            <a routerLink="/login" class="back-link">← Volver al inicio de sesión</a>
+        </div>
+
+    </div>
+</div>

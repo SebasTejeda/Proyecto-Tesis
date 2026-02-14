@@ -58,4 +58,25 @@ export class AuthService {
     }
     return null;
   }
+
+  // ... imports y variables anteriores ...
+
+  // 1. Enviar correo con el código
+  requestRecovery(email: string) {
+    return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  // 2. Verificar si el código es correcto
+  verifyCode(email: string, codigo: string) {
+    return this.http.post(`${this.apiUrl}/auth/verify-code`, { email, codigo });
+  }
+
+  // 3. Establecer la nueva contraseña
+  resetPassword(email: string, codigo: string, new_password: string) {
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { 
+      email, 
+      codigo, 
+      new_password 
+    });
+  }
 }
