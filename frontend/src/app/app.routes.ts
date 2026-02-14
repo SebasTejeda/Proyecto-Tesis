@@ -4,6 +4,7 @@ import { DashboardComponent } from './pages/dashboard/dashboard';
 import { RecoveryComponent } from './pages/recovery/recovery';
 import { RegisterAccountComponent } from './pages/register-account/register-account';
 import { SettingsComponent } from './pages/settings/settings';
+import { ChangePasswordComponent } from './pages/change-password/change-password';
 
 export const routes: Routes = [
     {path: 'login', component: LoginComponent},
@@ -12,6 +13,7 @@ export const routes: Routes = [
     {path: 'recovery', component: RecoveryComponent},
     {path: 'register', component: RegisterAccountComponent},
     {path: 'settings', component: SettingsComponent},
+    {path: 'change-password', component: ChangePasswordComponent},
     {path: '**', redirectTo: 'login'},
     
 ];
