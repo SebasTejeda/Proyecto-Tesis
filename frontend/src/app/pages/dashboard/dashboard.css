@@ -548,3 +548,131 @@ tbody td {
 .search-input::placeholder {
   color: #cbd5e1;
 }
+
+/* --- 1. MENÚ LATERAL (Sidebar) --- */
+.nav-icon-i {
+    font-size: 1.4rem; /* Antes era 1.1rem. Ahora es más grande y legible */
+    margin-right: 16px; /* Más separación del texto para que respire */
+    min-width: 24px; /* Asegura que todos los iconos alineen el texto igual */
+    text-align: center;
+}
+
+/* --- 2. TARJETAS DE ESTADÍSTICAS (Stat Cards) --- */
+.stat-icon-box {
+    width: 56px;  /* Caja más grande (Antes 40px) */
+    height: 56px;
+    border-radius: 14px; /* Bordes un poco más cuadrados (estilo moderno) */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Sombra suave de color para darle profundidad */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); 
+}
+
+/* El icono dentro de la tarjeta */
+.stat-icon-box i {
+    font-size: 1.8rem; /* ¡Mucho más grande! (Antes 1.2rem) */
+}
+
+/* Ajuste específico para el buscador */
+.search-icon-i {
+    font-size: 1.2rem; /* Un poco más grande para que se vea bien */
+    top: 50%;
+    transform: translateY(-50%);
+ }
+
+/* =========================================
+   ESTILO TABLA PREMIUM (PrimeNG Custom)
+   ========================================= */
+
+/* 1. El Contenedor de la Tabla */
+.section-card {
+    background: #ffffff;
+    border-radius: 20px; /* Bordes muy redondeados */
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08); /* Sombra flotante elegante */
+    border: 1px solid #f1f5f9;
+    padding: 0; /* Quitamos padding del contenedor para que la tabla toque los bordes si queremos */
+    overflow: hidden; /* Para que la tabla respete el borde redondeado */
+}
+
+/* 2. Cabecera de la Tabla (Thead) */
+:host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background-color: #f8fafc; /* Gris muy claro, casi blanco */
+    color: #64748b; /* Texto gris medio */
+    padding: 1.2rem 1.5rem; /* Mucho aire (espaciado) */
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* Letras un poco separadas */
+    border-bottom: 2px solid #e2e8f0;
+    border-top: none;
+}
+
+/* Iconos de ordenamiento en la cabecera */
+:host ::ng-deep .p-sortable-column-icon {
+    font-size: 0.8rem;
+    margin-left: 8px;
+    color: #cbd5e1;
+}
+
+/* 3. Cuerpo de la Tabla (Body) */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr {
+    background: #ffffff;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+/* Fila normal */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 1.2rem 1.5rem;
+    color: #334155;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+/* Efecto HOVER (Cuando pasas el mouse) */
+:host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+    background-color: #f8fafc !important; /* Color gris suave */
+    cursor: pointer;
+}
+
+/* 4. Estilo de la Primera Columna (Nombres destacados) */
+.patient-name {
+    font-weight: 600;
+    color: #0f172a; /* Color oscuro casi negro */
+    font-size: 1rem;
+}
+
+/* 5. Badges (Las etiquetas de estado: Alto, Bajo...) */
+.badge {
+    padding: 6px 14px;
+    border-radius: 50px; /* Forma de píldora completa */
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Colores de los Badges mejorados */
+/* Alto Riesgo */
+.badge-high {
+    background-color: #fee2e2;
+    color: #ef4444;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.15); /* Pequeño brillo rojo */
+}
+
+/* Riesgo Moderado */
+.badge-mod {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+/* Bajo Riesgo */
+.badge-low {
+    background-color: #dcfce7;
+    color: #10b981;
+    box-shadow: 0 2px 5px rgba(16, 185, 129, 0.15); /* Pequeño brillo verde */
+}

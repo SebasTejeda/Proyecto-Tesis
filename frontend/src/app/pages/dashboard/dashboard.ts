@@ -54,7 +54,6 @@ export class DashboardComponent implements OnInit {
   cargarPacientesReales(){
     this.patientService.getPatients().subscribe({
       next: (data) => {
-        console.log('Datos recibidos del Backend:', data); // Para confirmar
         
         // Verificamos que sea un arreglo antes de intentar mapearlo
         if (Array.isArray(data)) {
@@ -87,12 +86,9 @@ export class DashboardComponent implements OnInit {
           // 3. ¡LA CLAVE! Forzamos a Angular a pintar los cambios
           this.cdr.detectChanges(); 
           
-        } else {
-          console.error('El backend no devolvió una lista (array). Recibido:', data);
         }
       },
       error: (err) => {
-        console.error('Error:', err);
         this.alertService.error('Error', 'No se pudieron cargar los pacientes.');
       }
     });

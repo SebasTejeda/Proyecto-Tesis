@@ -72,7 +72,6 @@ export class EvaluationComponent implements OnInit {
         });
       },
       error: (err) => {
-        console.error(err);
         this.alertService.error('Error', 'No se pudo guardar la evaluación.');
       }
     });

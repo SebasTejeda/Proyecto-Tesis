@@ -41,3 +41,102 @@ body {
   100% { transform: translate(0, 0); }
 }
 
+/* =========================================
+   ESTILOS GLOBALES DE ICONOS (SaaS Clean)
+   ========================================= */
+
+/* 1. Iconos del Menú Lateral (Sidebar) */
+.nav-icon-i {
+    font-size: 1.1rem;
+    margin-right: 12px;
+    color: #94a3b8; /* Gris suave por defecto */
+    transition: color 0.2s;
+}
+
+/* Cuando el link está activo */
+.nav-link.active .nav-icon-i {
+    color: #3b82f6; /* Azul activo */
+}
+.nav-link:hover .nav-icon-i {
+    color: #1e293b; /* Oscuro al hover */
+}
+
+/* 2. Cajas de Iconos en las Tarjetas (Dashboard Stats) */
+.stat-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+/* Variantes de color */
+.stat-icon-box.blue {
+    background-color: #eff6ff; /* Fondo azul muy claro */
+    color: #3b82f6;            /* Icono azul */
+}
+
+.stat-icon-box.teal {
+    background-color: #f0fdf4; /* Fondo verde menta */
+    color: #10b981;            /* Icono verde */
+}
+
+.stat-icon-box.coral {
+    background-color: #fef2f2; /* Fondo rojo claro */
+    color: #ef4444;            /* Icono rojo */
+}
+
+/* 3. Icono del Buscador */
+.search-icon-i {
+    position: absolute;
+    left: 12px;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+/* Ajuste del input para que no tape el icono */
+.search-input {
+    padding-left: 36px !important; 
+}
+
+/* 4. Botones de Acción (Configuración, Guardar) */
+.btn-primary i, .btn-secondary i {
+    font-size: 0.95rem;
+}
+
+/* 5. Flechas de navegación (Volver) */
+.back-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+.back-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* 6. Iconos en Evaluation (Repaso por si acaso) */
+.section-icon {
+    font-size: 1.1rem;
+    margin-right: 10px;
+    vertical-align: middle;
+    padding: 6px;
+    border-radius: 8px;
+}
+.icon-blue { color: #3b82f6; background-color: #eff6ff; }
+.icon-rose { color: #e11d48; background-color: #ffe4e6; }
+.icon-indigo { color: #6366f1; background-color: #e0e7ff; }
+.icon-amber { color: #d97706; background-color: #fef3c7; }
+.icon-slate { color: #64748b; background-color: #f8fafc; }
+
