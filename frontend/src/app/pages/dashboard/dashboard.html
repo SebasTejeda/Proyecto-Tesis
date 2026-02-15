@@ -118,45 +118,74 @@
       </div>
 
       <div class="section-card">
-        <div class="section-header">
-          <h2 class="section-title">Últimos Pacientes Evaluados</h2>
-          <a href="#" class="section-action">Ver todos →</a>
+        
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <h2 class="section-title" style="margin: 0;">Últimos Pacientes Evaluados</h2>
+          
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+              placeholder="Buscar paciente..." 
+              class="search-input"
+            />
+          </div>
         </div>
 
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Paciente</th>
-                <th>Fecha</th>
-                <th>Edad</th>
-                <th>Probabilidad</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-            <tr *ngIf="pacientes.length === 0">
-              <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">
-                No tienes pacientes registrados aún. Ve a "Registrar Paciente".
-              </td>
-            </tr>
+        <p-table 
+            #dt
+            [value]="pacientes" 
+            [paginator]="false" 
+            [rows]="10" 
+            [globalFilterFields]="['nombre_completo', 'riesgo', 'edad']"
+            [tableStyle]="{ 'min-width': '100%' }">
+            
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="nombre_completo">
+                        Paciente <p-sortIcon field="nombre_completo"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="fecha">
+                        Fecha <p-sortIcon field="fecha"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="edad">
+                        Edad <p-sortIcon field="edad"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="prob">
+                        Probabilidad <p-sortIcon field="prob"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="riesgo">
+                        Estado <p-sortIcon field="riesgo"></p-sortIcon>
+                    </th>
+                </tr>
+            </ng-template>
 
-            <tr *ngFor="let p of pacientes">
-              <td class="patient-name">{{ p.nombre_completo }}</td> 
-              <td>{{ p.fecha }}</td>
-              <td>{{ p.edad }} años</td>
-              <td>{{ p.prob }}%</td>
-              <td>
-                <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
-                  {{ p.riesgo }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-          </table>
+            <ng-template pTemplate="body" let-p>
+                <tr>
+                    <td class="patient-name">{{ p.nombre_completo }}</td>
+                    <td>{{ p.fecha }}</td>
+                    <td>{{ p.edad }} años</td>
+                    <td>{{ p.prob }}%</td>
+                    <td>
+                        <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
+                            {{ p.riesgo }}
+                        </span>
+                    </td>
+                </tr>
+            </ng-template>
+            
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        No se encontraron resultados.
+                    </td>
+                </tr>
+            </ng-template>
+
+          </p-table>
         </div>
       </div>
-    </div>
 
     <div *ngIf="currentSection === 'registro'" class="page-section fade-in">
       <app-register></app-register>

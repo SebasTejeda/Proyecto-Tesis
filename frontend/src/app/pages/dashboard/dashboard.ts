@@ -6,11 +6,12 @@ import { RegisterComponent } from '../register/register';
 import { EvaluationComponent } from '../evaluation/evaluation';
 import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
+import { TableModule } from 'primeng/table';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RegisterComponent, EvaluationComponent, RouterModule], 
+  imports: [CommonModule, RegisterComponent, EvaluationComponent, RouterModule, TableModule], 
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -23,7 +24,7 @@ export class DashboardComponent implements OnInit {
 
   totalPacientes: number = 0;
   evaluacionesHoy: number = 0;
-  casosAltoRiesgo: number = 0;
+  casosAltoRiesgo: number = 0; 
 
   userName: string = 'Usuario';
   userPhoto: string = '';
