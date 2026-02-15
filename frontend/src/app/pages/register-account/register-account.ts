@@ -62,7 +62,6 @@ export class RegisterAccountComponent {
       .pipe(
         finalize(() => {
           this.isLoading = false;
-          this.alertService.close();
           this.cdr.detectChanges();
         })
       )
@@ -95,7 +94,6 @@ export class RegisterAccountComponent {
     this.authService.verifyAccount(this.emailRegistrado, codigo)
       .pipe(finalize(() => { 
           this.isLoading = false; 
-          this.alertService.close();
           this.cdr.detectChanges(); 
       }))
       .subscribe({

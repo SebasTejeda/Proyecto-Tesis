@@ -52,7 +52,6 @@ export class RecoveryComponent {
 
     this.authService.requestRecovery(email).pipe(finalize(()=>{
         this.isLoading = false;
-        this.alertService.close();
         this.cdr.detectChanges();
     })).subscribe({
       next: () => {
@@ -87,7 +86,6 @@ export class RecoveryComponent {
     .pipe(
       finalize(() => {
         this.isLoading = false;
-        this.alertService.close();
         this.cdr.detectChanges();
       })
     )

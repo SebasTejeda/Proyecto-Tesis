@@ -87,13 +87,14 @@
       </div>
 
       <div class="stats-grid">
+        
         <div class="stat-card">
           <div class="stat-header">
             <div class="stat-label">Pacientes Totales</div>
             <div class="stat-icon blue">👥</div>
           </div>
-          <div class="stat-value">247</div>
-          <div class="stat-change">↑ 12% vs mes anterior</div>
+          <div class="stat-value">{{ totalPacientes }}</div>
+          <div class="stat-change">Pacientes registrados</div>
         </div>
 
         <div class="stat-card">
@@ -101,8 +102,8 @@
             <div class="stat-label">Evaluaciones Hoy</div>
             <div class="stat-icon teal">📝</div>
           </div>
-          <div class="stat-value">18</div>
-          <div class="stat-change">↑ 6 completadas</div>
+          <div class="stat-value">{{ evaluacionesHoy }}</div>
+          <div class="stat-change">Pendiente de implementar</div>
         </div>
 
         <div class="stat-card">
@@ -110,9 +111,10 @@
             <div class="stat-label">Casos Alto Riesgo</div>
             <div class="stat-icon coral">⚠️</div>
           </div>
-          <div class="stat-value">12</div>
-          <div class="stat-change warn-text">Atención prioritaria</div>
+          <div class="stat-value">{{ casosAltoRiesgo }}</div>
+          <div class="stat-change warn-text">Detectados por IA</div>
         </div>
+
       </div>
 
       <div class="section-card">
@@ -133,18 +135,24 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let p of pacientesRecientes">
-                <td class="patient-name">{{ p.nombre }}</td>
-                <td>{{ p.fecha }}</td>
-                <td>{{ p.edad }} años</td>
-                <td>{{ p.prob }}%</td>
-                <td>
-                  <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
-                    {{ p.riesgo }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
+            <tr *ngIf="pacientes.length === 0">
+              <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">
+                No tienes pacientes registrados aún. Ve a "Registrar Paciente".
+              </td>
+            </tr>
+
+            <tr *ngFor="let p of pacientes">
+              <td class="patient-name">{{ p.nombre_completo }}</td> 
+              <td>{{ p.fecha }}</td>
+              <td>{{ p.edad }} años</td>
+              <td>{{ p.prob }}%</td>
+              <td>
+                <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
+                  {{ p.riesgo }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
           </table>
         </div>
       </div>

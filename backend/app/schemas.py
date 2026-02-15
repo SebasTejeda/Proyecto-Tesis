@@ -33,8 +33,8 @@ class UserResponse(UserBase):
     picture: Optional[str] = None
     is_verified: bool = False
 
-class Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True
 
 class GoogleLoginRequest(BaseModel):
     credential: str
@@ -56,3 +56,18 @@ class UserUpdate(BaseModel):
     apellidos: Optional[str] = None
     codigo_colegiatura: Optional[str] = None
 
+class PatientCreate(BaseModel):
+    nombre: str
+    edad: int
+    sexo: str
+    telefono: Optional[str] = None
+
+class PatientResponse(BaseModel):
+    id: int
+    nombre_completo: str
+    edad: int
+    sexo: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

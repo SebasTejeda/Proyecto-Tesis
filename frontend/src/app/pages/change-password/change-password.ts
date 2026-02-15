@@ -131,7 +131,6 @@ export class ChangePasswordComponent implements OnInit {
     this.authService.resetPassword(this.emailUsuario, this.codigoGuardado, pass)
     .pipe(finalize(() => { 
       this.isLoading = false; 
-      this.alertService.close(); // Cerramos el loading
       this.cdr.detectChanges(); 
     }))
     .subscribe({

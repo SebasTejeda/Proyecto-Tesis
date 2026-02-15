@@ -284,3 +284,23 @@ def verify_account(request: schemas.VerifyCodeRequest, db: Session = Depends(get
     db.commit()
 
     return {"message": "Cuenta verificada correctamente"}
+
+@app.post("/patients/", response_model=schemas.PatientResponse)
+def create_patient(patient: schemas.PatientCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+   
+    new_patient = models.Patient(
+        nombre_completo=patient.nombre,
+        edad=patient.edad,
+        sexo=patient.sexo,
+        telefono=patient.telefono,
+        doctor_id=current_user.id
+    )
+    db.add(new_patient)
+    db.commit()
+    db.refresh(new_patient)
+    return new_patient
+
+@app.get("/patients/", response_model=list[schemas.PatientResponse])
+def read_patients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    patients = db.query(models.Patient).filter(models.Patient.doctor_id == current_user.id).offset(skip).limit(limit).all()
+    return patients
