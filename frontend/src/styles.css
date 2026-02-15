@@ -140,3 +140,69 @@ body {
 .icon-amber { color: #d97706; background-color: #fef3c7; }
 .icon-slate { color: #64748b; background-color: #f8fafc; }
 
+/* =========================================
+   ESTILOS GLOBALES DE CENTRADO (styles.css)
+   ========================================= */
+
+/* 1. Obligamos al componente <app-register> a ocupar todo el ancho */
+app-register {
+    display: block;
+    width: 100%;
+}
+
+/* 2. El contenedor FLEX que hace la magia del centrado */
+.register-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* ESTO CENTRA HORIZONTALMENTE */
+    width: 100%;
+}
+
+/* 3. Encabezado centrado */
+.center-header {
+    text-align: center;
+    max-width: 600px;
+    margin-bottom: 30px;
+}
+
+/* 4. Tarjeta del formulario (Blanca y centrada) */
+.centered-card {
+    background: white;
+    width: 100%;       
+    max-width: 700px;  /* Ancho máximo para que se vea elegante */
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eef2f6;
+    margin: 0 auto;    /* Aseguramos centrado extra por si acaso */
+}
+
+/* 5. Asegurar que los inputs llenen la tarjeta */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Inputs full width */
+.full-width { width: 100%; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+
+/* Botones centrados */
+.centered-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    width: 100%;
+}
+
+.btn-primary {
+    width: 100%; /* Botón ancho se ve mejor en tarjeta centrada */
+}

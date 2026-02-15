@@ -7,11 +7,12 @@ import { EvaluationComponent } from '../evaluation/evaluation';
 import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 import { TableModule } from 'primeng/table';
+import { SettingsComponent } from '../settings/settings';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RegisterComponent, EvaluationComponent, RouterModule, TableModule], 
+  imports: [CommonModule, RegisterComponent, EvaluationComponent, RouterModule, TableModule, SettingsComponent], 
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })

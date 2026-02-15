@@ -1,41 +1,48 @@
 <div class="register-container">
-    <div class="page-header">
+    
+    <div class="page-header center-header">
         <h1 class="welcome-text">Registrar Nuevo Paciente</h1>
         <p class="page-subtitle">Ingresa los datos para crear un nuevo expediente.</p>
     </div>
 
-    <div class="form-card">
+    <div class="form-card centered-card">
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
             
             <div class="form-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                     <label class="form-label">Nombre Completo</label>
                     <input type="text" class="form-input" formControlName="nombre" placeholder="Ej: Juan Pérez">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Edad</label>
-                    <input type="number" class="form-input" formControlName="edad" placeholder="Ej: 30">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Edad</label>
+                        <input type="number" class="form-input" formControlName="edad" placeholder="Ej: 30">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Sexo</label>
+                        <select class="form-input" formControlName="sexo">
+                            <option value="">Seleccionar...</option>
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Sexo</label>
-                    <select class="form-input" formControlName="sexo">
-                        <option value="">Seleccionar...</option>
-                        <option value="M">Masculino</option>
-                        <option value="F">Femenino</option>
-                        <option value="O">Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
+
+                <div class="form-group full-width">
                     <label class="form-label">Teléfono</label>
                     <input type="tel" class="form-input" formControlName="telefono" placeholder="+51 999 999 999">
                 </div>
             </div>
 
-            <div class="form-actions">
+            <div class="form-actions centered-actions">
                 <button type="submit" class="btn-primary" [disabled]="registerForm.invalid">
                     <i class="pi pi-save" style="margin-right: 8px;"></i> Guardar Paciente
                 </button>
             </div>
+
         </form>
     </div>
 </div>

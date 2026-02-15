@@ -85,3 +85,114 @@
     cursor: not-allowed;
     transform: none;
 }
+
+/* =========================================
+   ESTILOS DE REGISTRO CENTRADO
+   ========================================= */
+
+/* 1. Centrar textos del encabezado */
+.center-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+/* 2. La tarjeta centrada */
+.centered-card {
+    background: white;
+    max-width: 600px; /* Ancho máximo elegante */
+    margin: 0 auto;   /* Truco para centrar horizontalmente */
+    padding: 40px;    /* Buen espacio interno */
+    border-radius: 20px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    border: 1px solid #f1f5f9;
+}
+
+/* 3. Grid del formulario */
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Fila para Edad y Sexo (uno al lado del otro) */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 50% y 50% */
+    gap: 20px;
+}
+
+/* Inputs que ocupan todo el ancho */
+.full-width {
+    width: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-weight: 600;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.form-input {
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s;
+    background: #f8fafc;
+}
+
+.form-input:focus {
+    background: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 4. Botón centrado y ancho */
+.centered-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.btn-primary {
+    width: 100%; /* Botón ancho se ve bien en tarjeta centrada */
+    padding: 14px;
+    background: linear-gradient(135deg, #0f172a 0%, #334155 100%); /* Negro azulado elegante */
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.register-container{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}

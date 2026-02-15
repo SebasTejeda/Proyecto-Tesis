@@ -1,22 +1,26 @@
 <div class="app-container">
   <aside class="sidebar">
-    <div class="logo">
-      <div class="logo-icon">N</div>
-      <div class="logo-text">NeuroMind AI</div>
+    
+    <div class="sidebar-header-group">
+        <div class="logo">
+            <div class="logo-icon">N</div>
+            <div class="logo-text">NeuroMind AI</div>
+        </div>
+
+        <div class="user-profile">
+            <img *ngIf="userPhoto" [src]="userPhoto" alt="Perfil" class="avatar" />
+            <div *ngIf="!userPhoto" class="avatar-circle">
+                {{ userInitial }}
+            </div>
+
+            <div class="user-info">
+                <span class="user-name">{{ userName | titlecase }}</span>
+                <span class="user-role">Doctor</span>
+            </div>
+        </div>
     </div>
 
-    <div class="user-profile">
-      <img *ngIf="userPhoto" [src]="userPhoto" alt="Perfil" class="avatar" />
-      <div *ngIf="!userPhoto" class="avatar-circle">
-        {{ userInitial }}
-      </div>
-      <div class="user-info">
-        <span class="user-name">{{ userName | titlecase }}</span>
-        <span class="user-role">Doctor</span>
-      </div>
-    </div>
-
-    <nav>
+    <nav class="sidebar-nav-content">
       <ul class="nav-menu">
         <li class="nav-item">
           <a class="nav-link" [class.active]="currentSection === 'resumen'" (click)="cambiarSeccion('resumen')">
@@ -37,27 +41,28 @@
           </a>
         </li>
         <li class="nav-item">
-          <a routerLink="/settings" routerLinkActive="active" class="nav-link">
+          <a class="nav-link" 
+             [class.active]="currentSection === 'settings'" 
+             (click)="cambiarSeccion('settings')">
             <i class="pi pi-cog nav-icon-i"></i>
-            <span class="nav-text">Configuración</span>
-          </a>
-        </li>
-      </ul>
-
-      <div class="nav-divider"></div>
-
-      <ul class="nav-menu logout-section">
-        <li class="nav-item">
-          <a class="nav-link logout" (click)="logout()">
-            <i class="pi pi-sign-out nav-icon-i"></i>
-            <span>Cerrar Sesión</span>
+            <span>Configuración</span>
           </a>
         </li>
       </ul>
     </nav>
+
+    <div class="sidebar-footer">
+        <div class="nav-divider"></div>
+        <a class="nav-link logout" (click)="logout()">
+            <i class="pi pi-sign-out nav-icon-i"></i>
+            <span>Cerrar Sesión</span>
+        </a>
+    </div>
+
   </aside>
 
   <main class="main-content">
+    
     <div *ngIf="currentSection === 'resumen'" class="page-section fade-in">
       <div class="page-header">
         <h1 class="welcome-text">Bienvenido, Doctor</h1>
@@ -115,28 +120,58 @@
           </div>
         </div>
 
-        <p-table #dt [value]="pacientes" [paginator]="false" [rows]="10" [globalFilterFields]="['nombre_completo', 'riesgo', 'edad']" [tableStyle]="{ 'min-width': '100%' }">
+        <p-table 
+            #dt
+            [value]="pacientes" 
+            [paginator]="false" 
+            [rows]="10" 
+            [resizableColumns]="true" 
+            columnResizeMode="expand"
+            [globalFilterFields]="['nombre_completo', 'riesgo', 'edad']"
+            [tableStyle]="{ 'min-width': '100%' }">
+            
             <ng-template pTemplate="header">
                 <tr>
-                    <th pSortableColumn="nombre_completo">Paciente <p-sortIcon field="nombre_completo"></p-sortIcon></th>
-                    <th pSortableColumn="fecha">Fecha <p-sortIcon field="fecha"></p-sortIcon></th>
-                    <th pSortableColumn="edad">Edad <p-sortIcon field="edad"></p-sortIcon></th>
-                    <th pSortableColumn="prob">Probabilidad <p-sortIcon field="prob"></p-sortIcon></th>
-                    <th pSortableColumn="riesgo">Estado <p-sortIcon field="riesgo"></p-sortIcon></th>
+                    <th pSortableColumn="nombre_completo" pResizableColumn>
+                        Paciente <p-sortIcon field="nombre_completo"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="fecha" pResizableColumn>
+                        Fecha <p-sortIcon field="fecha"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="edad" pResizableColumn>
+                        Edad <p-sortIcon field="edad"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="prob" pResizableColumn>
+                        Probabilidad <p-sortIcon field="prob"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="riesgo" pResizableColumn>
+                        Estado <p-sortIcon field="riesgo"></p-sortIcon>
+                    </th>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="body" let-p>
                 <tr>
                     <td class="patient-name">{{ p.nombre_completo }}</td>
                     <td>{{ p.fecha }}</td>
                     <td>{{ p.edad }} años</td>
                     <td>{{ p.prob }}%</td>
-                    <td><span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">{{ p.riesgo }}</span></td>
+                    <td>
+                        <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
+                            {{ p.riesgo }}
+                        </span>
+                    </td>
                 </tr>
             </ng-template>
+            
             <ng-template pTemplate="emptymessage">
-                <tr><td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">No se encontraron resultados.</td></tr>
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        No se encontraron resultados.
+                    </td>
+                </tr>
             </ng-template>
+
           </p-table>
         </div>
       </div>
@@ -148,5 +183,10 @@
     <div *ngIf="currentSection === 'evaluacion'" class="page-section fade-in">
       <app-evaluation></app-evaluation>
     </div>
+
+    <div *ngIf="currentSection === 'settings'" class="page-section fade-in">
+      <app-settings></app-settings> 
+    </div>
+
   </main>
 </div>
