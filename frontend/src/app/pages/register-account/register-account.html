@@ -51,8 +51,6 @@
             </div>
           </div>
 
-          <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
-
           <button type="submit" class="btn-submit" [disabled]="registerForm.invalid || isLoading">
             <span *ngIf="!isLoading">Registrarse</span>
             <span *ngIf="isLoading">Enviando...</span>
@@ -80,8 +78,6 @@
               style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
             >
           </div>
-
-          <div *ngIf="errorMessage" class="alert-error">{{ errorMessage }}</div>
 
           <button (click)="onVerifyCode(codeInput.value)" class="btn-submit" [disabled]="isLoading">
             <span *ngIf="!isLoading">Verificar y Entrar</span>

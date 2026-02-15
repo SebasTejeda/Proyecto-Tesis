@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-register',
@@ -11,6 +12,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
+  private alertService = inject(AlertService); // Asegúrate de tener un AlertService para mostrar alertas
 
   registerForm: FormGroup = this.fb.group({
     nombre: ['', Validators.required],
@@ -21,9 +23,7 @@ export class RegisterComponent {
 
   onSubmit() {
     if (this.registerForm.valid) {
-      console.log('Datos del paciente:', this.registerForm.value);
-      alert('¡Paciente registrado (simulado)!');
-      // Aquí luego conectaremos con el Backend
+      this.alertService.success('Paciente registrado', 'El paciente ha sido registrado exitosamente (simulado).');
       this.registerForm.reset();
     }
   }

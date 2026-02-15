@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../services/auth/auth';
 import { finalize, take } from 'rxjs';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-change-password',
@@ -17,13 +18,12 @@ export class ChangePasswordComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private alertService = inject(AlertService);
 
   currentStep: number = 1;
   emailUsuario: string = '';
   codigoGuardado: string = '';
   isLoading: boolean = true;
-  errorMessage: string = '';
-  successMessage: string = '';
   enviandoCodigo: boolean = false;
 
   codeForm = this.fb.group({
@@ -41,46 +41,38 @@ export class ChangePasswordComponent implements OnInit {
         this.emailUsuario = user.email;
         if (this.emailUsuario) this.enviarCodigo();
       },
-      error: (err) => {
-        this.errorMessage = 'Error al obtener el perfil del usuario.';
+      error: () => {
+        this.alertService.error('Error', 'No se pudo obtener tu perfil. Inicia sesión nuevamente.');
         this.isLoading = false;
       }
     });
   }
 
   enviarCodigo(): void {
-
-    if (this.enviandoCodigo){
-      console.warn('Evitando envío duplicado');
-      return;      
-    }
+    if (this.enviandoCodigo) return;      
 
     this.isLoading = true;
     this.enviandoCodigo = true;
-    this.successMessage = '';
-    this.errorMessage = '';
-    console.log('Iniciando envío de código a: ', this.emailUsuario);
-    
 
     this.authService.requestRecovery(this.emailUsuario)
     .pipe(
       take(1),
       finalize(() => {
-      this.isLoading = false;
-      this.enviandoCodigo = false;
-      this.cdr.detectChanges();
-    }))
+        this.isLoading = false;
+        this.enviandoCodigo = false;
+        this.cdr.detectChanges();
+      })
+    )
     .subscribe({
       next: () => {
-        console.log('código enviado con éxito');
-        
-        this.successMessage = `Hemos enviado un código a ${this.emailUsuario}`;
+        // Usamos Toast o Success para avisar que se envió
+        this.alertService.success('Código Enviado', `Revisa tu correo ${this.emailUsuario}`);
       },
       error: (err) => {
         if (err.status === 403) {
-          this.errorMessage = 'Tu cuenta es de Google, no necesitas cambiar la contraseña aquí.';
+          this.alertService.error('Cuenta de Google', 'Tu cuenta es de Google, no necesitas cambiar la contraseña aquí.');
         } else {
-          this.errorMessage = 'Error al enviar el código de recuperación. Intenta nuevamente.';
+          this.alertService.error('Error', 'No se pudo enviar el código. Intenta nuevamente.');
         }
       }
     })
@@ -92,23 +84,15 @@ export class ChangePasswordComponent implements OnInit {
     this.codeForm.controls['code'].setValue(input.value);
   }
 
-  verifyCode(){
-    console.log('Botón presionado verificar');
-    console.log('Valor del formulario: ', this.codeForm.value);
-    console.log('¿Formulario válido?', this.codeForm.valid);
-       
+  verifyCode(){       
     if (this.codeForm.invalid){
-      console.warn('El formulario es inválido, no enviamos nada');
+      this.alertService.error('Código Inválido', 'El código debe tener 4 dígitos numéricos.');
       this.codeForm.markAllAsTouched();
-      return
+      return;
     }
 
     this.isLoading = true;
-    this.errorMessage = '';
-    const code = this.codeForm.value.code!;
-
-    console.log('Enviando al backend...', this.emailUsuario, code);
-    
+    const code = this.codeForm.value.code!; 
 
     this.authService.verifyCode(this.emailUsuario, code)
     .pipe(finalize(() => {
@@ -116,39 +100,47 @@ export class ChangePasswordComponent implements OnInit {
       this.cdr.detectChanges();
     }))
     .subscribe({
-      next: (res) => {
-        console.log('¡Backend respondió éxito!', res);
+      next: () => {
         this.codigoGuardado = code;
         this.currentStep = 2;
         this.cdr.detectChanges();
       },
-      error: (err) => {
-        console.error('Error del backend', err);
-        this.errorMessage = 'Código incorrecto. Intenta nuevamente.';
+      error: () => {
+        this.alertService.error('Error', 'Código incorrecto o expirado.');
       }
     })
   }
 
   changePassword(){
-    if (this.passwordForm.invalid) return;
+    if (this.passwordForm.invalid) {
+      this.alertService.error('Formulario Inválido', 'Completa los campos correctamente.');
+      return;
+    }
 
     const pass = this.passwordForm.value.newPassword!;
     const confirm = this.passwordForm.value.confirmPassword!;
 
     if (pass !== confirm) {
-      this.errorMessage = 'Las contraseñas no coinciden.';
+      this.alertService.error('Error', 'Las contraseñas no coinciden.');
       return;
     }
 
     this.isLoading = true;
+    this.alertService.loading('Actualizando contraseña...');
+    
     this.authService.resetPassword(this.emailUsuario, this.codigoGuardado, pass)
-    .pipe(finalize(() => { this.isLoading = false; this.cdr.detectChanges(); }))
+    .pipe(finalize(() => { 
+      this.isLoading = false; 
+      this.alertService.close(); // Cerramos el loading
+      this.cdr.detectChanges(); 
+    }))
     .subscribe({
       next: () => {
+        this.alertService.success('Contraseña Actualizada', 'Tu clave ha sido modificada con éxito.');
         this.router.navigate(['/settings']);
       },
-      error: (err) => {
-        this.errorMessage = 'Error al cambiar la contraseña. Intenta nuevamente.';
+      error: () => {
+        this.alertService.error('Error', 'No se pudo actualizar la contraseña. Intenta nuevamente.');
       }
     })
   }

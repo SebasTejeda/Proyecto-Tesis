@@ -89,7 +89,7 @@ export class AuthService {
     return this.http.get(`${this.apiUrl}/users/me/`, { headers });
   }
 
-  updateProfile(data: {nombre: string, apellidos:string, codigo_colegiatura: string}): Observable<any> {
+  updateProfile(data: {nombres: string, apellidos:string, codigo_colegiatura: string}): Observable<any> {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
 

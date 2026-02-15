@@ -6,9 +6,6 @@
             <p class="subtitle">Sigue los pasos para restablecer tu acceso</p>
         </div>
 
-        <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
-        <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
-
         <div [ngSwitch]="currentStep">
 
             <div *ngSwitchCase="1">

@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService, RegisterData } from '../../services/auth/auth';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-register-account',
@@ -17,13 +18,11 @@ export class RegisterAccountComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
+  private alertService = inject(AlertService);
 
-  // ESTADO: 1 = Formulario, 2 = Verificar Código
   currentStep: number = 1;
   emailRegistrado: string = '';
-  
   isLoading: boolean = false;
-  errorMessage: string = '';
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
@@ -42,10 +41,12 @@ export class RegisterAccountComponent {
 
   // PASO 1: Enviar datos y recibir el código
   onSubmit() {
-    if (this.registerForm.invalid) return;
+    if (this.registerForm.invalid) {
+        this.alertService.error('Formulario Inválido', 'Por favor revisa todos los campos.');
+        return;
+    }
 
     this.isLoading = true;
-    this.errorMessage = '';
 
     const formData: RegisterData = {
       nombres: this.registerForm.value.nombres!,
@@ -55,26 +56,28 @@ export class RegisterAccountComponent {
       password: this.registerForm.value.password!
     };
 
+    this.alertService.loading('Registrando y enviando código...');
+    
     this.authService.register(formData)
       .pipe(
         finalize(() => {
           this.isLoading = false;
+          this.alertService.close();
           this.cdr.detectChanges();
         })
       )
       .subscribe({
         next: () => {
-          // ÉXITO: Guardamos el email y pasamos al paso 2
           this.emailRegistrado = formData.email;
           this.currentStep = 2; 
+          this.alertService.success('¡Registro Exitoso!', 'Te hemos enviado un código a tu correo.');
         },
         error: (err) => {
           if (err.status === 400) {
-            this.errorMessage = 'El correo electrónico ya está registrado.';
+            this.alertService.error('Error de Registro', 'El correo electrónico ya está registrado.');
           } else {
-            this.errorMessage = 'Error al registrar. Intenta nuevamente.';
+            this.alertService.error('Error', 'No se pudo crear la cuenta. Intenta nuevamente.');
           }
-          console.error(err);
         }
       });
   }
@@ -82,23 +85,26 @@ export class RegisterAccountComponent {
   // PASO 2: Verificar el código ingresado
   onVerifyCode(codigo: string) {
     if (!codigo || codigo.length !== 4) {
-      this.errorMessage = 'El código debe tener 4 dígitos.';
+      this.alertService.error('Error', 'El código debe tener 4 dígitos.');
       return;
     }
 
     this.isLoading = true;
-    this.errorMessage = '';
+    this.alertService.loading('Verificando cuenta...');
 
     this.authService.verifyAccount(this.emailRegistrado, codigo)
-      .pipe(finalize(() => { this.isLoading = false; this.cdr.detectChanges(); }))
+      .pipe(finalize(() => { 
+          this.isLoading = false; 
+          this.alertService.close();
+          this.cdr.detectChanges(); 
+      }))
       .subscribe({
         next: () => {
-          alert('¡Cuenta verificada exitosamente! Ahora puedes iniciar sesión.');
+          this.alertService.success('¡Cuenta Verificada!', 'Bienvenido a NeuroMind AI. Ahora puedes iniciar sesión.');
           this.router.navigate(['/login']);
         },
-        error: (err) => {
-          this.errorMessage = 'Código incorrecto. Verifica tu correo.';
-          console.error(err);
+        error: () => {
+          this.alertService.error('Error', 'Código incorrecto. Verifica tu correo.');
         }
       });
   }

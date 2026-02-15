@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-settings',
@@ -16,6 +17,7 @@ export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
   private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
+  private alertService = inject(AlertService);
 
   nombres: string = '';
   apellidos: string = ''
@@ -35,7 +37,7 @@ export class SettingsComponent implements OnInit {
     this.cargarDatosUsuario();
   }
 
-  cargarDatosUsuario() {
+  cargarDatosUsuario() {    
     this.isLoading = true;
 
     this.authService.getProfile()
@@ -60,7 +62,7 @@ export class SettingsComponent implements OnInit {
         this.initial = primerNombre.charAt(0).toUpperCase();
       },
       error: (err) => {
-        console.error('Error al cargar datos del usuario:', err);
+        this.alertService.error('Error', 'No se pudieron cargar los datos del usuario. Por favor, inténtalo de nuevo.');
 
         if (err.status === 401) {
           this.authService.logout();
@@ -88,8 +90,9 @@ export class SettingsComponent implements OnInit {
 
   guardarCambios() {
     this.isLoading = true;
+    this.alertService.loading('Guardando cambios...');
     const datosActualizados = {
-      nombre: this.nombres,
+      nombres: this.nombres,
       apellidos: this.apellidos,
       codigo_colegiatura: this.codigo_colegiatura
     }
@@ -101,12 +104,12 @@ export class SettingsComponent implements OnInit {
       })
     ).subscribe({
       next: (response) => {
-        console.log('Perfil actualizado:', response);
+        this.alertService.success('Éxito', 'Tu perfil ha sido actualizado correctamente.');
         this.isEditing = false;
         this.backupData = { ...datosActualizados }; // Actualizamos el backup con los nuevos datos
       },
       error: (err) => {
-        console.error('Error al actualizar perfil:', err);
+        this.alertService.error('Error', 'No se pudieron guardar los cambios. Por favor, inténtalo de nuevo.');
       }
     });
   }

@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth/auth';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { AlertService } from '../../services/alert/alert';
 
 declare var google: any;
 
@@ -20,6 +21,7 @@ export class LoginComponent implements OnInit {
   private router = inject(Router);
   private http = inject(HttpClient);
   private ngZone = inject(NgZone);
+  private alertService = inject(AlertService);
 
   loginForm: FormGroup = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
@@ -27,31 +29,27 @@ export class LoginComponent implements OnInit {
     rememberMe: [false]
   });
 
-  errorMessage: string = '';
-
   ngOnInit() {
     const savedEmail = localStorage.getItem('saved_email');
     if (savedEmail) {
       this.loginForm.patchValue({ email: savedEmail, rememberMe: true });
     }
-    // Verificamos si la librería de Google ya cargó
+    // Inicializar Google
     if (typeof google !== 'undefined' && google.accounts) {
       this.initGoogleBtn();
     } else {
-      // Si no ha cargado, esperamos y reintentamos cada 100ms
       const checkGoogle = setInterval(() => {
         if (typeof google !== 'undefined' && google.accounts) {
-          clearInterval(checkGoogle); // ¡Ya llegó! Detenemos el reloj
-          this.initGoogleBtn();       // Iniciamos el botón
+          clearInterval(checkGoogle);
+          this.initGoogleBtn();
         }
       }, 100);
     }
   }
 
-  // Sacamos la lógica a una función privada para no repetir código
   private initGoogleBtn() {
     google.accounts.id.initialize({
-      client_id: '122329310552-6f3g3hn3fuj6fngiqfnef1aknddqi01v.apps.googleusercontent.com', // <--- TU ID AQUÍ
+      client_id: '122329310552-6f3g3hn3fuj6fngiqfnef1aknddqi01v.apps.googleusercontent.com', 
       callback: (resp: any) => this.handleGoogleLogin(resp)
     });
 
@@ -63,22 +61,21 @@ export class LoginComponent implements OnInit {
   }
 
   handleGoogleLogin(response: any) {
-    console.log("Token de Google recibido:", response.credential);
-
-    // Lo enviamos a TU Backend (Python)
+    this.alertService.loading('Iniciando sesión con Google...');
+    
     this.http.post('http://127.0.0.1:8000/auth/google', {
       credential: response.credential
     }).subscribe({
       next: (res: any) => {
-        // Usamos NgZone para volver al "mundo Angular" y navegar
+        this.alertService.close();
         this.ngZone.run(() => {
           localStorage.setItem('token', res.access_token);
           this.router.navigate(['/dashboard']);
         });
       },
-      error: (err) => {
-        console.error('Error en login con Google:', err);
-        alert('Error al iniciar sesión con Google');
+      error: () => {
+        this.alertService.close();
+        this.alertService.error('Error de Acceso', 'No se pudo iniciar sesión con Google.');
       }
     });
   }
@@ -93,25 +90,24 @@ export class LoginComponent implements OnInit {
         localStorage.removeItem('saved_email');
       }
       
-      // Llamamos al servicio de autenticación
+      this.alertService.loading('Entrando...');
+
       this.authService.login(email, password, rememberMe).subscribe({
         next: (res) => {
-          console.log('Login exitoso!', res);
-          
-          // --- AQUÍ ESTÁ LA SOLUCIÓN ---
-          // En lugar de alert(), usamos el router para ir al Dashboard
+          this.alertService.close();
           this.router.navigate(['/dashboard']); 
         },
         error: (err) => {
-          console.error(err);
-          // Si falla, mostramos el mensaje de error en rojo
+          this.alertService.close();
           if (err.status === 400 && err.error?.detail) {
-            this.errorMessage = err.error.detail;
+            this.alertService.error('Error de Acceso', err.error.detail);
           } else {
-            this.errorMessage = 'Correo o contraseña incorrectos';
+            this.alertService.error('Error de Acceso', 'Correo o contraseña incorrectos.');
           }
         }
       });
+    } else {
+        this.alertService.error('Formulario Incompleto', 'Por favor ingresa tu correo y contraseña.');
     }
   }
 }

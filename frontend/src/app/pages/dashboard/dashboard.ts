@@ -4,6 +4,7 @@ import { AuthService } from '../../services/auth/auth';
 import { Router, RouterModule } from '@angular/router';
 import { RegisterComponent } from '../register/register';
 import { EvaluationComponent } from '../evaluation/evaluation';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,6 +16,7 @@ import { EvaluationComponent } from '../evaluation/evaluation';
 export class DashboardComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private alertService = inject(AlertService);
 
   userName: string = 'Usuario';
   userPhoto: string = '';
@@ -52,9 +54,12 @@ export class DashboardComponent {
     this.currentSection = seccion;
   }
 
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
+  async logout() {
+    const confirmado = await this.alertService.confirm('¿Cerrar sesión?', '¿Estás seguro de que deseas cerrar sesión?');
+    if (confirmado) {
+      this.authService.logout();
+      this.router.navigate(['/login']);
+    }
   }
   
   // Función auxiliar para el color de la etiqueta
