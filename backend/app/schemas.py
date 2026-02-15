@@ -71,3 +71,19 @@ class PatientResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class EvaluationCreate(BaseModel):
+    patient_id: int  # <--- Obligatorio saber de quién es
+    ansiedad: int
+    estres: int
+    sueno: int
+    tristeza: str
+    historial: str
+
+class EvaluationResponse(EvaluationCreate):
+    id: int
+    fecha: datetime
+    resultado_ia: Optional[str] = None
+    
+    class Config:
+        from_attributes = True

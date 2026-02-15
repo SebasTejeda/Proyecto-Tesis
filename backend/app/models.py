@@ -38,3 +38,20 @@ class Patient(Base):
     doctor_id = Column(Integer, ForeignKey('usuarios.id')) 
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class Evaluation(Base):
+    __tablename__ = "evaluations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id")) # <--- La conexión clave
+    
+    # Los puntajes (del 0 al 10)
+    ansiedad = Column(Integer)
+    estres = Column(Integer)
+    sueno = Column(Integer)
+    tristeza = Column(String) # "Si" o "No" (o 0/1)
+    historial = Column(String) # "Si" o "No"
+    
+    # Resultado de la IA (lo guardaremos aquí después)
+    resultado_ia = Column(String, nullable=True) 
+    fecha = Column(DateTime, default=datetime.utcnow)
+

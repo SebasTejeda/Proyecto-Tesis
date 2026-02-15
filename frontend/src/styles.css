@@ -2,7 +2,14 @@
 
 /* 1. Importamos las fuentes de Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap');
+/* Importar Tema (Colores y formas) */
+@import "primeng/resources/themes/lara-light-blue/theme.css";
 
+/* Importar Estructura (Para que el dropdown funcione bien) */
+@import "primeng/resources/primeng.css";
+
+/* Iconos */
+@import "primeicons/primeicons.css";
 /* 2. Definimos las variables globales (Colores del Mockup) */
 :root {
   --primary-dark: #1A4D6D;
@@ -23,8 +30,9 @@
 }
 
 body {
-  font-family: 'DM Sans', sans-serif;
-  background-color: #FAFBFD;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
 }
 
 @keyframes float {
@@ -32,3 +40,4 @@ body {
   50% { transform: translate(-30px, 30px); }
   100% { transform: translate(0, 0); }
 }
+

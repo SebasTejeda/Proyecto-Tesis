@@ -1,80 +1,107 @@
-<div class="eval-container">
-    <div class="page-header">
-        <h1 class="welcome-text">Nueva Evaluación con IA</h1>
+<div class="eval-container fade-in">
+    <div class="header-section">
+        <h1 class="page-title">Nueva Evaluación con IA</h1>
         <p class="page-subtitle">Ingresa los síntomas para que el modelo estime el riesgo.</p>
     </div>
 
     <div class="eval-card">
         <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
             
-            <div class="sliders-section">
+            <div class="form-section-top">
+                <div class="form-group">
+                    <label class="section-label">
+                        <i class="pi pi-user section-icon icon-blue"></i> 
+                        Seleccionar Paciente
+                    </label>
+                    <div class="custom-select-wrapper">
+                        <select formControlName="patient_id" class="native-select" [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
+                            <option [ngValue]="null" disabled selected>-- Selecciona un paciente --</option>
+                            <option *ngFor="let p of pacientes" [value]="p.id">{{ p.nombre_completo }}</option>
+                        </select>
+                        <span class="select-arrow">▼</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="divider-compact">
+
+            <div class="form-grid">
                 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <label>😰 Nivel de Ansiedad</label>
-                        <span class="slider-value">{{ evalForm.get('ansiedad')?.value }}/10</span>
+                <div class="col-left">
+                    <h3 class="col-title">📉 Indicadores</h3>
+                    
+                    <div class="slider-group compact">
+                        <div class="slider-header">
+                            <label>
+                                <i class="pi pi-heart section-icon icon-rose"></i>
+                                Ansiedad
+                            </label>
+                            <span class="badge-value">{{ evalForm.get('ansiedad')?.value }}/10</span>
+                        </div>
+                        <input type="range" min="0" max="10" formControlName="ansiedad">
+                        <div class="labels"><span>Bajo</span><span>Alto</span></div>
                     </div>
-                    <input type="range" min="1" max="10" formControlName="ansiedad" class="range-slider">
-                    <div class="slider-labels">
-                        <span>Muy bajo</span>
-                        <span>Muy alto</span>
+
+                    <div class="slider-group compact">
+                        <div class="slider-header">
+                            <label>
+                                <i class="pi pi-moon section-icon icon-indigo"></i>
+                                Sueño
+                            </label>
+                            <span class="badge-value">{{ evalForm.get('sueno')?.value }}/10</span>
+                        </div>
+                        <input type="range" min="0" max="10" formControlName="sueno">
+                        <div class="labels"><span>Mal</span><span>Bien</span></div>
+                    </div>
+
+                    <div class="slider-group compact">
+                        <div class="slider-header">
+                            <label>
+                                <i class="pi pi-bolt section-icon icon-amber"></i>
+                                Estrés
+                            </label>
+                            <span class="badge-value">{{ evalForm.get('estres')?.value }}/10</span>
+                        </div>
+                        <input type="range" min="0" max="10" formControlName="estres">
+                        <div class="labels"><span>Relax</span><span>Alto</span></div>
                     </div>
                 </div>
 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <label>😴 Calidad de Sueño</label>
-                        <span class="slider-value">{{ evalForm.get('sueno')?.value }}/10</span>
-                    </div>
-                    <input type="range" min="1" max="10" formControlName="sueno" class="range-slider">
-                    <div class="slider-labels">
-                        <span>Pésimo</span>
-                        <span>Excelente</span>
-                    </div>
-                </div>
+                <div class="col-right">
+                    <h3 class="col-title">📋 Historial</h3>
 
-                <div class="slider-group">
-                    <div class="slider-header">
-                        <label>⚡ Nivel de Estrés</label>
-                        <span class="slider-value">{{ evalForm.get('estres')?.value }}/10</span>
+                    <div class="questions-stack">
+                        <div class="form-group">
+                            <label class="section-label">
+                                <i class="pi pi-question-circle section-icon icon-slate"></i>
+                                ¿Tristeza persistente?
+                            </label>
+                            <select formControlName="tristeza" class="native-select">
+                                <option value="No">No</option>
+                                <option value="Si">Sí</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="section-label">
+                                <i class="pi pi-users section-icon icon-slate"></i>
+                                ¿Historial Familiar?
+                            </label>
+                            <select formControlName="historial" class="native-select">
+                                <option value="No">No</option>
+                                <option value="Si">Sí</option>
+                            </select>
+                        </div>
                     </div>
-                    <input type="range" min="1" max="10" formControlName="estres" class="range-slider">
-                    <div class="slider-labels">
-                        <span>Relajado</span>
-                        <span>Colapsado</span>
+
+                    <div class="button-wrapper">
+                        <button type="submit" class="btn-analyze">
+                            <i class="pi pi-search" style="margin-right: 8px;"></i> Analizar Riesgo
+                        </button>
                     </div>
                 </div>
 
             </div>
-
-            <hr class="divider">
-
-            <div class="questions-grid">
-                <div class="form-group">
-                    <label class="form-label">¿Tristeza persistente?</label>
-                    <select class="form-input" formControlName="tristeza">
-                        <option value="0">No</option>
-                        <option value="1">A veces</option>
-                        <option value="2">Frecuentemente</option>
-                        <option value="3">Siempre</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">¿Historial Familiar?</label>
-                    <select class="form-input" formControlName="historial">
-                        <option value="0">No</option>
-                        <option value="1">Sí</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="action-area">
-                <button type="submit" class="btn-ai" [disabled]="evalForm.invalid">
-                    ✨ Analizar Paciente
-                </button>
-            </div>
-
         </form>
     </div>
 </div>

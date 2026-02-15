@@ -304,3 +304,22 @@ def create_patient(patient: schemas.PatientCreate, db: Session = Depends(get_db)
 def read_patients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     patients = db.query(models.Patient).filter(models.Patient.doctor_id == current_user.id).offset(skip).limit(limit).all()
     return patients
+
+@app.post("/evaluations/", response_model=schemas.EvaluationResponse)
+def create_evaluation(eval: schemas.EvaluationCreate, db: Session = Depends(get_db)):
+    # Aquí en el futuro llamaremos a tu IA para calcular el riesgo
+    riesgo_calculado = "Pendiente" 
+    
+    new_eval = models.Evaluation(
+        patient_id=eval.patient_id,
+        ansiedad=eval.ansiedad,
+        estres=eval.estres,
+        sueno=eval.sueno,
+        tristeza=eval.tristeza,
+        historial=eval.historial,
+        resultado_ia=riesgo_calculado
+    )
+    db.add(new_eval)
+    db.commit()
+    db.refresh(new_eval)
+    return new_eval
