@@ -1,0 +1,333 @@
+/* --- LAYOUT GENERAL --- */
+.detail-container {
+    padding: 2rem 3rem;
+    background-color: #f8fafc; /* Fondo gris muy suave */
+    min-height: 100vh;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr; /* Sidebar fijo, contenido flexible */
+    gap: 2rem;
+    align-items: start;
+}
+
+/* --- HEADER DE NAVEGACIÓN --- */
+.nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+.back-link:hover { color: #1e293b; }
+
+.header-actions { display: flex; gap: 1rem; }
+
+.btn-primary, .btn-secondary {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.btn-primary { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+.btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+
+.btn-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; }
+.btn-secondary:hover { background: #f1f5f9; color: #1e293b; }
+
+/* --- TARJETA DE PERFIL (Izquierda) --- */
+.profile-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    position: sticky;
+    top: 2rem;
+}
+
+.profile-cover {
+    height: 100px;
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+}
+
+.profile-content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    margin-top: -50px; /* Sube el contenido sobre el cover */
+}
+
+.avatar-wrapper {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    padding: 4px;
+    margin: 0 auto 1rem auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.avatar-text {
+    width: 100%;
+    height: 100%;
+    background: #f1f5f9;
+    color: #64748b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.patient-name { margin: 0; color: #1e293b; font-size: 1.4rem; font-weight: 700; }
+.patient-role { margin: 0.2rem 0 1rem 0; color: #64748b; font-size: 0.9rem; }
+
+/* BADGE GRANDE */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.status-badge i { font-size: 0.6rem; }
+
+/* GRID DE INFO */
+.divider { height: 1px; background: #f1f5f9; margin: 1.5rem 0; }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: left;
+}
+
+.info-group.full { grid-column: span 2; }
+
+.info-group label {
+    display: block;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.info-group span {
+    color: #334155;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* --- TARJETAS DE ANÁLISIS (Derecha) --- */
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 2rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-subtitle { color: #94a3b8; font-size: 0.85rem; }
+
+/* Estilos de Tabla Clean */
+.hover-row:hover { background-color: #f8fafc; }
+
+.badge-pill {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+/* Barras de progreso pequeñas en la tabla */
+.progress-bar-bg {
+    width: 50px;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 3px;
+    display: inline-block;
+    vertical-align: middle;
+}
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+}
+
+/* Colores de Badges */
+.badge-high { background: #fee2e2; color: #ef4444; }
+.badge-mod { background: #fef3c7; color: #d97706; }
+.badge-low { background: #dcfce7; color: #10b981; }
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.btn-icon:hover { color: #3b82f6; }
+
+/* Responsive */
+@media (max-width: 900px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .profile-card { position: static; margin-bottom: 2rem; }
+}
+
+/* --- ESTILO TABLA PREMIUM --- */
+
+/* Quitar bordes y fondos por defecto de PrimeNG para personalizar */
+:host ::ng-deep .modern-table .p-datatable-thead > tr > th {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+}
+
+:host ::ng-deep .modern-table .p-datatable-tbody > tr {
+    background: transparent;
+    border-bottom: 1px solid #f1f5f9; /* Línea separadora muy sutil */
+    transition: all 0.2s ease;
+}
+
+/* Efecto al pasar el mouse por la fila */
+:host ::ng-deep .modern-table .p-datatable-tbody > tr.row-card:hover {
+    background-color: #f8fafc;
+    transform: scale(1.01); /* Efecto de "levitar" muy sutil */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    border-radius: 8px; /* Bordes redondeados al hacer hover */
+    position: relative;
+    z-index: 10;
+    border-bottom-color: transparent;
+}
+
+:host ::ng-deep .modern-table .p-datatable-tbody > tr > td {
+    border: none;
+    padding: 1.2rem 1.5rem;
+    vertical-align: middle;
+}
+
+/* Celdas Personalizadas */
+.date-cell {
+    font-weight: 600;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.date-cell i { color: #cbd5e1; font-weight: normal; }
+
+.doctor-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.doc-avatar {
+    width: 28px;
+    height: 28px;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Píldora de Puntaje (Score Pill) */
+.score-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    min-width: 60px;
+    text-align: center;
+}
+/* Reutilizamos tus clases de colores pero aplicadas al pill */
+.badge-high { background: #fee2e2; color: #ef4444; }
+.badge-mod { background: #fef3c7; color: #d97706; }
+.badge-low { background: #dcfce7; color: #10b981; }
+
+/* Indicadores de Tendencia */
+.trend-indicator { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.trend-up { color: #ef4444; } /* Rojo porque subir riesgo es malo */
+.trend-down { color: #10b981; } /* Verde porque bajar riesgo es bueno */
+.trend-equal { color: #94a3b8; }
+.trend-start { color: #cbd5e1; font-style: italic; font-size: 0.8rem; }
+
+/* Botón de Acción */
+.btn-action {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 8px;
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.btn-action:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: #3b82f6;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+}

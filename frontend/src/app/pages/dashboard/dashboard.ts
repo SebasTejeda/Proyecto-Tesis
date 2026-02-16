@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common'; // Importante para *ngIf y *ngFor
 import { AuthService } from '../../services/auth/auth';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { RegisterComponent } from '../register/register';
 import { EvaluationComponent } from '../evaluation/evaluation';
 import { AlertService } from '../../services/alert/alert';
@@ -22,6 +22,7 @@ export class DashboardComponent implements OnInit {
   private alertService = inject(AlertService);
   private patientService = inject(PatientService);
   private cdr = inject(ChangeDetectorRef);
+  private route = inject(ActivatedRoute)
 
   totalPacientes: number = 0;
   evaluacionesHoy: number = 0;
@@ -50,7 +51,14 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarPacientesReales()
+
+    this.route.queryParams.subscribe(params => {
+      if(params['tab'] === 'evaluation') {
+        this.currentSection = 'evaluacion';
+      }
+    });
   }
+
 
   cargarPacientesReales(){
     this.patientService.getPatients().subscribe({

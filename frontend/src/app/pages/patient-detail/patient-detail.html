@@ -1,0 +1,170 @@
+<div class="detail-container fade-in">
+    
+    <div class="nav-header">
+        <a routerLink="/dashboard" class="back-link">
+            <i class="pi pi-arrow-left"></i>
+            <span>Volver al Dashboard</span>
+        </a>
+        <div class="header-actions">
+            <button class="btn-secondary" (click)="exportarInformeGeneral()">
+                <i class="pi pi-file-pdf"></i> Informe General
+            </button>
+            
+            <button class="btn-primary" (click)="irANuevaEvaluacion()">
+                <i class="pi pi-plus"></i> Nueva Evaluación
+            </button>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        
+        <aside class="profile-column">
+            <div class="profile-card">
+                <div class="profile-cover"></div>
+                <div class="profile-content">
+                    <div class="avatar-wrapper">
+                        <span class="avatar-text">{{ patient.nombre.charAt(0) }}</span>
+                    </div>
+                    
+                    <h2 class="patient-name">{{ patient.nombre }}</h2>
+                    <p class="patient-role">{{ patient.ocupacion }}</p>
+                    
+                    <div class="status-badge" [ngClass]="getClassRiesgo(patient.riesgo_actual)">
+                        <i class="pi pi-circle-fill"></i>
+                        {{ patient.riesgo_actual }}
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="info-grid">
+                        <div class="info-group">
+                            <label>Edad</label>
+                            <span>{{ patient.edad }} años</span>
+                        </div>
+                        <div class="info-group">
+                            <label>Sexo</label>
+                            <span>{{ patient.sexo }}</span>
+                        </div>
+                        <div class="info-group full">
+                            <label>Teléfono</label>
+                            <span>{{ patient.telefono }}</span>
+                        </div>
+                        <div class="info-group full">
+                            <label>Fecha Registro</label>
+                            <span>{{ patient.fecha_registro }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="analysis-column">
+            
+            <div class="card graph-card">
+                <div class="card-header">
+                    <h3><i class="pi pi-chart-line"></i> Evolución del Riesgo</h3>
+                    <span class="card-subtitle">Últimas 5 evaluaciones</span>
+                </div>
+                <div class="chart-wrapper">
+                    <p-chart type="line" [data]="chartData" [options]="chartOptions" style="height: 100%; width: 100%;"></p-chart>
+                </div>
+            </div>
+
+            <div class="card history-card">
+                <div class="card-header">
+                    <h3><i class="pi pi-history"></i> Historial Clínico</h3>
+                    
+                    <button class="btn-text" (click)="exportarHistorialCompleto()">
+                        <i class="pi pi-print" style="margin-right: 5px;"></i> Imprimir Historial
+                    </button>
+                </div>
+                
+                <p-table [value]="historial" styleClass="p-datatable-gridlines-none modern-table" [rowHover]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 20%">Fecha</th>
+                            <th style="width: 30%">Especialista</th>
+                            <th style="width: 20%">Puntaje Riesgo</th>
+                            <th style="width: 10%"></th>
+                        </tr>
+                    </ng-template>
+                    
+                    <ng-template pTemplate="body" let-eval>
+                        <tr class="row-card">
+                            <td class="date-cell">
+                                <i class="pi pi-calendar"></i>
+                                {{ eval.fecha }}
+                            </td>
+                            <td>
+                                <div class="doctor-info">
+                                    <div class="doc-avatar">{{ eval.doctor.charAt(4) }}</div>
+                                    <span>{{ eval.doctor }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="score-pill" [ngClass]="getClassRiesgo(eval.riesgo)">
+                                    {{ eval.puntaje }}%
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <button class="btn-action" (click)="verDetalle(eval)">
+                                    Ver Detalle <i class="pi pi-chevron-right"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<p-dialog 
+    [header]="'Detalle de Evaluación - ' + (selectedEval?.fecha || '')" 
+    [(visible)]="displayModal" 
+    [modal]="true" 
+    [style]="{ width: '50vw', maxWidth: '600px' }" 
+    [draggable]="false" 
+    [resizable]="false"
+    [closable]="true">
+    
+    <div class="result-content" *ngIf="selectedEval">
+        
+        <div class="verdict-section">
+            <h3 class="result-title">Resultado Histórico</h3>
+            
+            <div class="gauge-wrapper" style="width: 250px; margin: 0 auto; position: relative;">
+                <p-chart type="doughnut" [data]="gaugeData" [options]="gaugeOptions" height="180px"></p-chart>
+                <div class="gauge-center-text" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
+                    <span class="percentage" style="font-size: 3rem; font-weight: 800; display: block; line-height: 1;">{{ selectedEval.puntaje }}%</span>
+                    <span class="label" style="font-size: 1rem; font-weight: 700; color: #ef4444;">{{ selectedEval.riesgo }}</span>
+                </div>
+            </div>
+
+            <p class="result-description" style="margin-top: -10px; color: #64748b;">
+                Evaluación realizada por <strong>{{ selectedEval.doctor }}</strong>.
+            </p>
+        </div>
+
+        <hr class="divider" style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0;">
+
+        <div class="xai-section" style="background: #f8fafc; padding: 20px; border-radius: 12px; text-align: left;">
+            <h3 class="xai-title" style="margin: 0 0 15px 0; font-size: 1rem; color: #1e293b;">
+                <i class="pi pi-bolt"></i> Factores Clave (XAI)
+            </h3>
+            
+            <div class="shap-chart-container">
+                <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
+            </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <button class="btn-secondary" (click)="displayModal=false">Cerrar</button>
+            <button class="btn-primary">
+                <i class="pi pi-download"></i> Descargar este Reporte
+            </button>
+        </div>
+
+    </div>
+</p-dialog>

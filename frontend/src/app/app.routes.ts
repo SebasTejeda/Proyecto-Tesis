@@ -7,6 +7,7 @@ import { SettingsComponent } from './pages/settings/settings';
 import { ChangePasswordComponent } from './pages/change-password/change-password';
 import { authGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
+import { PatientDetailComponent } from './pages/patient-detail/patient-detail';
 
 export const routes: Routes = [
     {path: 'login', component: LoginComponent, canActivate: [publicGuard]},
@@ -15,6 +16,7 @@ export const routes: Routes = [
     {path: 'register', component: RegisterAccountComponent, canActivate: [publicGuard]},
     {path: 'settings', component: SettingsComponent, canActivate: [authGuard]},
     {path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard]},
+    {path: 'patient/:id', component: PatientDetailComponent, canActivate: [authGuard]},
     {path: '', redirectTo: 'login', pathMatch: 'full'},
     {path: '**', redirectTo: 'login'},
 ];

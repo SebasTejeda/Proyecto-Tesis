@@ -13,9 +13,15 @@
                         <i class="pi pi-user section-icon icon-blue"></i> 
                         Seleccionar Paciente
                     </label>
+
                     <div class="custom-select-wrapper">
-                        <select formControlName="patient_id" class="native-select" [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
+                        <select 
+                            formControlName="patient_id" 
+                            class="native-select" 
+                            [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
+                            
                             <option [ngValue]="null" disabled selected>-- Selecciona un paciente --</option>
+                            
                             <option *ngFor="let p of pacientes" [value]="p.id">{{ p.nombre_completo }}</option>
                         </select>
                         <span class="select-arrow">▼</span>
@@ -105,3 +111,62 @@
         </form>
     </div>
 </div>
+
+<p-dialog 
+    header="Análisis de Inteligencia Artificial" 
+    [(visible)]="displayModal" 
+    [modal]="true" 
+    [style]="{ width: '50vw', maxWidth: '600px' }" 
+    [draggable]="false" 
+    [resizable]="false"
+    [closable]="true">
+    
+    <div class="result-content">
+        
+        <div class="verdict-section">
+            <h3 class="result-title">Probabilidad de Depresión</h3>
+            
+            <div class="gauge-wrapper">
+                <p-chart type="doughnut" [data]="gaugeData" [options]="gaugeOptions" height="180px"></p-chart>
+                
+                <div class="gauge-center-text">
+                    <span class="percentage">{{ riesgoPorcentaje }}%</span>
+                    <span class="label">{{ riesgoEtiqueta }}</span>
+                </div>
+            </div>
+
+            <p class="result-description">
+                El modelo ha detectado patrones de comportamiento asociados a un riesgo 
+                <strong [style.color]="riesgoPorcentaje > 50 ? '#ef4444' : '#10b981'">{{ riesgoEtiqueta }}</strong>.
+            </p>
+        </div>
+
+        <hr class="divider">
+
+        <div class="xai-section">
+            <h3 class="xai-title">
+                <i class="pi pi-bolt"></i> Factores Determinantes (SHAP)
+            </h3>
+            <p class="xai-subtitle">¿Qué variables influyeron más en esta decisión?</p>
+            
+            <div class="shap-chart-container">
+                <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
+            </div>
+            
+            <div class="legend">
+                <span class="legend-item"><span class="dot red"></span> Aumenta Riesgo</span>
+                <span class="legend-item"><span class="dot green"></span> Disminuye Riesgo</span>
+            </div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn-secondary" (click)="displayModal=false">Cerrar</button>
+            
+            <button class="btn-primary" (click)="exportarPDF()">
+                <i class="pi pi-file-pdf"></i> Guardar y Exportar PDF
+            </button>
+        </div>
+
+    </div>
+</p-dialog>
+

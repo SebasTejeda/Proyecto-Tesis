@@ -152,7 +152,9 @@
 
             <ng-template pTemplate="body" let-p>
                 <tr>
-                    <td class="patient-name">{{ p.nombre_completo }}</td>
+                    <td class="patient-name" style="cursor: pointer; color: #3b82f6;" [routerLink]="['/patient', 1]">
+                        {{ p.nombre_completo }}
+                    </td>
                     <td>{{ p.fecha }}</td>
                     <td>{{ p.edad }} años</td>
                     <td>{{ p.prob }}%</td>
