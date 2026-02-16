@@ -109,4 +109,76 @@ export class PdfService {
     // --- GUARDAR ---
     doc.save(`Evaluacion_${patient.nombre_completo}_${new Date().getTime()}.pdf`);
   }
+
+  generateHistoryReport(patient: any, historial: any[]) {
+    const doc = new jsPDF();
+    const grisTexto = '#334155';
+
+    // 1. CABECERA (Igual que el otro reporte para consistencia)
+    doc.setFillColor(59, 130, 246); // Azul
+    doc.rect(0, 0, 210, 25, 'F'); 
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NeuroMind AI', 15, 17);
+
+    doc.setFontSize(10);
+    doc.text('Historial Clínico Completo', 150, 17);
+
+    // 2. RESUMEN DEL PACIENTE
+    let yPos = 40;
+    doc.setTextColor(grisTexto);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Paciente: ${patient.nombre_completo || patient.nombre}`, 15, yPos);
+    doc.text(`ID: #${patient.id}`, 150, yPos);
+    
+    yPos += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha de emisión: ${new Date().toLocaleDateString()}`, 15, yPos);
+    doc.text(`Total de evaluaciones: ${historial.length}`, 150, yPos);
+
+    // 3. TABLA DE HISTORIAL (La parte importante)
+    // Preparamos los datos para la tabla
+    const tableBody = historial.map(item => [
+      item.fecha,
+      item.doctor,
+      `${item.puntaje}%`, // Columna Puntaje
+      item.riesgo         // Columna Riesgo
+    ]);
+
+    autoTable(doc, {
+      startY: yPos + 15,
+      head: [['Fecha', 'Especialista', 'Puntaje', 'Nivel de Riesgo']],
+      body: tableBody,
+      theme: 'grid', // Estilo rejilla limpio
+      headStyles: { fillColor: [59, 130, 246], halign: 'center' },
+      bodyStyles: { textColor: [51, 65, 85] },
+      columnStyles: {
+        0: { cellWidth: 40 }, // Fecha
+        1: { cellWidth: 70 }, // Doctor
+        2: { cellWidth: 30, halign: 'center' }, // Puntaje
+        3: { cellWidth: 40, halign: 'center', fontStyle: 'bold' } // Riesgo
+      },
+      // Colorear el texto del riesgo dinámicamente
+      didParseCell: function (data) {
+        if (data.section === 'body' && data.column.index === 3) {
+            const riesgo = data.cell.raw as string;
+            if (riesgo === 'Alto') data.cell.styles.textColor = [239, 68, 68]; // Rojo
+            if (riesgo === 'Bajo') data.cell.styles.textColor = [16, 185, 129]; // Verde
+        }
+      }
+    });
+
+    // 4. PIE DE PÁGINA
+    const finalY = (doc as any).lastAutoTable.finalY + 20;
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text('Este documento es un resumen histórico generado automáticamente por NeuroMind AI.', 105, 280, { align: 'center' });
+
+    // GUARDAR
+    doc.save(`Historial_${patient.nombre || 'Paciente'}.pdf`);
+  }
 }

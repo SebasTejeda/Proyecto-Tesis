@@ -5,9 +5,10 @@ import { ChartModule } from 'primeng/chart';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { PatientService } from '../../services/patients/patient';
-import { AlertService } from '../../services/alert/alert'; // <--- IMPORTAMOS TU SERVICIO
+import { AlertService } from '../../services/alert/alert';
 import { Chart, registerables } from 'chart.js';
 import { PdfService } from '../../services/pdf/pdf';
+import { ActivatedRoute } from '@angular/router'; // Importante para leer la URL
 
 @Component({
   selector: 'app-evaluation',
@@ -25,21 +26,17 @@ import { PdfService } from '../../services/pdf/pdf';
 export class EvaluationComponent implements OnInit {
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
-  private alertService = inject(AlertService); // <--- INYECTAMOS TU SERVICIO
+  private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef);
   private pdfService = inject(PdfService);
-
+  private route = inject(ActivatedRoute); // Inyectamos la ruta activa
 
   evalForm: FormGroup;
   pacientes: any[] = [];
   
-  // YA NO NECESITAMOS loadingAnalysis
   displayModal: boolean = false;
   riesgoPorcentaje: number = 0;
   riesgoEtiqueta: string = '';
-
-  // Variables para el Select de carga
-  loadingPacientes: boolean = true;
 
   gaugeData: any;
   gaugeOptions: any;
@@ -60,18 +57,38 @@ export class EvaluationComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
+    // 1. Mostrar carga inicial
     this.alertService.loading('Cargando pacientes...');
 
     this.patientService.getPatients().subscribe({
       next: (data) => {
+        // 2. Llenar la lista de pacientes
         this.pacientes = Array.isArray(data) ? data : [];
+        
+        // 3. Cerrar la alerta de carga
         this.alertService.close();
+
+        // 4. (NUEVO) Verificar si venimos del Detalle con un paciente pre-seleccionado
+        this.route.queryParams.subscribe(params => {
+          const preSelectedId = params['patientId'];
+          
+          if (preSelectedId) {
+            // Buscamos si el paciente existe en la lista cargada
+            const idNumber = Number(preSelectedId);
+            const pacienteExiste = this.pacientes.find(p => p.id === idNumber);
+
+            if (pacienteExiste) {
+               // Seleccionamos al paciente en el formulario automáticamente
+               this.evalForm.patchValue({ patient_id: idNumber });
+            }
+          }
+        });
+
+        // 5. Actualizar la vista
         this.cdr.detectChanges();
       },
       error: (err) => {
         this.alertService.close();
-        // Usamos tu servicio para errores también
         this.alertService.error('Error', 'No se pudieron cargar los pacientes');
       }
     });
@@ -79,25 +96,16 @@ export class EvaluationComponent implements OnInit {
 
   onSubmit() {
     if (this.evalForm.invalid) {
-      // Usamos tu servicio para validación
       this.alertService.error('Formulario Incompleto', 'Por favor selecciona un paciente.');
       return;
     }
 
-    // 1. LLAMAMOS A TU SERVICIO DE LOADING
     this.alertService.loading('Analizando síntomas con IA...');
 
     setTimeout(() => {
-      // 2. CERRAR SWEETALERT
       this.alertService.close();
-
-      // 3. PREPARAR DATOS
       this.mostrarResultadosSimulados();
-      
-      // 4. MOSTRAR EL MODAL DE PRIMENG
       this.displayModal = true;
-      
-      // 5. FORZAR ACTUALIZACIÓN (Para que Angular pinte el modal inmediatamente)
       this.cdr.detectChanges();
     }, 2000);
   }
@@ -178,7 +186,10 @@ export class EvaluationComponent implements OnInit {
     const patientId = this.evalForm.get('patient_id')?.value;
     const selectedPatient = this.pacientes.find(p => p.id == patientId);
 
-    if(!selectedPatient) return
+    if(!selectedPatient) {
+        this.alertService.error('Error', 'No hay paciente seleccionado');
+        return;
+    }
 
     const resultado = {
       riesgoPorcentaje: this.riesgoPorcentaje,
@@ -186,8 +197,6 @@ export class EvaluationComponent implements OnInit {
     }
 
     this.pdfService.generateEvaluationReport(selectedPatient, resultado, this.shapData);
-
     this.alertService.success('Informe Descargado', 'El PDF se ha generado correctamente.')
-
   }
 }

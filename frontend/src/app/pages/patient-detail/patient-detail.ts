@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog'; // <--- Importante para el Modal
 import { Chart, registerables } from 'chart.js';
 import { PdfService } from '../../services/pdf/pdf';
+import { AlertService } from '../../services/alert/alert';
 
 @Component({
   selector: 'app-patient-detail',
@@ -19,6 +20,8 @@ export class PatientDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private pdfService = inject(PdfService);
+  private alertService = inject(AlertService);
+
 
   // Datos del Paciente (Simulados)
   patient: any = {
@@ -77,27 +80,59 @@ export class PatientDetailComponent implements OnInit {
   }
 
   exportarInformeGeneral() {
-    // Generamos un PDF con los datos actuales del paciente (última evaluación)
-    const ultimaEval = {
-      riesgoPorcentaje: 85, // Simulamos que es la última
-      riesgoEtiqueta: 'ALTO'
-    };
-    
-    // Simulamos datos SHAP para el reporte
-    const shapSimulado = {
-        labels: ['Ansiedad', 'Sueño', 'Estrés'],
-        datasets: [{ data: [30, 20, 10] }]
+    // 1. Validar que tenemos datos del paciente
+    if (!this.patient || !this.patient.nombre) {
+        alert("Error: No hay datos del paciente para generar el informe.");
+        return;
+    }
+
+    // 2. Preparar los datos del paciente para el servicio PDF
+    // IMPORTANTE: Mapeamos 'nombre' a 'nombre_completo' para que el PDF service lo entienda y el archivo se nombre bien.
+    const patientForPdf = {
+        ...this.patient, // Copia todas las propiedades
+        nombre_completo: this.patient.nombre, // Asegura esta propiedad
+        id: this.patient.id // Asegura el ID
     };
 
-    this.pdfService.generateEvaluationReport(this.patient, ultimaEval, shapSimulado);
+    // 3. Simular datos coherentes basados en el riesgo ACTUAL del paciente
+    const riesgoActual = this.patient.riesgo_actual; // Ej: 'Alto', 'Moderado', 'Bajo'
+    let puntajeSimulado = 30; // Default bajo
+
+    if (riesgoActual === 'Alto') puntajeSimulado = 88;
+    else if (riesgoActual === 'Moderado') puntajeSimulado = 62;
+
+    const datosResultadoSimulado = {
+      riesgoPorcentaje: puntajeSimulado,
+      riesgoEtiqueta: riesgoActual.toUpperCase()
+    };
+    
+    // 4. Simular datos SHAP coherentes para el reporte general
+    const esAlto = puntajeSimulado > 50;
+    const shapSimuladoGeneral = {
+        labels: esAlto ? ['Ansiedad Generalizada', 'Calidad de Sueño Pobre', 'Estrés Percibido'] : ['Buen Soporte Social', 'Actividad Física Regular', 'Sueño Adecuado'],
+        datasets: [{
+           // Valores positivos si es riesgo alto, negativos si es bajo
+           data: esAlto ? [35, 25, 15] : [-25, -15, -10]
+        }]
+    };
+
+    // 5. Llamar al servicio
+    console.log("Generando PDF para:", patientForPdf.nombre_completo);
+    this.pdfService.generateEvaluationReport(patientForPdf, datosResultadoSimulado, shapSimuladoGeneral);
   }
 
   // --- 2. ACCIONES DE LA TABLA (HISTORIAL) ---
 
   exportarHistorialCompleto() {
-     // Aquí podrías crear otro método en PdfService para "generateHistoryReport"
-     // Por ahora reutilizamos el reporte general o mostramos un alert
-     alert("Generando PDF con todo el historial de citas...");
+     if (!this.historial || this.historial.length === 0) {
+        this.alertService.error("Sin datos", "No hay historial disponible para exportar.");
+        return;
+     }
+
+     // Llamamos al nuevo método del servicio
+     this.pdfService.generateHistoryReport(this.patient, this.historial);
+     
+     this.alertService.success("Historial Exportado", "Se ha generado el PDF con todas las evaluaciones.");
   }
 
   verDetalle(evaluacion: any) {
