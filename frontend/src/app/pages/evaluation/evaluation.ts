@@ -8,6 +8,7 @@ import { PatientService } from '../../services/patients/patient';
 import { AlertService } from '../../services/alert/alert';
 import { Chart, registerables } from 'chart.js';
 import { PdfService } from '../../services/pdf/pdf';
+import { Tooltip, TooltipModule } from 'primeng/tooltip';
 import { ActivatedRoute } from '@angular/router'; // Importante para leer la URL
 
 @Component({
@@ -18,7 +19,8 @@ import { ActivatedRoute } from '@angular/router'; // Importante para leer la URL
     ReactiveFormsModule, 
     ChartModule, 
     DialogModule, 
-    ButtonModule
+    ButtonModule,
+    TooltipModule
   ],
   templateUrl: './evaluation.html',
   styleUrls: ['./evaluation.css']

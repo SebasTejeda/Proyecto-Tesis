@@ -33,6 +33,9 @@ export class SettingsComponent implements OnInit {
   isLoading: boolean = true;
   isEditing: boolean = false;
 
+  isGoogleAccount: boolean = false;
+
+
   ngOnInit() {
     this.cargarDatosUsuario();
   }
@@ -60,6 +63,10 @@ export class SettingsComponent implements OnInit {
 
         const primerNombre = this.nombres ? this.nombres.split(' ')[0] : 'U';
         this.initial = primerNombre.charAt(0).toUpperCase();
+
+        if(userData.picture && userData.picture.includes('googleusercontent.com')){
+          this.isGoogleAccount = true;
+        }
       },
       error: (err) => {
         this.alertService.error('Error', 'No se pudieron cargar los datos del usuario. Por favor, inténtalo de nuevo.');

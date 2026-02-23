@@ -52,7 +52,7 @@ export class RecoveryComponent {
 
     this.authService.requestRecovery(email).pipe(finalize(()=>{
         this.isLoading = false;
-        this.cdr.detectChanges();
+        this.cdr.detectChanges(); 
     })).subscribe({
       next: () => {
         this.emailGuardado = email;
@@ -61,7 +61,12 @@ export class RecoveryComponent {
       },
       error: (err) => {
         if (err.status === 403) {
-          this.alertService.error('Cuenta de Google', 'Esta cuenta usa Google. Inicia sesión con el botón de Google.');
+          // AHORA PODEMOS USAR .then()
+          this.alertService.error('Cuenta de Google', 'Esta cuenta inicia sesión con Google. No es necesario recuperar contraseña.')
+            .then(() => {
+              // ESTO SE EJECUTA CUANDO EL USUARIO CIERRA LA ALERTA
+              this.router.navigate(['/dashboard']); // Lo mandamos al login para que entre con Google
+            });
         } else if (err.status === 404) {
           this.alertService.error('Correo No Encontrado', 'Este correo no está registrado en nuestro sistema.');
         } else {

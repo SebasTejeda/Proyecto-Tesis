@@ -20,13 +20,14 @@ export class AlertService {
   }
 
   error(titulo: string, mensaje: string) {
-    Swal.fire({
+    return Swal.fire({
       title: titulo,
       text: mensaje,
       icon: 'error',
       confirmButtonText: 'Intentar de nuevo',
       confirmButtonColor: '#ef4444',
-      background: '#ffffff'
+      background: '#ffffff',
+      allowOutsideClick: false
     });
   }
 

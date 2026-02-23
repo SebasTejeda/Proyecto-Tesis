@@ -46,7 +46,7 @@ export class DashboardComponent implements OnInit {
       if (userData.foto) {
         this.userPhoto = userData.foto;
       }
-    }
+  }
   }
 
   ngOnInit(): void {

@@ -10,7 +10,7 @@
 
     <div class="settings-grid">
       <div class="profile-card">
-        <img *ngIf="userPhoto" [src]="userPhoto" alt="Foto de perfil" class="avatar-large" style="object-fit: cover; padding: 0; background: none;">
+        <img *ngIf="userPhoto" [src]="userPhoto" alt="Foto de perfil" class="avatar-large" style="object-fit: cover; padding: 0; background: none;" referrerpolicy="no-referrer">
         <div *ngIf="!userPhoto" class="avatar-large">{{ initial }}</div>
         
         <h2 style="margin: 0; color: #1E293B; font-size: 20px;">{{ nombres }}</h2>

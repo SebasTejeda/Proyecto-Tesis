@@ -8,6 +8,7 @@ import { ChangePasswordComponent } from './pages/change-password/change-password
 import { authGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
 import { PatientDetailComponent } from './pages/patient-detail/patient-detail';
+import { NotFoundComponent } from './pages/not-found/not-found';
 
 export const routes: Routes = [
     {path: 'login', component: LoginComponent, canActivate: [publicGuard]},
@@ -18,5 +19,5 @@ export const routes: Routes = [
     {path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard]},
     {path: 'patient/:id', component: PatientDetailComponent, canActivate: [authGuard]},
     {path: '', redirectTo: 'login', pathMatch: 'full'},
-    {path: '**', redirectTo: 'login'},
+    {path: '**', component: NotFoundComponent},
 ];
