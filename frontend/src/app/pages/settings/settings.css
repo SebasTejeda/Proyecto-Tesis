@@ -188,3 +188,20 @@ img.avatar-large {
   object-fit: cover; /* Para que la foto no se deforme */
   box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Una sombra suave */
 }
+
+/* Añade esto a tu settings.css */
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Evita que la foto se estire o aplaste */
+    border-radius: 50%;
+}
+
+.google-notice {
+    color: #64748b;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+}

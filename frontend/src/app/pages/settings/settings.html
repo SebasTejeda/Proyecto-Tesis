@@ -9,13 +9,43 @@
     </div>
 
     <div class="settings-grid">
-      <div class="profile-card">
-        <img *ngIf="userPhoto" [src]="userPhoto" alt="Foto de perfil" class="avatar-large" style="object-fit: cover; padding: 0; background: none;" referrerpolicy="no-referrer">
-        <div *ngIf="!userPhoto" class="avatar-large">{{ initial }}</div>
+      
+      <div class="profile-card" style="text-align: center;">
+        
+        <div style="margin-bottom: 15px;">
+            <img *ngIf="previewUrl || userPhoto" 
+                 [src]="previewUrl || userPhoto" 
+                 alt="Foto de perfil" 
+                 class="avatar-large" 
+                 style="object-fit: cover; padding: 0; background: none; border-radius: 50%; width: 100px; height: 100px; margin: 0 auto;" 
+                 referrerpolicy="no-referrer">
+                 
+            <div *ngIf="!previewUrl && !userPhoto" class="avatar-large" style="margin: 0 auto;">{{ initial }}</div>
+        </div>
+
+        <div style="margin-bottom: 25px;">
+            <input type="file" 
+                   accept="image/png, image/jpeg, image/jpg" 
+                   style="display: none" 
+                   #fileInput 
+                   (change)="onFileSelected($event)">
+            
+            <button type="button" 
+                    (click)="fileInput.click()" 
+                    *ngIf="!isGoogleAccount"
+                    style="background: white; border: 1px solid #cbd5e1; padding: 6px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.2s;">
+                <i class="pi pi-camera" style="margin-right: 5px;"></i> Cambiar Foto
+            </button>
+            <div *ngIf="!isGoogleAccount" style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px;">JPG o PNG, máx 2MB</div>
+            
+            <div *ngIf="isGoogleAccount" style="color: #64748b; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 5px;">
+                <i class="pi pi-google"></i> Foto gestionada por Google
+            </div>
+        </div>
         
         <h2 style="margin: 0; color: #1E293B; font-size: 20px;">{{ nombres }}</h2>
         <p style="margin: 4px 0 0 0; color: #64748B; font-size: 14px;">{{ email }}</p>
-        <div class="profile-role">{{ role }}</div>
+        <div class="profile-role" style="margin-top: 10px;">{{ role }}</div>
 
         <div style="margin-top: 30px; width: 100%;">
           <div style="font-size: 12px; color: #94A3B8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Estado</div>
@@ -68,12 +98,16 @@
 
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #F1F5F9;">
            <h3 style="margin: 0 0 15px 0; color: #334155; font-size: 16px;">Seguridad</h3>
-           <button type="button" routerLink="/change-password" style="width: 100%; text-align: left; padding: 15px; border: 1px solid #E2E8F0; background: white; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#94A3B8'" onmouseout="this.style.borderColor='#E2E8F0'">
+           <button *ngIf="!isGoogleAccount" type="button" routerLink="/change-password" style="width: 100%; text-align: left; padding: 15px; border: 1px solid #E2E8F0; background: white; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#94A3B8'" onmouseout="this.style.borderColor='#E2E8F0'">
              <span style="display: flex; align-items: center; gap: 10px; color: #334155;">
                 <i class="pi pi-lock" style="color: #64748B;"></i> Cambiar Contraseña
              </span>
              <i class="pi pi-chevron-right" style="color: #94A3B8;"></i>
            </button>
+           
+           <div *ngIf="isGoogleAccount" style="padding: 15px; border: 1px dashed #cbd5e1; border-radius: 10px; background: #f8fafc; color: #64748b; font-size: 0.9rem;">
+             Tu seguridad es gestionada por Google. Si deseas cambiar tu contraseña, debes hacerlo desde las configuraciones de tu cuenta de Google.
+           </div>
         </div>
 
       </div>

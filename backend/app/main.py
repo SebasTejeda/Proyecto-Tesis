@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Form, File, UploadFile
 from sqlalchemy.orm import Session
 from . import models, schemas, utils, email_utils
 from .database import engine, get_db
@@ -11,10 +11,21 @@ from google.auth.transport import requests as google_requests
 from datetime import timedelta
 import random
 
+import cloudinary
+import cloudinary.uploader
+
 # Crear las tablas en la base de datos
 models.Base.metadata.create_all(bind=engine)
 
 GOOGLE_CLIENT_ID = "122329310552-6f3g3hn3fuj6fngiqfnef1aknddqi01v.apps.googleusercontent.com"
+
+cloudinary.config(
+    cloud_name = "djeho3n05",
+    api_key = "235275886461698",
+    api_secret = "ePkXCYkDuCp2fM9qlNnChws4rEs",
+    secure = True
+)
+
 
 app = FastAPI(title="API Tesis de Salud Mental")
 
@@ -254,17 +265,45 @@ def read_users_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 @app.put("/users/me/", response_model=schemas.UserResponse)
-def update_user_me(user_update: schemas.UserUpdate, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    if user_update.nombres:
-        current_user.nombres = user_update.nombres
-    if user_update.apellidos:
-        current_user.apellidos = user_update.apellidos
-    if user_update.codigo_colegiatura:
-        current_user.codigo_colegiatura = user_update.codigo_colegiatura
-    
-    db.commit()
-    db.refresh(current_user)
-    return current_user
+async def update_user_me(
+    nombres: str = Form(...),
+    apellidos: str = Form(...),
+    codigo_colegiatura: str = Form(""),
+    foto: UploadFile = File(None),
+    current_user: models.User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    try:
+        # 1. Actualizar los campos de texto
+        current_user.nombres = nombres
+        current_user.apellidos = apellidos
+        current_user.codigo_colegiatura = codigo_colegiatura
+
+        # 2. Si viene una foto, validarla y subirla a Cloudinary
+        if foto and foto.filename:
+            if not foto.content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="El archivo debe ser una imagen válida.")
+            
+            # Subir a la nube en una carpeta llamada "neuromind_profiles"
+            upload_result = cloudinary.uploader.upload(
+                foto.file,
+                folder="neuromind_profiles"
+            )
+            
+            # Obtener la URL segura de la imagen subida
+            secure_url = upload_result.get("secure_url")
+            
+            # Guardar la URL en el modelo de base de datos
+            current_user.picture = secure_url
+
+        # 3. Guardar todo en PostgreSQL
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el perfil: {str(e)}")
 
 @app.post("/auth/verify-account")
 def verify_account(request: schemas.VerifyCodeRequest, db: Session = Depends(get_db)):
