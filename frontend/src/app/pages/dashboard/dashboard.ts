@@ -52,6 +52,18 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.cargarPacientesReales()
 
+    this.authService.fotoActualizada.subscribe(nuevaFoto => {
+      if (nuevaFoto) {
+        this.userPhoto = nuevaFoto;
+        this.cdr.detectChanges(); // Forzamos actualización visual
+      }
+    });
+
+    const customPic = localStorage.getItem('custom_picture');
+    if (customPic) {
+      this.userPhoto = customPic;
+    }
+
     this.route.queryParams.subscribe(params => {
       if(params['tab'] === 'evaluation') {
         this.currentSection = 'evaluacion';

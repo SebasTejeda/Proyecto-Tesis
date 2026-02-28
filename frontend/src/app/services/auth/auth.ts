@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
+import { BehaviorSubject } from 'rxjs';
 
 export interface RegisterData {
   nombres: string;
@@ -21,6 +22,9 @@ export class AuthService {
   
   // La URL de tu backend
   private apiUrl = 'http://localhost:8000';
+
+  public fotoActualizada = new BehaviorSubject<string | null>(null);
+
 
   constructor() { }
 

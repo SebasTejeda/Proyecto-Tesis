@@ -287,7 +287,9 @@ async def update_user_me(
             # Subir a la nube en una carpeta llamada "neuromind_profiles"
             upload_result = cloudinary.uploader.upload(
                 foto.file,
-                folder="neuromind_profiles"
+                folder="neuromind_profiles",
+                public_id=f"perfil_{current_user.id}",
+                overwrite=True
             )
             
             # Obtener la URL segura de la imagen subida

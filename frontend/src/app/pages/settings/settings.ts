@@ -41,6 +41,20 @@ export class SettingsComponent implements OnInit {
   constructor() { }
 
   ngOnInit() {
+    // 1. Cargar datos instantáneos de caché para evitar el parpadeo
+    const cachedUser = this.authService.getUserData();
+
+    if (cachedUser && cachedUser.foto) {
+      this.userPhoto = cachedUser.foto;
+    }
+    
+    // Si guardamos una foto nueva recientemente, la recuperamos
+    const customPic = localStorage.getItem('custom_picture');
+    if (customPic) {
+      this.userPhoto = customPic;
+    }
+
+    // 2. Hacer la petición real al backend en segundo plano
     this.cargarDatosUsuario();
   }
 
@@ -99,7 +113,10 @@ export class SettingsComponent implements OnInit {
 
       // Generar previsualización para mostrarla instantáneamente en pantalla
       const reader = new FileReader();
-      reader.onload = (e) => this.previewUrl = reader.result;
+      reader.onload = (e) => {
+        this.previewUrl = reader.result;
+        this.cdr.detectChanges();
+      }
       reader.readAsDataURL(file);
     }
   }
@@ -147,6 +164,13 @@ export class SettingsComponent implements OnInit {
         this.alertService.success('Éxito', 'Tu perfil ha sido actualizado correctamente.');
         this.isEditing = false;
         this.selectedFile = null; // Limpiamos el archivo seleccionado
+        this.previewUrl = null; // Limpiamos la previsualización
+
+        if (response.picture) {
+          this.userPhoto = response.picture; // Actualiza la vista actual
+          localStorage.setItem('custom_picture', response.picture); // Guarda para no perderla con F5
+          this.authService.fotoActualizada.next(response.picture); // Avisa al menú lateral
+        }
         
         // Actualizamos el backup manualmente con las variables actuales
         this.backupData = { 
