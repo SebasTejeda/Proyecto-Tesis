@@ -1,0 +1,65 @@
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-header-group">
+      <div class="logo">
+        <div class="logo-icon">N</div>
+        <div class="logo-text">NeuroMind AI</div>
+      </div>
+
+      <div class="user-profile">
+        @if (userPhoto()) {
+          <img [src]="userPhoto()" alt="Perfil" class="avatar" referrerpolicy="no-referrer"/>
+        } @else {
+          <div class="avatar-circle">
+            {{ userInitial() }}
+          </div>
+        }
+        <div class="user-info">
+          <span class="user-name">{{ userName() | titlecase }}</span>
+          <span class="user-role">Doctor</span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav-content">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <i class="pi pi-home nav-icon-i"></i>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard/registro" routerLinkActive="active">
+            <i class="pi pi-user-plus nav-icon-i"></i>
+            <span>Registrar Paciente</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard/evaluacion" routerLinkActive="active">
+            <i class="pi pi-list nav-icon-i"></i>
+            <span>Nueva Evaluación</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard/settings" routerLinkActive="active">
+            <i class="pi pi-cog nav-icon-i"></i>
+            <span>Configuración</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-divider"></div>
+      <a class="nav-link logout" (click)="logout()">
+        <i class="pi pi-sign-out nav-icon-i"></i>
+        <span>Cerrar Sesión</span>
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -8,7 +8,7 @@
         <h1 class="app-name">NeuroMind AI</h1>
       </div>
 
-      <div *ngIf="currentStep === 1">
+      @if (currentStep() === 1) {
         <h2 class="auth-title">Crear Cuenta</h2>
         <p class="auth-subtitle">Únete a nuestra red de especialistas</p>
 
@@ -20,6 +20,7 @@
               <input type="text" class="form-input" formControlName="nombres" placeholder="Juan"
                 [class.input-error]="registerForm.get('nombres')?.invalid && registerForm.get('nombres')?.touched">
             </div>
+            
             <div class="form-group">
               <label class="form-label">Apellidos</label>
               <input type="text" class="form-input" formControlName="apellidos" placeholder="Pérez"
@@ -29,66 +30,82 @@
 
           <div class="form-group">
             <label class="form-label">N° Colegiatura (CMP/CPP)</label>
-            <input type="text" class="form-input" formControlName="codigo_colegiatura" placeholder="Ej: 12345">
+            <input type="text" class="form-input" formControlName="codigo_colegiatura" placeholder="Ej: 12345"
+                   [class.input-error]="registerForm.get('codigo_colegiatura')?.invalid && registerForm.get('codigo_colegiatura')?.touched">
           </div>
 
           <div class="form-group">
             <label class="form-label">Correo Electrónico</label>
             <input type="email" class="form-input" formControlName="email" placeholder="doctor@ejemplo.com"
               [class.input-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            
+            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+              <span class="error-msg">Ingresa un correo electrónico válido</span>
+            }
           </div>
 
           <div class="form-group">
             <label class="form-label">Contraseña</label>
-            <input type="password" class="form-input" formControlName="password" placeholder="Mínimo 6 caracteres">
+            <input type="password" class="form-input" formControlName="password" placeholder="Mínimo 6 caracteres"
+                   [class.input-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
           </div>
 
           <div class="form-group">
             <label class="form-label">Confirmar Contraseña</label>
-            <input type="password" class="form-input" formControlName="confirmPassword" placeholder="Repite tu contraseña">
-            <div *ngIf="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched" class="error-msg">
-              Las contraseñas no coinciden.
-            </div>
+            <input type="password" class="form-input" formControlName="confirmPassword" placeholder="Repite tu contraseña"
+                   [class.input-error]="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
+            
+            @if (registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched) {
+              <div class="error-msg">Las contraseñas no coinciden.</div>
+            }
           </div>
 
-          <button type="submit" class="btn-submit" [disabled]="registerForm.invalid || isLoading">
-            <span *ngIf="!isLoading">Registrarse</span>
-            <span *ngIf="isLoading">Enviando...</span>
+          <button type="submit" class="btn-submit" [disabled]="registerForm.invalid || isLoading()">
+            @if (isLoading()) {
+              Enviando...
+            } @else {
+              Registrarse
+            }
           </button>
         </form>
 
         <div class="auth-footer">
           <p>¿Ya tienes cuenta? <a routerLink="/login" class="link-primary">Inicia Sesión</a></p>
         </div>
-      </div>
+      }
 
-      <div *ngIf="currentStep === 2" class="fade-in">
-        <h2 class="auth-title">Verifica tu Cuenta</h2>
-        <p class="auth-subtitle">Hemos enviado un código a <br><strong>{{ emailRegistrado }}</strong></p>
+      @if (currentStep() === 2) {
+        <div class="fade-in">
+          <h2 class="auth-title">Verifica tu Cuenta</h2>
+          <p class="auth-subtitle">Hemos enviado un código a <br><strong>{{ emailRegistrado() }}</strong></p>
 
-        <div class="auth-form">
-          <div class="form-group">
-            <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
-            <input 
-              #codeInput 
-              type="text" 
-              class="form-input" 
-              placeholder="0000" 
-              maxlength="4" 
-              style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
-            >
-          </div>
+          <div class="auth-form">
+            <div class="form-group">
+              <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
+              <input 
+                #codeInput 
+                type="text" 
+                class="form-input" 
+                placeholder="0000" 
+                maxlength="4" 
+                style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
+                (keyup.enter)="onVerifyCode(codeInput.value)"
+              >
+            </div>
 
-          <button (click)="onVerifyCode(codeInput.value)" class="btn-submit" [disabled]="isLoading">
-            <span *ngIf="!isLoading">Verificar y Entrar</span>
-            <span *ngIf="isLoading">Verificando...</span>
-          </button>
-          
-          <div class="auth-footer">
-            <p>¿No recibiste el código? <a href="#" (click)="currentStep=1" class="link-primary">Intentar de nuevo</a></p>
+            <button (click)="onVerifyCode(codeInput.value)" class="btn-submit" [disabled]="isLoading()">
+              @if (isLoading()) {
+                Verificando...
+              } @else {
+                Verificar y Entrar
+              }
+            </button>
+            <div class="auth-footer">
+              <p>¿No recibiste el código? <a href="javascript:void(0)" (click)="currentStep.set(1)" class="link-primary">Intentar de nuevo</a></p>
+            </div>
           </div>
         </div>
-      </div>
+      }
 
     </div>
 

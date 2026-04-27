@@ -1,9 +1,9 @@
 /* =========================================
-   LAYOUT PRINCIPAL (Flexbox + Sticky)
-
-/* =========================================
    DASHBOARD / CONTENIDO
    ========================================= */
+.page-section {
+  width: 100%;
+}
 
 .welcome-text {
   font-family: 'Playfair Display', serif;
@@ -56,7 +56,6 @@
 /* =========================================
    TABLA PREMIUM (PrimeNG Override)
    ========================================= */
-
 .section-card {
   background: white;
   border-radius: 16px;
@@ -70,6 +69,11 @@
   padding: 20px 24px;
   background: white;
   border-bottom: 1px solid #f1f5f9;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  flex-wrap: wrap; 
+  gap: 1rem;
 }
 
 .section-title {
@@ -123,7 +127,14 @@
     background-color: #f8fafc !important;
 }
 
-.patient-name { font-weight: 600; color: #0f172a; }
+.patient-name { 
+    font-weight: 600; 
+    color: #3b82f6; 
+    cursor: pointer;
+}
+.patient-name:hover {
+    text-decoration: underline;
+}
 
 /* Badges */
 .badge {
@@ -137,9 +148,18 @@
 .badge-mod { background: #fef3c7; color: #92400e; }
 .badge-high { background: #fee2e2; color: #b91c1c; }
 
+.empty-state {
+    text-align: center; 
+    padding: 2rem; 
+    color: #94a3b8;
+}
+
 /* Animación */
 .fade-in { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(10px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
 
 /* Helpers para PrimeNG Column Resizer */
 :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td,
@@ -149,121 +169,3 @@
     text-overflow: ellipsis;
 }
 :host ::ng-deep .p-column-resizer-helper { background-color: #3b82f6 !important; }
-
-/* --- SIDEBAR MEJORADO --- */
-.sidebar {
-    width: 300px; /* Aumentamos de 260px a 300px para más presencia */
-    height: 100vh;
-    background: #ffffff;
-    border-right: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-    padding: 24px; /* Un poco más de espacio interno */
-    position: sticky;
-    top: 0;
-    flex-shrink: 0;
-    z-index: 100;
-}
-
-/* Ajuste del contenido principal para compensar el nuevo ancho */
-.main-content {
-    flex: 1;
-    padding: 40px 60px; /* Más aire a los lados del contenido */
-    width: 100%;
-    margin-left: 0;
-}
-
-/* --- PERFIL MÁS DEFINIDO --- */
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 16px;
-    background-color: #f8fafc;
-    border-radius: 16px; /* Bordes más suaves */
-    border: 1px solid #f1f5f9;
-    
-    /* Esta es la clave: Margen grande abajo para separar del menú */
-    margin-bottom: 25px; 
-    position: relative; /* Para poner el separador */
-}
-
-/* EL SEPARADOR QUE QUERÍAS */
-/* Creamos una línea visual debajo del perfil */
-.user-profile::after {
-    content: '';
-    position: absolute;
-    bottom: -15px; /* Lo bajamos un poco fuera de la tarjeta */
-    left: 10px;
-    right: 10px;
-    height: 1px;
-    background-color: #e2e8f0;
-}
-
-/* Ajustes de texto del perfil */
-.user-name {
-    font-size: 1rem; /* Un pelín más grande */
-    color: #0f172a;
-    font-weight: 700;
-}
-
-.user-role {
-    font-size: 0.85rem;
-    color: #64748b;
-}
-
-/* Ajuste del Logo para que se vea equilibrado con el nuevo ancho */
-.logo {
-    margin-bottom: 35px;
-    padding-left: 10px;
-}
-
-/* =========================================
-   FIX PARA CENTRADO DE REGISTRO
-   ========================================= */
-
-/* 1. Obligar al componente de Angular a ocupar todo el ancho */
-app-register {
-    display: block;
-    width: 100%;
-}
-
-/* 2. El contenedor principal del registro */
-.register-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* ESTO CENTRA HORIZONTALMENTE */
-    width: 100%;
-}
-
-/* 3. Encabezado centrado */
-.center-header {
-    text-align: center;
-    max-width: 600px; /* Mismo ancho que la tarjeta para que alineen */
-    margin-bottom: 30px;
-}
-
-/* 4. Tarjeta del formulario */
-.centered-card {
-    background: white;
-    width: 100%;       /* Intenta ocupar todo... */
-    max-width: 700px;  /* ...pero detente en 700px (para que se vea elegante) */
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-    border: 1px solid #eef2f6;
-}
-
-/* Asegurar que los inputs llenen la tarjeta */
-.form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}

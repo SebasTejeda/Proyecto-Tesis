@@ -1,123 +1,110 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 import { BehaviorSubject } from 'rxjs';
-
-export interface RegisterData {
-  nombres: string;
-  apellidos: string;
-  email: string;
-  password: string;
-  codigo_colegiatura: string;
-}
+import { environment } from '../../../environments/environment';
+import { AuthResponse, RegisterData, UserResponse } from '../../models/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Nueva forma moderna de inyectar dependencias en Angular
   private http = inject(HttpClient);
-  
-  // La URL de tu backend
-  private apiUrl = 'http://localhost:8000';
+  private readonly apiUrl = environment.apiUrl;
 
   public fotoActualizada = new BehaviorSubject<string | null>(null);
 
 
   constructor() { }
 
-  register(data: RegisterData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/usuarios/`, data);
+  getToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || sessionStorage.getItem('token');
+    }
+    return null;
   }
 
-  login(correo: string, contrasena: string, recordarme: boolean): Observable<any> {
-    // Truco: FastAPI con OAuth2 espera 'FormData', no un JSON normal.
-    const payload = new FormData();
-    payload.append('username', correo); // FastAPI siempre busca el campo 'username', aunque mandemos email
-    payload.append('password', contrasena);
+  register(data: RegisterData): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.apiUrl}/usuarios/`, data);
+  }
 
-    return this.http.post(`${this.apiUrl}/token`, payload).pipe(
-      tap((response: any) => {
-        // Guardamos el token en el navegador apenas llegue
-        if (response.access_token) {
-          if (recordarme) {
-            localStorage.setItem('token', response.access_token);
-          }
-            sessionStorage.setItem('token', response.access_token);
+  login(email: string, password: string, recordarme: boolean): Observable<AuthResponse> {
+    const body = new HttpParams()
+      .set('username', email)
+      .set('password', password);
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/x-www-form-urlencoded'
+    });
+
+    return this.http.post<AuthResponse>(`${this.apiUrl}/token`, body, { headers }).pipe(
+      tap(res => {
+        if (res.access_token) {
+          const storage = recordarme ? localStorage : sessionStorage;
+          storage.setItem('token', res.access_token);
         }
       })
     );
   }
 
-  // Método útil para cerrar sesión
+  loginWithGoogle(token: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/google`, { credential: token }).pipe(
+      tap(res => sessionStorage.setItem('token', res.access_token))
+    )
+  }
+
   logout() {
     localStorage.removeItem('token');
     sessionStorage.removeItem('token');
   }
 
-  // Método para saber si estamos logueados
   isLoggedIn(): boolean {
-    return !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
+    return !!this.getToken();
   }
 
   getUserData() {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded: any = jwtDecode(token);
-        return {
-          nombre: decoded.name,
-          foto: decoded.picture,
-          email: decoded.sub
-        };
-      } catch (error) {
-        return null;
-      }
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const decoded: any = jwtDecode(token);
+      return {
+        nombre: decoded.name,
+        foto: decoded.picture,
+        email: decoded.sub
+      };
+    } catch{
+      return null;
     }
-    return null;
   }
 
-  getProfile(): Observable<any> {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-
-    if (!token) return new Observable(observer => {
-      observer.error('No hay token');
-    });
-
+  getProfile(): Observable<UserResponse> {
     const headers = new HttpHeaders({
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${this.getToken()}`
     })
-
-    return this.http.get(`${this.apiUrl}/users/me/`, { headers });
+    return this.http.get<UserResponse>(`${this.apiUrl}/users/me/`, { headers });
   }
 
-  updateProfile(data: FormData): Observable<any> {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  updateProfile(data: FormData): Observable<UserResponse> {
+    const headers = new HttpHeaders({ 'Authorization': `Bearer ${this.getToken()}` });
 
-    return this.http.put(`${this.apiUrl}/users/me/`, data, { headers });
+    return this.http.put<UserResponse>(`${this.apiUrl}/users/me/`, data, { headers });
   }
 
-  // ... imports y variables anteriores ...
-
-  // 1. Enviar correo con el código
   requestRecovery(email: string) {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
-  // 2. Verificar si el código es correcto
   verifyCode(email: string, codigo: string) {
     return this.http.post(`${this.apiUrl}/auth/verify-code`, { email, codigo });
   }
 
-  // 3. Establecer la nueva contraseña
   resetPassword(email: string, codigo: string, new_password: string) {
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, { 
-      email, 
-      codigo, 
-      new_password 
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, {
+      email,
+      codigo,
+      new_password
     });
   }
 

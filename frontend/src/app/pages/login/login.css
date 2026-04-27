@@ -214,3 +214,15 @@
   text-align: center;
   color: #666;
 }
+
+.input-error {
+  border-color: #EF4444 !important;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1) !important;
+}
+
+.error-text {
+  color: #EF4444;
+  font-size: 12px;
+  margin-top: -4px;
+  font-weight: 500;
+}
