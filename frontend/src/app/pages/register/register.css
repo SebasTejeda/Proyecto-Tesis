@@ -189,10 +189,13 @@
     box-shadow: none;
 }
 
-.register-container{
+/* --- CONTENEDOR PRINCIPAL --- */
+.register-container {
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    margin: 0 auto; /* La magia para centrar horizontalmente */
+    padding: 2rem;
 }

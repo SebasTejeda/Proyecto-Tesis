@@ -1,9 +1,9 @@
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
-import { AuthService } from '../../services/auth/auth';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { AuthService } from '../../services/auth/auth';
 import { AlertService } from '../../services/alert/alert';
 
 @Component({
@@ -15,81 +15,73 @@ import { AlertService } from '../../services/alert/alert';
 })
 export class SettingsComponent implements OnInit {
   private authService = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
   private router = inject(Router);
   private alertService = inject(AlertService);
 
+  // --- ESTADO REACTIVO CON SIGNALS ---
+  isLoading = signal(true);
+  isEditing = signal(false);
+  isSaving = signal(false);
+
+  // --- DATOS DEL FORMULARIO (ngModel) ---
   nombres: string = '';
   apellidos: string = '';
   email: string = '';
   codigo_colegiatura: string = '';
 
+  // Datos visuales
+  initial: string = '';
+  userPhoto = signal<string>('');
+  role: string = 'Doctor';
+  isGoogleAccount = signal(false);
+
+  // Manejo de la foto
+  selectedFile: File | null = null;
+  previewUrl = signal<string | ArrayBuffer | null>(null);
+
+  // Respaldo para cancelar edición
   private backupData: any = {};
 
-  initial: string = '';
-  userPhoto: string = '';
-  role: string = '';
-
-  isLoading: boolean = true;
-  isEditing: boolean = false;
-
-  isGoogleAccount: boolean = false;
-
-  selectedFile: File | null = null;
-  previewUrl : string | ArrayBuffer | null = null;
-
-  constructor() { }
-
   ngOnInit() {
-    // 1. Cargar datos instantáneos de caché para evitar el parpadeo
+    // 1. Cargar datos desde caché local para evitar parpadeos
     const cachedUser = this.authService.getUserData();
-
-    if (cachedUser && cachedUser.foto) {
-      this.userPhoto = cachedUser.foto;
-    }
+    if (cachedUser?.foto) this.userPhoto.set(cachedUser.foto);
     
-    // Si guardamos una foto nueva recientemente, la recuperamos
     const customPic = localStorage.getItem('custom_picture');
-    if (customPic) {
-      this.userPhoto = customPic;
-    }
+    if (customPic) this.userPhoto.set(customPic);
 
-    // 2. Hacer la petición real al backend en segundo plano
+    // 2. Fetch real al backend
     this.cargarDatosUsuario();
   }
 
   cargarDatosUsuario() {    
-    this.isLoading = true;
+    this.isLoading.set(true);
 
-    this.authService.getProfile()
-    .pipe(
-      finalize(() => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      })
+    this.authService.getProfile().pipe(
+      finalize(() => this.isLoading.set(false))
     ).subscribe({
       next: (userData) => {
-        
+        // Llenar formulario
         this.nombres = userData.nombres || '';
         this.apellidos = userData.apellidos || '';
         this.email = userData.email || '';
         this.codigo_colegiatura = userData.codigo_colegiatura || '';
+        this.role = userData.role || 'Doctor';
 
-        this.userPhoto = userData.picture || '';
-
-        this.backupData = { ...userData }; // Guardamos una copia para poder cancelar ediciones
+        // Llenar visuales
+        this.userPhoto.set(userData.picture || '');
+        this.backupData = { ...userData };
 
         const primerNombre = this.nombres ? this.nombres.split(' ')[0] : 'U';
         this.initial = primerNombre.charAt(0).toUpperCase();
 
-        // Detectar si la cuenta es de Google a través de la URL de la imagen
-        if(userData.picture && userData.picture.includes('googleusercontent.com')){
-          this.isGoogleAccount = true;
+        // Verificamos si es cuenta de Google leyendo el 'google_id' que manda FastAPI (Mejor que chequear la URL)
+        if (userData.google_id) {
+          this.isGoogleAccount.set(true);
         }
       },
       error: (err) => {
-        this.alertService.error('Error', 'No se pudieron cargar los datos del usuario. Por favor, inténtalo de nuevo.');
-
+        this.alertService.error('Error', 'No se pudieron cargar los datos del perfil.');
         if (err.status === 401) {
           this.authService.logout();
           this.router.navigate(['/login']);
@@ -102,21 +94,16 @@ export class SettingsComponent implements OnInit {
     const file: File = event.target.files[0];
     
     if (file) {
-      // Validar tamaño (Máximo 2MB)
-      if (file.size > 2 * 1024 * 1024) {
+      if (file.size > 2 * 1024 * 1024) { // 2MB Max
         this.alertService.error('Archivo muy grande', 'La imagen no debe superar los 2MB.');
         return;
       }
 
       this.selectedFile = file;
-      this.isEditing = true; // Habilita el botón de guardar
+      this.isEditing.set(true);
 
-      // Generar previsualización para mostrarla instantáneamente en pantalla
       const reader = new FileReader();
-      reader.onload = (e) => {
-        this.previewUrl = reader.result;
-        this.cdr.detectChanges();
-      }
+      reader.onload = () => this.previewUrl.set(reader.result);
       reader.readAsDataURL(file);
     }
   }
@@ -127,24 +114,32 @@ export class SettingsComponent implements OnInit {
       apellidos: this.apellidos,
       codigo_colegiatura: this.codigo_colegiatura
     };
-    this.isEditing = true;
+    this.isEditing.set(true);
   }
 
   cancelarEdicion() {
+    // Restauramos desde el backup
     this.nombres = this.backupData.nombres || '';
     this.apellidos = this.backupData.apellidos || '';
     this.codigo_colegiatura = this.backupData.codigo_colegiatura || '';
     
-    // Si cancela, también limpiamos la previsualización de la foto
+    // Limpiamos la memoria de la foto temporal
     this.selectedFile = null;
-    this.previewUrl = null;
-    this.isEditing = false;
+    this.previewUrl.set(null);
+    this.isEditing.set(false);
   }
 
   guardarCambios() {
-    this.isLoading = true;
-    this.alertService.loading('Guardando cambios...');
+    // Validaciones básicas de seguridad
+    if (!this.nombres.trim() || !this.apellidos.trim()) {
+      this.alertService.error('Error', 'Los nombres y apellidos no pueden estar vacíos.');
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.alertService.loading('Actualizando perfil en la nube...');
     
+    // CONSTRUCCIÓN DEL FORMDATA (Vital para archivos físicos)
     const formData = new FormData();
     formData.append('nombres', this.nombres);
     formData.append('apellidos', this.apellidos);
@@ -156,33 +151,33 @@ export class SettingsComponent implements OnInit {
     
     this.authService.updateProfile(formData).pipe(
       finalize(() => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
+        this.isSaving.set(false);
+        this.alertService.close();
       })
     ).subscribe({
       next: (response) => {
-        this.alertService.success('Éxito', 'Tu perfil ha sido actualizado correctamente.');
-        this.isEditing = false;
-        this.selectedFile = null; // Limpiamos el archivo seleccionado
-        this.previewUrl = null; // Limpiamos la previsualización
+        this.alertService.success('¡Perfil Actualizado!', 'Tus datos se guardaron correctamente.', true);
+        
+        // Reiniciamos estado de edición
+        this.isEditing.set(false);
+        this.selectedFile = null;
+        this.previewUrl.set(null);
 
+        // Actualizamos la foto global de la aplicación si Cloudinary nos devolvió una nueva URL
         if (response.picture) {
-          this.userPhoto = response.picture; // Actualiza la vista actual
-          localStorage.setItem('custom_picture', response.picture); // Guarda para no perderla con F5
-          this.authService.fotoActualizada.next(response.picture); // Avisa al menú lateral
+          this.userPhoto.set(response.picture);
+          localStorage.setItem('custom_picture', response.picture);
+          this.authService.fotoActualizada.next(response.picture); 
         }
         
-        // Actualizamos el backup manualmente con las variables actuales
+        // Actualizamos el backup con los nuevos datos
         this.backupData = { 
           nombres: this.nombres, 
           apellidos: this.apellidos, 
           codigo_colegiatura: this.codigo_colegiatura 
         }; 
       },
-      error: (err) => {
-        this.alertService.error('Error', 'No se pudieron guardar los cambios. Por favor, inténtalo de nuevo.');
-      }
+      error: () => this.alertService.error('Error', 'No se pudieron guardar los cambios. Intenta nuevamente.')
     });
   }
-
 }

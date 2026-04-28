@@ -15,6 +15,7 @@ export interface UserResponse {
   is_verified: boolean;
   picture?: string;
   created_at: string;
+  google_id?: string;
 }
 
 export interface RegisterData {
