@@ -1,6 +1,6 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChartModule } from 'primeng/chart';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -8,8 +8,11 @@ import { PatientService } from '../../services/patients/patient';
 import { AlertService } from '../../services/alert/alert';
 import { Chart, registerables } from 'chart.js';
 import { PdfService } from '../../services/pdf/pdf';
-import { Tooltip, TooltipModule } from 'primeng/tooltip';
-import { ActivatedRoute } from '@angular/router'; // Importante para leer la URL
+import { TooltipModule } from 'primeng/tooltip';
+import { ActivatedRoute } from '@angular/router';
+import { EvaluationService } from '../../services/evaluation/evaluation';
+import { EvaluationCreate } from '../../models/evaluations';
+
 
 @Component({
   selector: 'app-evaluation',
@@ -28,18 +31,33 @@ import { ActivatedRoute } from '@angular/router'; // Importante para leer la URL
 export class EvaluationComponent implements OnInit {
   private fb = inject(FormBuilder);
   private patientService = inject(PatientService);
+  private evalService = inject(EvaluationService); // Nuevo servicio
   private alertService = inject(AlertService);
   private cdr = inject(ChangeDetectorRef);
   private pdfService = inject(PdfService);
-  private route = inject(ActivatedRoute); // Inyectamos la ruta activa
+  private route = inject(ActivatedRoute);
 
-  evalForm: FormGroup;
-  pacientes: any[] = [];
-  
-  displayModal: boolean = false;
+  pacientes = signal<any[]>([]);
+  displayModal = signal(false);
+  isLoading = signal(false);
+
+  evalForm = this.fb.nonNullable.group({
+    patient_id: [0, [Validators.required, Validators.min(1)]],
+    phq_1: [0, [Validators.min(0), Validators.max(3)]], // Poco interés
+    phq_2: [0, [Validators.min(0), Validators.max(3)]], // Deprimido
+    phq_3: [0, [Validators.min(0), Validators.max(3)]], // Sueño
+    phq_4: [0, [Validators.min(0), Validators.max(3)]], // Cansancio
+    phq_5: [0, [Validators.min(0), Validators.max(3)]], // Apetito
+    phq_6: [0, [Validators.min(0), Validators.max(3)]], // Culpa
+    phq_7: [0, [Validators.min(0), Validators.max(3)]], // Concentración
+    phq_8: [0, [Validators.min(0), Validators.max(3)]], // Lentitud/Agitación
+    phq_9: [0, [Validators.min(0), Validators.max(3)]], // Pensamientos suicidas
+    historial_familiar: ['No', Validators.required]
+  });
+
+  // Variables para los gráficos
   riesgoPorcentaje: number = 0;
   riesgoEtiqueta: string = '';
-
   gaugeData: any;
   gaugeOptions: any;
   shapData: any;
@@ -47,49 +65,33 @@ export class EvaluationComponent implements OnInit {
 
   constructor() {
     Chart.register(...registerables);
-
-    this.evalForm = this.fb.group({
-      patient_id: [null, Validators.required],
-      ansiedad: [5, Validators.required],
-      sueno: [5, Validators.required],
-      estres: [5, Validators.required],
-      tristeza: ['No', Validators.required],
-      historial: ['No', Validators.required]
-    });
   }
 
   ngOnInit(): void {
-    // 1. Mostrar carga inicial
-    this.alertService.loading('Cargando pacientes...');
+    this.cargarPacientes();
+  }
 
+  cargarPacientes() {
+    this.alertService.loading('Cargando pacientes...', true);
+    
     this.patientService.getPatients().subscribe({
       next: (data) => {
-        // 2. Llenar la lista de pacientes
-        this.pacientes = Array.isArray(data) ? data : [];
-        
-        // 3. Cerrar la alerta de carga
+        this.pacientes.set(Array.isArray(data) ? data : []);
         this.alertService.close();
 
-        // 4. (NUEVO) Verificar si venimos del Detalle con un paciente pre-seleccionado
+        // Autoselección si venimos desde el detalle del paciente
         this.route.queryParams.subscribe(params => {
           const preSelectedId = params['patientId'];
-          
           if (preSelectedId) {
-            // Buscamos si el paciente existe en la lista cargada
             const idNumber = Number(preSelectedId);
-            const pacienteExiste = this.pacientes.find(p => p.id === idNumber);
-
+            const pacienteExiste = this.pacientes().find(p => p.id === idNumber);
             if (pacienteExiste) {
-               // Seleccionamos al paciente en el formulario automáticamente
                this.evalForm.patchValue({ patient_id: idNumber });
             }
           }
         });
-
-        // 5. Actualizar la vista
-        this.cdr.detectChanges();
       },
-      error: (err) => {
+      error: () => {
         this.alertService.close();
         this.alertService.error('Error', 'No se pudieron cargar los pacientes');
       }
@@ -97,27 +99,44 @@ export class EvaluationComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.evalForm.invalid) {
-      this.alertService.error('Formulario Incompleto', 'Por favor selecciona un paciente.');
+    if (this.evalForm.invalid || this.evalForm.get('patient_id')?.value === 0) {
+      this.alertService.error('Formulario Incompleto', 'Por favor selecciona un paciente y completa el cuestionario.');
+      this.evalForm.markAllAsTouched();
       return;
     }
 
-    this.alertService.loading('Analizando síntomas con IA...');
+    this.isLoading.set(true);
+    this.alertService.loading('Enviando datos y analizando con IA...');
 
-    setTimeout(() => {
-      this.alertService.close();
-      this.mostrarResultadosSimulados();
-      this.displayModal = true;
-      this.cdr.detectChanges();
-    }, 2000);
+    const dataToSend: EvaluationCreate = this.evalForm.getRawValue();
+
+    // 🚀 Llamada real al backend
+    this.evalService.createEvaluation(dataToSend).subscribe({
+      next: (response) => {
+        this.isLoading.set(false);
+        this.alertService.close();
+        
+        // Mapeamos los resultados de tu backend a la vista
+        this.mostrarResultados(response.puntaje_total, response.nivel_riesgo);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.alertService.close();
+        this.alertService.error('Error', 'Hubo un problema de conexión con el modelo.');
+        console.error(err);
+      }
+    });
   }
 
-  mostrarResultadosSimulados() {
-    this.riesgoPorcentaje = 78;
-    this.riesgoEtiqueta = 'ALTO';
+  mostrarResultados(puntaje_total: number, riesgo: string) {
+    // Cálculo temporal para el Gauge (0-27 a porcentaje 0-100)
+    this.riesgoPorcentaje = Math.round((puntaje_total / 27) * 100);
+    this.riesgoEtiqueta = riesgo;
 
     this.initGaugeChart(this.riesgoPorcentaje);
-    this.initShapChart();
+    this.initShapChart(); // SHAP simulado por ahora
+    
+    this.displayModal.set(true); // Abrimos el modal usando Signal
   }
 
   initGaugeChart(valor: number) {
@@ -127,7 +146,7 @@ export class EvaluationComponent implements OnInit {
         {
           data: [valor, 100 - valor],
           backgroundColor: [
-            valor > 50 ? '#ef4444' : '#10b981',
+            valor > 50 ? '#ef4444' : (valor > 20 ? '#d97706' : '#10b981'),
             '#e2e8f0'
           ],
           borderWidth: 0,
@@ -135,70 +154,33 @@ export class EvaluationComponent implements OnInit {
         }
       ]
     };
-
-    this.gaugeOptions = {
-      rotation: -90,
-      circumference: 180,
-      plugins: {
-        legend: { display: false },
-        tooltip: { enabled: false }
-      },
-      aspectRatio: 1.5,
-      maintainAspectRatio: false
-    };
+    this.gaugeOptions = { rotation: -90, circumference: 180, plugins: { legend: { display: false }, tooltip: { enabled: false } }, aspectRatio: 1.5, maintainAspectRatio: false };
   }
 
   initShapChart() {
+    // SHAP Simulado hasta que conectes XGBoost
     this.shapData = {
-      labels: ['Ansiedad Alta', 'Mal Sueño', 'Sin Tristeza', 'Estrés Medio'],
+      labels: ['Poco interés', 'Problemas Sueño', 'Culpa', 'Sin apetito'],
       datasets: [
         {
           label: 'Impacto',
-          data: [35, 20, -10, 5],
-          backgroundColor: (context: any) => {
-            const value = context.raw;
-            return value >= 0 ? '#ef4444' : '#10b981';
-          },
+          data: [25, 15, -5, 10],
+          backgroundColor: (context: any) => context.raw >= 0 ? '#ef4444' : '#10b981',
           borderRadius: 5
         }
       ]
     };
-
-    this.shapOptions = {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: {
-          grid: { color: '#f1f5f9' },
-          ticks: { display: false }
-        },
-        y: {
-          grid: { display: false },
-          ticks: { font: { weight: 'bold' } }
-        }
-      }
-    };
+    this.shapOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: '#f1f5f9' }, ticks: { display: false } }, y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } } };
   }
 
   exportarPDF(){
     const patientId = this.evalForm.get('patient_id')?.value;
-    const selectedPatient = this.pacientes.find(p => p.id == patientId);
+    const selectedPatient = this.pacientes().find(p => p.id == patientId);
 
-    if(!selectedPatient) {
-        this.alertService.error('Error', 'No hay paciente seleccionado');
-        return;
-    }
+    if(!selectedPatient) return;
 
-    const resultado = {
-      riesgoPorcentaje: this.riesgoPorcentaje,
-      riesgoEtiqueta: this.riesgoEtiqueta
-    }
-
+    const resultado = { riesgoPorcentaje: this.riesgoPorcentaje, riesgoEtiqueta: this.riesgoEtiqueta }
     this.pdfService.generateEvaluationReport(selectedPatient, resultado, this.shapData);
-    this.alertService.success('Informe Descargado', 'El PDF se ha generado correctamente.')
+    this.alertService.success('Informe Descargado', 'El PDF se ha generado correctamente.', true);
   }
 }

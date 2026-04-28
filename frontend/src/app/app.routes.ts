@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login';
-import { DashboardComponent } from './pages/dashboard/dashboard';
 import { RecoveryComponent } from './pages/recovery/recovery';
 import { RegisterAccountComponent } from './pages/register-account/register-account';
 import { SettingsComponent } from './pages/settings/settings';

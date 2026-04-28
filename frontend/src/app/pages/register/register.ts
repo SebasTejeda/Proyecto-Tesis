@@ -34,7 +34,7 @@ export class RegisterComponent {
     this.patientService.createPatient(this.registerForm.value).
     subscribe({
       next: (res) => {
-        this.alertService.success('¡Registrado!', `Paciente ${res.nombre_completo} guardado exitosamente.`);
+        this.alertService.success('¡Registrado!', `Paciente ${res.nombre} guardado exitosamente.`);
         this.registerForm.reset();
       },
       error: (err) => {

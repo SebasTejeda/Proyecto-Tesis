@@ -9,7 +9,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: str | None = None
-# Datos enviados
+
 class UserBase(BaseModel):
     email: EmailStr
     nombres: str
@@ -19,7 +19,6 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-# Datos recibidos
 class UserResponse(UserBase):
     id: int
     role: str
@@ -73,17 +72,24 @@ class PatientResponse(BaseModel):
         from_attributes = True
 
 class EvaluationCreate(BaseModel):
-    patient_id: int  # <--- Obligatorio saber de quién es
-    ansiedad: int
-    estres: int
-    sueno: int
-    tristeza: str
-    historial: str
+    patient_id: int
+    phq_1: int
+    phq_2: int
+    phq_3: int
+    phq_4: int
+    phq_5: int
+    phq_6: int
+    phq_7: int
+    phq_8: int
+    phq_9: int
+    historial_familiar: Optional[str] = "No" # Campo extra preparatorio
 
 class EvaluationResponse(EvaluationCreate):
     id: int
-    fecha: datetime
+    puntaje_total: int
+    nivel_riesgo: str
     resultado_ia: Optional[str] = None
+    fecha: datetime
     
     class Config:
         from_attributes = True
