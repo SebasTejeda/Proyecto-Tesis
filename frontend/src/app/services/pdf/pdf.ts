@@ -1,31 +1,7 @@
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-
-// --- INTERFACES PARA TIPADO ESTRICTO ---
-export interface PatientPdfInfo {
-  id?: number;
-  nombre_completo?: string;
-  nombre?: string;
-  edad?: number;
-}
-
-export interface EvaluationResult {
-  riesgoPorcentaje: number;
-  riesgoEtiqueta: string;
-}
-
-export interface ShapData {
-  labels: string[];
-  datasets: { data: number[] }[];
-}
-
-export interface HistoryItem {
-  fecha: string;
-  doctor: string;
-  puntaje: number;
-  riesgo: string;
-}
+import { EvaluationResult, HistoryItem, PatientPdfInfo, ShapData } from '../../models/pdf';
 
 @Injectable({
   providedIn: 'root'
@@ -69,14 +45,15 @@ export class PdfService {
     doc.setDrawColor(200, 200, 200);
     doc.line(15, yPos + 2, 195, yPos + 2);
     
-    yPos += 15;
+    yPos += 12;
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     
     doc.text(`Nombre: ${nombrePaciente}`, 15, yPos);
-    doc.text(`Edad: ${patient.edad || 'N/A'} años`, 120, yPos);
+    doc.text(`Edad: ${patient.edad || '--'} años`, 120, yPos);
     yPos += 8;
-    doc.text(`ID Expediente: #${patient.id || 'S/N'}`, 15, yPos);
+    // Eliminado el ID inútil y reemplazado por Teléfono y Sexo
+    doc.text(`Sexo: ${patient.sexo || 'No especificado'}`, 15, yPos);
     doc.text(`Fecha Evaluación: ${new Date().toLocaleDateString()}`, 120, yPos);
 
     // --- 3. RESULTADO DEL MODELO ---
@@ -109,7 +86,6 @@ export class PdfService {
     doc.text('FACTORES DETERMINANTES (XAI)', 15, yPos);
     doc.line(15, yPos + 2, 195, yPos + 2);
 
-    // Programación defensiva: Verificar que shapData es válido
     if (shapData && shapData.labels && shapData.datasets && shapData.datasets.length > 0) {
       const tableBody = shapData.labels.map((label: string, index: number) => {
         const valor = shapData.datasets[0].data[index];
@@ -132,7 +108,6 @@ export class PdfService {
     }
 
     // --- 5. FIRMA ---
-    // Usamos any temporalmente porque los tipos de jspdf-autotable a veces no detectan lastAutoTable
     const lastTableY = (doc as any).lastAutoTable?.finalY || yPos + 30;
     const finalY = lastTableY + 40;
     
@@ -143,7 +118,7 @@ export class PdfService {
     doc.text('Firma del Especialista', 105, finalY + 5, { align: 'center' });
 
     // --- GUARDAR ---
-    const filename = nombrePaciente.replace(/\s+/g, '_'); // Reemplaza espacios por guiones bajos
+    const filename = nombrePaciente.replace(/\s+/g, '_');
     doc.save(`Evaluacion_${filename}_${new Date().getTime()}.pdf`);
   }
 
@@ -160,26 +135,30 @@ export class PdfService {
     doc.text('NeuroMind AI', 15, 17);
 
     doc.setFontSize(10);
-    doc.text('Historial Clínico Completo', 150, 17);
+    doc.text('Historial Clínico Completo', 195, 17, { align: 'right' }); // Mejor alineado
 
+    // --- CABECERA CLÍNICA ---
     let yPos = 40;
     doc.setTextColor(...this.brandColors.textGray);
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.text(`Paciente: ${nombrePaciente}`, 15, yPos);
-    doc.text(`ID: #${patient.id || 'S/N'}`, 150, yPos);
+    
+    // Alineamos Edad y Sexo limpiamente a la derecha en la misma línea
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Edad: ${patient.edad || '--'} años   |   Sexo: ${patient.sexo || 'No especificado'}`, 195, yPos, { align: 'right' });   
     
     yPos += 10;
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
     doc.text(`Fecha de emisión: ${new Date().toLocaleDateString()}`, 15, yPos);
-    doc.text(`Total de evaluaciones: ${historial?.length || 0}`, 150, yPos);
+    doc.text(`Total de evaluaciones: ${historial?.length || 0}`, 195, yPos, { align: 'right' });
 
+    // --- TABLA DE HISTORIAL ---
     if (historial && historial.length > 0) {
       const tableBody = historial.map(item => [
         item.fecha,
         item.doctor,
-        `${item.puntaje}%`,
+        item.puntaje,
         item.riesgo
       ]);
 
@@ -197,10 +176,19 @@ export class PdfService {
           3: { cellWidth: 40, halign: 'center', fontStyle: 'bold' }
         },
         didParseCell: (data) => {
+          // LECTOR INTELIGENTE DE COLORES DE RIESGO
           if (data.section === 'body' && data.column.index === 3) {
-            const riesgo = data.cell.raw as string;
-            if (riesgo === 'Alto') data.cell.styles.textColor = this.brandColors.danger;
-            if (riesgo === 'Bajo') data.cell.styles.textColor = this.brandColors.success;
+            const riesgo = (data.cell.raw as string).toLowerCase();
+            
+            // Si es Severo, Moderadamente Severo o Alto -> Rojo
+            if (riesgo.includes('severo') || riesgo.includes('alto')) {
+                data.cell.styles.textColor = this.brandColors.danger;
+            } 
+            // Si es Leve, Mínimo o Bajo -> Verde
+            else if (riesgo.includes('leve') || riesgo.includes('mínim') || riesgo.includes('bajo')) {
+                data.cell.styles.textColor = this.brandColors.success;
+            }
+            // Los moderados se quedan en color gris oscuro estándar
           }
         }
       });

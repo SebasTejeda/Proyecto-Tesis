@@ -11,6 +11,7 @@ import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 import { EvaluationService } from '../../services/evaluation/evaluation';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../services/auth/auth';
 
 @Component({
   selector: 'app-patient-detail',
@@ -27,8 +28,8 @@ export class PatientDetailComponent implements OnInit {
   private patientService = inject(PatientService);
   private evalService = inject(EvaluationService);
   private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
-  // --- ESTADO CON SIGNALS ---
   patient = signal<any | null>(null);
   historial = signal<any[]>([]);
   isLoading = signal(true);
@@ -164,22 +165,31 @@ export class PatientDetailComponent implements OnInit {
   }
 
   exportarHistorialCompleto() {
-     if (this.historial().length === 0) {
-        this.alertService.error("Sin datos", "No hay historial disponible.");
-        return;
-     }
-     
-     const historialFormateado = this.historial().map(e => ({
-         fecha: new Date(e.fecha).toLocaleDateString(),
-         doctor: 'Dr/a. Especialista',
-         // CORRECCIÓN: Usamos phq9_puntaje y resultado
-         puntaje: Math.round((e.phq9_puntaje / 27) * 100),
-         riesgo: e.resultado
-     }));
+   if (this.historial().length === 0) {
+      this.alertService.error("Sin datos", "No hay historial disponible.");
+      return;
+   }
+   
+   const doctorData = this.authService.getUserData();
+   const nombreDoctor = doctorData ? `Dr/a. ${doctorData.nombre}` : 'Especialista Médico';
 
-     this.pdfService.generateHistoryReport(this.patient(), historialFormateado);
-     this.alertService.success("Historial Exportado", "Se ha generado el PDF.", true);
-  }
+   // --- LA CLAVE: Preparamos el objeto con la edad calculada ---
+   const pacienteParaPdf = {
+      ...this.patient(),
+      edad: this.calcularEdad(this.patient()?.fecha_nacimiento)
+   };
+
+   const historialFormateado = this.historial().map(e => ({
+      fecha: new Date(e.fecha).toLocaleDateString(),
+      doctor: nombreDoctor,
+      puntaje: e.phq9_puntaje,
+      riesgo: e.resultado
+   }));
+
+   // Enviamos el objeto con la edad ya procesada
+   this.pdfService.generateHistoryReport(pacienteParaPdf, historialFormateado);
+   this.alertService.success("Historial Exportado", "Se ha generado el PDF.", true);
+}
 
   verDetalle(evaluacion: any) {
     this.selectedEval.set(evaluacion);
