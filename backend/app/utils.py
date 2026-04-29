@@ -1,12 +1,16 @@
 # Importamos librería de encriptación
+from dotenv import load_dotenv
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, UTC
 from jose import jwt
+import os
+
+load_dotenv(override=True)
 
 # Configuración de JWT
-SECRET_KEY = "61a241f490de8db90b19059f631017a79698fc5c772c41766cbd8e6f8bcc4164"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 # Configuramos el contexto de encriptación
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
