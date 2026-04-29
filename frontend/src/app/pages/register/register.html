@@ -12,16 +12,16 @@
                 <div class="form-group full-width">
                     <label class="form-label">Nombre Completo</label>
                     <input type="text" class="form-input" 
-                           [class.error-border]="registerForm.get('nombre')?.invalid && registerForm.get('nombre')?.touched"
-                           formControlName="nombre" placeholder="Ej: Juan Pérez">
+                           [class.error-border]="registerForm.get('nombre_completo')?.invalid && registerForm.get('nombre_completo')?.touched"
+                           formControlName="nombre_completo" placeholder="Ej: Juan Pérez">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Edad</label>
-                        <input type="number" class="form-input" 
-                               [class.error-border]="registerForm.get('edad')?.invalid && registerForm.get('edad')?.touched"
-                               formControlName="edad" placeholder="Ej: 30">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-input" 
+                               [class.error-border]="registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched"
+                               formControlName="fecha_nacimiento">
                     </div>
 
                     <div class="form-group">

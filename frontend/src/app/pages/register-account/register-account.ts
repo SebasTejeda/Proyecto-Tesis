@@ -91,7 +91,21 @@ export class RegisterAccountComponent {
           this.router.navigate(['/login']);
         },
         error: (err) => {
-          const msg = err.error?.detail || 'Código incorrecto. Intenta nuevamente.';
+          // --- NUEVO MANEJO DE ERRORES INTELIGENTE ---
+          let msg = 'Código incorrecto. Intenta nuevamente.';
+          
+          if (err.error?.detail) {
+            if (typeof err.error.detail === 'string') {
+              // Si es un mensaje simple (ej. "Código expirado")
+              msg = err.error.detail;
+            } else if (Array.isArray(err.error.detail)) {
+              // Si es un error 422 de Pydantic, extraemos el campo exacto que falló
+              const campoFallido = err.error.detail[0].loc[err.error.detail[0].loc.length - 1];
+              msg = `Falta el campo o tiene formato incorrecto: ${campoFallido}`;
+            }
+          }
+          // -------------------------------------------
+          
           this.alertService.error('Error de Verificación', msg);
         }
       });

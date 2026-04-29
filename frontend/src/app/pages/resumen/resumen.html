@@ -1,7 +1,7 @@
 <div class="page-section fade-in">
   <div class="page-header">
     <h1 class="welcome-text">Panel de Control</h1>
-    <p class="page-subtitle">Resumen de actividad del día</p>
+    <p class="page-subtitle">Resumen de actividad clínica</p>
   </div>
 
   <div class="stats-grid">
@@ -35,7 +35,7 @@
         </div>
       </div>
       <div class="stat-value">{{ casosAltoRiesgo() }}</div>
-      <div class="stat-change warn-text">Detectados por IA</div>
+      <div class="stat-change warn-text">Requieren atención</div>
     </div>
   </div>
 
@@ -57,11 +57,11 @@
     <p-table 
       #dt
       [value]="pacientes()" 
-      [paginator]="false" 
+      [paginator]="true" 
       [rows]="10" 
       [resizableColumns]="true" 
       columnResizeMode="expand"
-      [globalFilterFields]="['nombre_completo', 'riesgo', 'edad']"
+      [globalFilterFields]="['nombre_completo', 'riesgo']"
       [tableStyle]="{ 'min-width': '100%' }"
       [loading]="isLoading()">
 
@@ -70,14 +70,14 @@
           <th pSortableColumn="nombre_completo" pResizableColumn>
             Paciente <p-sortIcon field="nombre_completo"></p-sortIcon>
           </th>
-          <th pSortableColumn="fecha" pResizableColumn>
-            Fecha <p-sortIcon field="fecha"></p-sortIcon>
+          <th pSortableColumn="fecha_raw" pResizableColumn>
+            Última Eval. <p-sortIcon field="fecha_raw"></p-sortIcon>
           </th>
           <th pSortableColumn="edad" pResizableColumn>
             Edad <p-sortIcon field="edad"></p-sortIcon>
           </th>
           <th pSortableColumn="prob" pResizableColumn>
-            Probabilidad <p-sortIcon field="prob"></p-sortIcon>
+            Riesgo Estimado <p-sortIcon field="prob"></p-sortIcon>
           </th>
           <th pSortableColumn="riesgo" pResizableColumn>
             Estado <p-sortIcon field="riesgo"></p-sortIcon>
@@ -87,14 +87,17 @@
 
       <ng-template pTemplate="body" let-p>
         <tr>
-          <td class="patient-name" [routerLink]="['/dashboard/patient', p.id || 1]">
+          <td class="patient-name" [routerLink]="['/dashboard/patient', p.id]">
             {{ p.nombre_completo }}
           </td>
-          <td>{{ p.fecha }}</td>
-          <td>{{ p.edad }} años</td>
-          <td>{{ p.prob }}%</td>
+          <td>{{ p.fecha_ultima_eval }}</td>
+          <td>{{ p.edad }} {{ p.edad !== '--' ? 'años' : '' }}</td>
           <td>
-            <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
+             <span *ngIf="p.riesgo !== 'Sin evaluar'">{{ p.prob }}%</span>
+             <span *ngIf="p.riesgo === 'Sin evaluar'" style="color: #94a3b8;">--</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)" [style.background]="p.riesgo === 'Sin evaluar' ? '#f1f5f9' : ''" [style.color]="p.riesgo === 'Sin evaluar' ? '#64748b' : ''">
               {{ p.riesgo }}
             </span>
           </td>
@@ -104,7 +107,7 @@
       <ng-template pTemplate="emptymessage">
         <tr>
           <td colspan="5" class="empty-state">
-            No se encontraron resultados.
+            No se encontraron pacientes registrados.
           </td>
         </tr>
       </ng-template>

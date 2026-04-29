@@ -56,6 +56,7 @@ def create_evaluation(
             phq9_puntaje=puntaje,
             resultado=riesgo,
             ia_feedback=feedback_ia,
+            notas_doctor=eval_data.notas_doctor,
             status="Completado"
         )
         

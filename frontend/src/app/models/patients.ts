@@ -1,6 +1,6 @@
 export interface PatientData {
-    nombre: string;
-    edad: number;
+    nombre_completo: string;
+    fecha_nacimiento: string;
     sexo: string;
     telefono?: string;
 }

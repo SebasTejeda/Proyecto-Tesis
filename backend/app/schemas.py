@@ -1,6 +1,54 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, date
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: int
+    role: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+    
+class GoogleLoginRequest(BaseModel):
+    credential: str
+
+class VerifyCodeRequest(BaseModel):
+    email: EmailStr
+    codigo: str
+
+class EmailRequest(BaseModel): 
+    email: EmailStr
+
+class NewPasswordRequest(BaseModel): # <--- CAMBIA EL NOMBRE AQUÍ
+    email: EmailStr
+    codigo: str
+    new_password: str
+
+class UserBase(BaseModel):
+    email: EmailStr
+
+class UserCreate(UserBase):
+    password: str
+    nombres: str
+    apellidos: str
+    codigo_colegiatura: Optional[str] = None
+
+class UserResponse(UserBase):
+    id: int
+    role: str
+    is_active: bool
+    created_at: datetime
+    nombres: Optional[str] = None
+    apellidos: Optional[str] = None
+    codigo_colegiatura: Optional[str] = None
+    picture: Optional[str] = None
+    is_verified: bool = False
+    google_id: Optional[str] = None 
+
+    class Config:
+        from_attributes = True
 
 # ==========================================
 # SCHEMAS DE PACIENTES
@@ -80,6 +128,7 @@ class ExtraDataPatientResponse(ExtraDataPatientBase):
 # ==========================================
 class EvaluationBase(BaseModel):
     patient_id: int
+    notas_doctor: Optional[str] = None
 
 class EvaluationCreate(EvaluationBase):
     # Aquí anidamos los schemas para que Angular envíe todo en una sola petición POST

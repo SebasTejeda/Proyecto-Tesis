@@ -10,12 +10,12 @@ import { PdfService } from '../../services/pdf/pdf';
 import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 import { EvaluationService } from '../../services/evaluation/evaluation';
-
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChartModule, TableModule, ButtonModule, DialogModule],
+  imports: [CommonModule, RouterModule, ChartModule, TableModule, ButtonModule, DialogModule, ReactiveFormsModule],
   templateUrl: './patient-detail.html',
   styleUrls: ['./patient-detail.css']
 })
@@ -26,6 +26,7 @@ export class PatientDetailComponent implements OnInit {
   private alertService = inject(AlertService);
   private patientService = inject(PatientService);
   private evalService = inject(EvaluationService);
+  private fb = inject(FormBuilder);
 
   // --- ESTADO CON SIGNALS ---
   patient = signal<any | null>(null);
@@ -44,12 +45,19 @@ export class PatientDetailComponent implements OnInit {
   shapData: any;
   shapOptions: any;
 
+  displayEditModal = signal(false);
+  editForm = this.fb.nonNullable.group({
+    nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
+    fecha_nacimiento: ['', [Validators.required]],
+    sexo: ['', [Validators.required]],
+    telefono: [''],
+  })
+
   constructor() {
     Chart.register(...registerables);
   }
 
   ngOnInit() {
-    // 1. Extraer el ID del paciente de la URL
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.cargarDatosReales(Number(idParam));
@@ -59,19 +67,39 @@ export class PatientDetailComponent implements OnInit {
     }
   }
 
+  // NUEVA FUNCIÓN: Calcula la edad basada en la fecha de nacimiento
+  calcularEdad(fecha_nacimiento: string | Date | undefined): number | string {
+    if (!fecha_nacimiento) return '--';
+    const hoy = new Date();
+    const fechaNac = new Date(fecha_nacimiento);
+    let edad = hoy.getFullYear() - fechaNac.getFullYear();
+    const mes = hoy.getMonth() - fechaNac.getMonth();
+    if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())) {
+      edad--;
+    }
+    return edad;
+  }
+
   cargarDatosReales(patientId: number) {
     this.alertService.loading('Cargando expediente clínico...', true);
     
-    // Primero buscamos al paciente
     this.patientService.getPatientById(patientId).subscribe({
       next: (pacienteData) => {
         this.patient.set(pacienteData);
         
-        // Luego buscamos su historial de evaluaciones
         this.evalService.getPatientEvaluations(patientId).subscribe({
           next: (evaluaciones) => {
-            this.historial.set(evaluaciones);
-            this.prepararGraficoEvolucion(evaluaciones);
+            // ---> SOLUCIÓN DE LA HORA: Convertimos a UTC agregando la 'Z' <---
+            const evaluacionesConHoraLocal = evaluaciones.map(e => ({
+                ...e, 
+                fecha: e.fecha.endsWith('Z') ? e.fecha : e.fecha + 'Z' 
+            }));
+
+            // Usamos las evaluaciones arregladas
+            this.historial.set(evaluacionesConHoraLocal);
+            this.prepararGraficoEvolucion(evaluacionesConHoraLocal);
+            // ----------------------------------------------------------------
+            
             this.alertService.close();
             this.isLoading.set(false);
           },
@@ -80,33 +108,26 @@ export class PatientDetailComponent implements OnInit {
       },
       error: () => {
         this.alertService.close();
-        this.alertService.error('Error', 'Paciente no encontrado o acceso denegado.');
+        this.alertService.error('Error', 'Paciente no encontrado.');
         this.router.navigate(['/dashboard']);
       }
     });
   }
 
-  // Prepara el gráfico de líneas con los datos reales ordenados cronológicamente
   prepararGraficoEvolucion(evaluaciones: any[]) {
-    // Si no hay suficientes datos, mostramos vacío
     if (!evaluaciones || evaluaciones.length === 0) return;
 
-    // Clonamos y ordenamos de más antiguo a más reciente para el gráfico
     const ordenadas = [...evaluaciones].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
-    
-    // Tomamos solo las últimas 5 evaluaciones para no saturar el gráfico
     const ultimas5 = ordenadas.slice(-5);
 
     const labels = ultimas5.map(e => new Date(e.fecha).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
     const dataPoints = ultimas5.map(e => {
-        // Normalizamos el puntaje de PHQ-9 (0-27) a un porcentaje (0-100) para el gráfico
-        return Math.round((e.puntaje_total / 27) * 100);
+        // CORRECCIÓN: Usamos phq9_puntaje en vez de puntaje_total
+        return Math.round((e.phq9_puntaje / 27) * 100);
     });
 
     this.initMainChart(labels, dataPoints);
   }
-
-  // --- ACCIONES DE LOS BOTONES SUPERIORES ---
 
   irANuevaEvaluacion() {
     this.router.navigate(['/dashboard/evaluacion'], {
@@ -118,7 +139,6 @@ export class PatientDetailComponent implements OnInit {
     const dataPaciente = this.patient();
     if (!dataPaciente) return;
 
-    // Tomamos la evaluación más reciente (que es la primera en el historial)
     const ultimaEval = this.historial()[0];
     
     if (!ultimaEval) {
@@ -126,11 +146,12 @@ export class PatientDetailComponent implements OnInit {
       return;
     }
 
-    const puntajePorcentaje = Math.round((ultimaEval.puntaje_total / 27) * 100);
+    // CORRECCIÓN: Usamos phq9_puntaje y resultado
+    const puntajePorcentaje = Math.round((ultimaEval.phq9_puntaje / 27) * 100);
     
     const datosResultadoSimulado = {
       riesgoPorcentaje: puntajePorcentaje,
-      riesgoEtiqueta: ultimaEval.nivel_riesgo.toUpperCase()
+      riesgoEtiqueta: ultimaEval.resultado.toUpperCase()
     };
     
     const shapSimuladoGeneral = {
@@ -148,12 +169,12 @@ export class PatientDetailComponent implements OnInit {
         return;
      }
      
-     // Mapeamos los datos al formato que espera tu PDF Service
      const historialFormateado = this.historial().map(e => ({
          fecha: new Date(e.fecha).toLocaleDateString(),
-         doctor: 'Dr/a. Especialista', // Podrías traer el nombre del doctor si lo unes en el backend
-         puntaje: Math.round((e.puntaje_total / 27) * 100),
-         riesgo: e.nivel_riesgo
+         doctor: 'Dr/a. Especialista',
+         // CORRECCIÓN: Usamos phq9_puntaje y resultado
+         puntaje: Math.round((e.phq9_puntaje / 27) * 100),
+         riesgo: e.resultado
      }));
 
      this.pdfService.generateHistoryReport(this.patient(), historialFormateado);
@@ -163,8 +184,8 @@ export class PatientDetailComponent implements OnInit {
   verDetalle(evaluacion: any) {
     this.selectedEval.set(evaluacion);
     
-    // Normalizamos el puntaje PHQ-9 para los gráficos de porcentaje
-    const porcentaje = Math.round((evaluacion.puntaje_total / 27) * 100);
+    // CORRECCIÓN: Usamos phq9_puntaje
+    const porcentaje = Math.round((evaluacion.phq9_puntaje / 27) * 100);
     this.initGaugeChart(porcentaje);
     this.initShapChart(porcentaje);
     
@@ -172,7 +193,6 @@ export class PatientDetailComponent implements OnInit {
   }
 
   // --- CONFIGURACIÓN DE GRÁFICOS ---
-
   initMainChart(labels: string[], dataPoints: number[]) {
     const documentStyle = getComputedStyle(document.documentElement);
     const textColorSecondary = documentStyle.getPropertyValue('--text-color-secondary');
@@ -215,5 +235,35 @@ export class PatientDetailComponent implements OnInit {
     if (r.includes('severo') || r.includes('alto')) return 'badge-high';
     if (r.includes('moderado')) return 'badge-mod';
     return 'badge-low';
+  }
+
+  abrirModalEditar() {
+    const p = this.patient();
+    if (p) {
+      this.editForm.patchValue({
+        nombre_completo: p.nombre_completo,
+        fecha_nacimiento: p.fecha_nacimiento, // Debe estar en formato YYYY-MM-DD
+        sexo: p.sexo,
+        telefono: p.telefono
+      });
+      this.displayEditModal.set(true);
+    }
+  }
+
+  // Guarda los cambios
+  guardarEdicion() {
+    if (this.editForm.invalid) return;
+
+    this.alertService.loading('Actualizando paciente...');
+    const id = this.patient()?.id;
+    
+    this.patientService.updatePatient(id, this.editForm.getRawValue()).subscribe({
+      next: () => {
+        this.alertService.success('Actualizado', 'Datos del paciente modificados con éxito.', true);
+        this.displayEditModal.set(false);
+        this.cargarDatosReales(id); // Recargamos para ver los cambios
+      },
+      error: () => this.alertService.error('Error', 'No se pudo actualizar el paciente.')
+    });
   }
 }

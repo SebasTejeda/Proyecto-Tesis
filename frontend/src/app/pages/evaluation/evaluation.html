@@ -1,7 +1,7 @@
 <div class="eval-container fade-in">
     <div class="header-section">
-        <h1 class="page-title">Evaluación Clínica PHQ-9 (Asistida por IA)</h1>
-        <p class="page-subtitle">Indique con qué frecuencia el paciente ha experimentado estos síntomas en las últimas 2 semanas.</p>
+        <h1 class="page-title">Evaluación Clínica PHQ-9 + XGBoost</h1>
+        <p class="page-subtitle">Complete el cuestionario y los datos biométricos para el análisis del modelo predictivo.</p>
     </div>
 
     <div class="eval-card">
@@ -15,11 +15,8 @@
                     </label>
 
                     <div class="custom-select-wrapper">
-                        <select 
-                            formControlName="patient_id" 
-                            class="native-select" 
-                            [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
-                            
+                        <select formControlName="patient_id" class="native-select" 
+                                [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
                             <option [ngValue]="0" disabled selected>-- Selecciona un paciente --</option>
                             <option *ngFor="let p of pacientes()" [value]="p.id">{{ p.nombre_completo }}</option>
                         </select>
@@ -30,7 +27,7 @@
 
             <hr class="divider-compact">
 
-            <div class="form-grid">
+            <div class="form-grid" formGroupName="symptoms">
                 
                 <div class="col-left">
                     <h3 class="col-title">📉 Síntomas Anímicos y Físicos</h3>
@@ -38,110 +35,147 @@
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-face-smile section-icon icon-slate"></i> 1. Poco interés o placer</label>
-                            <span class="badge-value">{{ evalForm.get('phq_1')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.interes_poco_placer')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_1">
+                        <input type="range" min="0" max="3" formControlName="interes_poco_placer">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-heart section-icon icon-rose"></i> 2. Decaído o sin esperanzas</label>
-                            <span class="badge-value">{{ evalForm.get('phq_2')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.desanimado_deprimido')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_2">
+                        <input type="range" min="0" max="3" formControlName="desanimado_deprimido">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-moon section-icon icon-indigo"></i> 3. Problemas de sueño</label>
-                            <span class="badge-value">{{ evalForm.get('phq_3')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.dificultad_dormir')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_3">
+                        <input type="range" min="0" max="3" formControlName="dificultad_dormir">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-bolt section-icon icon-amber"></i> 4. Cansancio o falta de energía</label>
-                            <span class="badge-value">{{ evalForm.get('phq_4')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.sentirse_cansado')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_4">
+                        <input type="range" min="0" max="3" formControlName="sentirse_cansado">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-apple section-icon icon-slate"></i> 5. Problemas de apetito</label>
-                            <span class="badge-value">{{ evalForm.get('phq_5')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.poco_apetito')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_5">
+                        <input type="range" min="0" max="3" formControlName="poco_apetito">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
                 </div>
 
                 <div class="col-right">
-                    <h3 class="col-title">🧠 Síntomas Cognitivos y Extras</h3>
+                    <h3 class="col-title">🧠 Síntomas Cognitivos</h3>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-exclamation-circle section-icon icon-slate"></i> 6. Sentimiento de culpa</label>
-                            <span class="badge-value">{{ evalForm.get('phq_6')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.sentirse_mal_consigo_mismo')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_6">
+                        <input type="range" min="0" max="3" formControlName="sentirse_mal_consigo_mismo">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-eye section-icon icon-slate"></i> 7. Falta de concentración</label>
-                            <span class="badge-value">{{ evalForm.get('phq_7')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.dificultad_concentracion')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_7">
+                        <input type="range" min="0" max="3" formControlName="dificultad_concentracion">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-directions section-icon icon-slate"></i> 8. Lentitud o agitación</label>
-                            <span class="badge-value">{{ evalForm.get('phq_8')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.moverse_hablar_lento_rapido')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_8">
+                        <input type="range" min="0" max="3" formControlName="moverse_hablar_lento_rapido">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
 
                     <div class="slider-group compact">
                         <div class="slider-header">
                             <label><i class="pi pi-shield section-icon icon-rose"></i> 9. Pensamientos suicidas</label>
-                            <span class="badge-value">{{ evalForm.get('phq_9')?.value }}/3</span>
+                            <span class="badge-value">{{ evalForm.get('symptoms.pensamientos_muerte')?.value }}/3</span>
                         </div>
-                        <input type="range" min="0" max="3" formControlName="phq_9">
+                        <input type="range" min="0" max="3" formControlName="pensamientos_muerte">
                         <div class="labels"><span>Nunca</span><span>Casi diario</span></div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="questions-stack">
-                        <div class="form-group">
-                            <label class="section-label">
-                                <i class="pi pi-users section-icon icon-slate"></i>
-                                ¿Historial Familiar de Depresión?
-                            </label>
-                            <select formControlName="historial_familiar" class="native-select">
-                                <option value="No">No</option>
-                                <option value="Si">Sí</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="button-wrapper">
-                        <button type="submit" class="btn-analyze" [disabled]="isLoading()">
-                            <i class="pi pi-search" style="margin-right: 8px;"></i> 
-                            {{ isLoading() ? 'Procesando...' : 'Analizar Riesgo' }}
-                        </button>
-                    </div>
+            <hr class="divider-compact" style="margin-top: 20px;">
+            <h3 class="col-title" style="margin-bottom: 15px;">📊 Variables Sociodemográficas y Clínicas (ENDES)</h3>
+            
+            <div class="form-grid" formGroupName="extra_data" style="grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">Peso (kg)</label>
+                    <input type="number" formControlName="peso" class="form-input" style="padding: 8px;">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">Talla (m)</label>
+                    <input type="number" step="0.01" formControlName="talla" class="form-input" style="padding: 8px;">
                 </div>
 
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">IMC Calculado</label>
+                    <input type="number" formControlName="imc" class="form-input" style="padding: 8px; background: #f1f5f9;" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">¿Fuma actualmente?</label>
+                    <select formControlName="fuma_30_dias" class="native-select" style="padding: 8px;">
+                        <option value="No">No</option><option value="Si">Sí</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">¿Diabetes?</label>
+                    <select formControlName="diagnostico_diabetes" class="native-select" style="padding: 8px;">
+                        <option value="No">No</option><option value="Si">Sí</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 0.85rem;">¿Hipertensión?</label>
+                    <select formControlName="diagnostico_hipertension" class="native-select" style="padding: 8px;">
+                        <option value="No">No</option><option value="Si">Sí</option>
+                    </select>
+                </div>
             </div>
+
+            <hr class="divider-compact" style="margin-top: 20px;">
+            <h3 class="col-title" style="margin-bottom: 15px;">👨‍⚕️ Observaciones de la Entrevista</h3>
+            
+            <div class="form-group full-width" style="margin-bottom: 25px;">
+                <textarea formControlName="notas_doctor" class="form-input" rows="4" 
+                    style="width: 100%; border-radius: 10px; padding: 15px; resize: vertical;" 
+                    placeholder="Escriba aquí las notas de la entrevista, comportamiento del paciente u otros detalles relevantes..."></textarea>
+            </div>
+            <div class="button-wrapper" style="margin-top: 30px; text-align: center;">
+                <button type="submit" class="btn-analyze" [disabled]="isLoading()" style="padding: 15px 40px; font-size: 1.1rem; border-radius: 12px; background: #0f172a; color: white;">
+                    <i class="pi pi-microchip-ai" style="margin-right: 10px;"></i> 
+                    {{ isLoading() ? 'Procesando Modelo...' : 'Ejecutar Análisis Clínico y Predictivo' }}
+                </button>
+            </div>
+
         </form>
     </div>
 </div>
@@ -154,9 +188,7 @@
     [style]="{ width: '50vw', maxWidth: '600px' }" 
     [draggable]="false" 
     [resizable]="false"
-    [closable]="true">
-    
-    <div class="result-content">
+    [closable]="false"> <div class="result-content">
         <div class="verdict-section">
             <h3 class="result-title">Nivel de Riesgo Clínico</h3>
             
@@ -192,11 +224,14 @@
             </div>
         </div>
 
-        <div class="modal-footer">
-            <button class="btn-secondary" (click)="displayModal.set(false)">Cerrar</button>
-            <button class="btn-primary" (click)="exportarPDF()">
-                <i class="pi pi-file-pdf"></i> Guardar y Exportar PDF
+        <div class="modal-footer" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+            <button class="btn-secondary" (click)="exportarPDF()">
+                <i class="pi pi-file-pdf"></i> Exportar PDF
+            </button>
+            <button class="btn-primary" (click)="cerrarYVolver()">
+                <i class="pi pi-check-circle"></i> Finalizar y Volver al Expediente
             </button>
         </div>
+
     </div>
-</p-dialog>\
+</p-dialog>

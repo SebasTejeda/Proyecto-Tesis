@@ -62,3 +62,33 @@ def get_patient(
         raise HTTPException(status_code=404, detail="Paciente no encontrado o acceso denegado")
     
     return patient
+
+@router.put("/{patient_id}", response_model=schemas.PatientResponse)
+def update_patient(
+    patient_id: int, 
+    patient_data: schemas.PatientCreate, 
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(get_current_user)
+):
+    """Actualiza la información de un paciente."""
+    patient = db.query(models.Patient).filter(
+        models.Patient.id == patient_id,
+        models.Patient.doctor_id == current_user.id
+    ).first()
+    
+    if not patient:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado o acceso denegado")
+    
+    # Actualizamos los campos
+    patient.nombre_completo = patient_data.nombre_completo
+    patient.fecha_nacimiento = patient_data.fecha_nacimiento
+    patient.sexo = patient_data.sexo
+    patient.telefono = patient_data.telefono
+    
+    try:
+        db.commit()
+        db.refresh(patient)
+        return patient
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")

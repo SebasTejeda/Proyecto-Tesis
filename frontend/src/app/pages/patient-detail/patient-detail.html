@@ -1,171 +1,386 @@
 <div class="detail-container fade-in" *ngIf="!isLoading()">
-    
-    <div class="nav-header">
-        <a routerLink="/dashboard" class="back-link">
-            <i class="pi pi-arrow-left"></i>
-            <span>Volver al Dashboard</span>
-        </a>
-        <div class="header-actions">
-            <button class="btn-secondary" (click)="exportarInformeGeneral()" [disabled]="!historial().length">
-                <i class="pi pi-file-pdf"></i> Informe General
+  <div class="nav-header">
+    <a routerLink="/dashboard" class="back-link">
+      <i class="pi pi-arrow-left"></i>
+      <span>Volver al Dashboard</span>
+    </a>
+    <div class="header-actions">
+      <button
+        class="btn-secondary"
+        (click)="exportarInformeGeneral()"
+        [disabled]="!historial().length"
+      >
+        <i class="pi pi-file-pdf"></i> Informe General
+      </button>
+      <button class="btn-primary" (click)="irANuevaEvaluacion()">
+        <i class="pi pi-plus"></i> Nueva Evaluación
+      </button>
+    </div>
+  </div>
+
+  <div class="content-grid" *ngIf="patient()">
+    <aside class="profile-column">
+      <div class="profile-card">
+        <div class="profile-cover"></div>
+        <div class="profile-content">
+          <div class="avatar-wrapper">
+            <span class="avatar-text"
+              >{{ patient()?.nombre_completo?.charAt(0) || 'P' }}</span
+            >
+          </div>
+
+          <h2 class="patient-name">{{ patient()?.nombre_completo }}</h2>
+          <p class="patient-role">
+            Paciente Registrado
+            <button
+              class="btn-text"
+              (click)="abrirModalEditar()"
+              style="font-size: 0.8rem; margin-left: 10px; color: #3b82f6"
+            >
+              <i class="pi pi-pencil"></i> Editar
             </button>
-            <button class="btn-primary" (click)="irANuevaEvaluacion()">
-                <i class="pi pi-plus"></i> Nueva Evaluación
-            </button>
+          </p>
+
+          <div
+            class="status-badge"
+            *ngIf="historial().length > 0"
+            [ngClass]="getClassRiesgo(historial()[0].resultado)"
+          >
+            <i class="pi pi-circle-fill"></i>
+            {{ historial()[0].resultado }}
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="info-grid">
+            <div class="info-group">
+              <label>Edad</label>
+              <span>{{ calcularEdad(patient()?.fecha_nacimiento) }} años</span>
+            </div>
+            <div class="info-group">
+              <label>Sexo</label>
+              <span>{{ patient()?.sexo }}</span>
+            </div>
+            <div class="info-group full">
+              <label>Teléfono</label>
+              <span>{{ patient()?.telefono || 'No registrado' }}</span>
+            </div>
+            <div class="info-group full">
+              <label>Fecha Registro</label>
+              <span>{{ patient()?.created_at | date:'dd/MM/yyyy' }}</span>
+            </div>
+          </div>
         </div>
-    </div>
+      </div>
+    </aside>
 
-    <div class="content-grid" *ngIf="patient()">
-        
-        <aside class="profile-column">
-            <div class="profile-card">
-                <div class="profile-cover"></div>
-                <div class="profile-content">
-                    <div class="avatar-wrapper">
-                        <span class="avatar-text">{{ patient()?.nombre_completo?.charAt(0) || 'P' }}</span>
-                    </div>
-                    
-                    <h2 class="patient-name">{{ patient()?.nombre_completo }}</h2>
-                    <p class="patient-role">Paciente Registrado</p>
-                    
-                    <div class="status-badge" *ngIf="historial().length > 0" [ngClass]="getClassRiesgo(historial()[0].nivel_riesgo)">
-                        <i class="pi pi-circle-fill"></i>
-                        {{ historial()[0].nivel_riesgo }}
-                    </div>
+    <main class="analysis-column">
+      <div class="card graph-card">
+        <div class="card-header">
+          <h3><i class="pi pi-chart-line"></i> Evolución del Riesgo (PHQ-9)</h3>
+          <span class="card-subtitle">Últimas 5 evaluaciones</span>
+        </div>
+        <div class="chart-wrapper">
+          <p-chart
+            type="line"
+            [data]="chartData"
+            [options]="chartOptions"
+            style="height: 100%; width: 100%"
+          ></p-chart>
+        </div>
+      </div>
 
-                    <div class="divider"></div>
+      <div class="card history-card">
+        <div class="card-header">
+          <h3><i class="pi pi-history"></i> Historial Clínico</h3>
 
-                    <div class="info-grid">
-                        <div class="info-group">
-                            <label>Edad</label>
-                            <span>{{ patient()?.edad }} años</span>
-                        </div>
-                        <div class="info-group">
-                            <label>Sexo</label>
-                            <span>{{ patient()?.sexo }}</span>
-                        </div>
-                        <div class="info-group full">
-                            <label>Teléfono</label>
-                            <span>{{ patient()?.telefono || 'No registrado' }}</span>
-                        </div>
-                        <div class="info-group full">
-                            <label>Fecha Registro</label>
-                            <span>{{ patient()?.created_at | date:'dd/MM/yyyy' }}</span>
-                        </div>
-                    </div>
+          <button
+            class="btn-text"
+            (click)="exportarHistorialCompleto()"
+            [disabled]="!historial().length"
+          >
+            <i class="pi pi-print" style="margin-right: 5px"></i> Imprimir
+            Historial
+          </button>
+        </div>
+
+        <p-table
+          [value]="historial()"
+          styleClass="p-datatable-gridlines-none modern-table"
+          [rowHover]="true"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 25%">Fecha</th>
+              <th style="width: 25%">Puntaje (0-27)</th>
+              <th style="width: 30%">Nivel de Riesgo</th>
+              <th style="width: 20%"></th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-eval>
+            <tr class="row-card">
+              <td class="date-cell">
+                <i class="pi pi-calendar"></i>
+                {{ eval.fecha | date:'dd/MM/yyyy HH:mm' }}
+              </td>
+              <td>
+                <strong>{{ eval.phq9_puntaje }} pts</strong>
+              </td>
+              <td>
+                <div
+                  class="score-pill"
+                  [ngClass]="getClassRiesgo(eval.resultado)"
+                >
+                  {{ eval.resultado }}
                 </div>
-            </div>
-        </aside>
+              </td>
+              <td style="text-align: right">
+                <button class="btn-action" (click)="verDetalle(eval)">
+                  Ver Detalle <i class="pi pi-chevron-right"></i>
+                </button>
+              </td>
+            </tr>
+          </ng-template>
 
-        <main class="analysis-column">
-            
-            <div class="card graph-card">
-                <div class="card-header">
-                    <h3><i class="pi pi-chart-line"></i> Evolución del Riesgo (PHQ-9)</h3>
-                    <span class="card-subtitle">Últimas 5 evaluaciones</span>
-                </div>
-                <div class="chart-wrapper">
-                    <p-chart type="line" [data]="chartData" [options]="chartOptions" style="height: 100%; width: 100%;"></p-chart>
-                </div>
-            </div>
-
-            <div class="card history-card">
-                <div class="card-header">
-                    <h3><i class="pi pi-history"></i> Historial Clínico</h3>
-                    
-                    <button class="btn-text" (click)="exportarHistorialCompleto()" [disabled]="!historial().length">
-                        <i class="pi pi-print" style="margin-right: 5px;"></i> Imprimir Historial
-                    </button>
-                </div>
-                
-                <p-table [value]="historial()" styleClass="p-datatable-gridlines-none modern-table" [rowHover]="true">
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th style="width: 25%">Fecha</th>
-                            <th style="width: 25%">Puntaje (0-27)</th>
-                            <th style="width: 30%">Nivel de Riesgo</th>
-                            <th style="width: 20%"></th>
-                        </tr>
-                    </ng-template>
-                    
-                    <ng-template pTemplate="body" let-eval>
-                        <tr class="row-card">
-                            <td class="date-cell">
-                                <i class="pi pi-calendar"></i>
-                                {{ eval.fecha | date:'dd/MM/yyyy HH:mm' }}
-                            </td>
-                            <td>
-                                <strong>{{ eval.puntaje_total }} pts</strong>
-                            </td>
-                            <td>
-                                <div class="score-pill" [ngClass]="getClassRiesgo(eval.nivel_riesgo)">
-                                    {{ eval.nivel_riesgo }}
-                                </div>
-                            </td>
-                            <td style="text-align: right;">
-                                <button class="btn-action" (click)="verDetalle(eval)">
-                                    Ver Detalle <i class="pi pi-chevron-right"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </ng-template>
-
-                    <ng-template pTemplate="emptymessage">
-                        <tr>
-                            <td colspan="4" style="text-align: center; padding: 2rem; color: #64748b;">
-                                Este paciente aún no tiene evaluaciones registradas.
-                            </td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
-        </main>
-    </div>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td
+                colspan="4"
+                style="text-align: center; padding: 2rem; color: #64748b"
+              >
+                Este paciente aún no tiene evaluaciones registradas.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </main>
+  </div>
 </div>
 
-<p-dialog 
-    [header]="'Detalle de Evaluación - ' + (selectedEval()?.fecha | date:'shortDate')" 
-    [visible]="displayModal()" 
-    (visibleChange)="displayModal.set($event)"
-    [modal]="true" 
-    [style]="{ width: '50vw', maxWidth: '600px' }" 
-    [draggable]="false" 
-    [resizable]="false"
-    [closable]="true">
-    
-    <div class="result-content" *ngIf="selectedEval()">
-        
-        <div class="verdict-section">
-            <h3 class="result-title">Resultado Histórico</h3>
-            
-            <div class="gauge-wrapper" style="width: 250px; margin: 0 auto; position: relative;">
-                <p-chart type="doughnut" [data]="gaugeData" [options]="gaugeOptions" height="180px"></p-chart>
-                <div class="gauge-center-text" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
-                    <span class="percentage" style="font-size: 3rem; font-weight: 800; display: block; line-height: 1;">{{ selectedEval()?.puntaje_total }}</span>
-                    <span class="label" style="font-size: 1rem; font-weight: 700; color: #64748b;">Puntos</span>
-                </div>
-            </div>
+<p-dialog
+  [header]="'Detalle de Evaluación - ' + (selectedEval()?.fecha | date:'shortDate')"
+  [visible]="displayModal()"
+  (visibleChange)="displayModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '50vw', maxWidth: '600px' }"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="true"
+>
+  <div class="result-content" *ngIf="selectedEval()">
+    <div class="verdict-section">
+      <h3 class="result-title">Resultado Histórico</h3>
 
-            <p class="result-description" style="margin-top: -10px; color: #64748b;">
-                Diagnóstico guardado: <strong [ngClass]="getClassRiesgo(selectedEval()?.nivel_riesgo)">{{ selectedEval()?.nivel_riesgo }}</strong>.
-            </p>
+      <div
+        class="gauge-wrapper"
+        style="width: 250px; margin: 0 auto; position: relative"
+      >
+        <p-chart
+          type="doughnut"
+          [data]="gaugeData"
+          [options]="gaugeOptions"
+          height="180px"
+        ></p-chart>
+        <div
+          class="gauge-center-text"
+          style="
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+          "
+        >
+          <span
+            class="percentage"
+            style="
+              font-size: 3rem;
+              font-weight: 800;
+              display: block;
+              line-height: 1;
+            "
+            >{{ selectedEval()?.phq9_puntaje }}</span
+          >
+          <span
+            class="label"
+            style="font-size: 1rem; font-weight: 700; color: #64748b"
+            >Puntos</span
+          >
         </div>
+      </div>
 
-        <hr class="divider" style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0;">
-
-        <div class="xai-section" style="background: #f8fafc; padding: 20px; border-radius: 12px; text-align: left;">
-            <h3 class="xai-title" style="margin: 0 0 15px 0; font-size: 1rem; color: #1e293b;">
-                <i class="pi pi-bolt"></i> Factores Clave (XAI)
-            </h3>
-            
-            <div class="shap-chart-container">
-                <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
-            </div>
-        </div>
-
-        <div class="modal-footer" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-            <button class="btn-secondary" (click)="displayModal.set(false)">Cerrar</button>
-        </div>
-
+      <p class="result-description" style="margin-top: -10px; color: #64748b">
+        Diagnóstico guardado:
+        <strong [ngClass]="getClassRiesgo(selectedEval()?.resultado)"
+          >{{ selectedEval()?.resultado }}</strong
+        >.
+      </p>
     </div>
+
+    <hr
+      class="divider"
+      style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0"
+    />
+
+    <div
+      class="xai-section"
+      style="
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: left;
+      "
+    >
+      <h3
+        class="xai-title"
+        style="margin: 0 0 15px 0; font-size: 1rem; color: #1e293b"
+      >
+        <i class="pi pi-bolt"></i> Factores Clave (XAI)
+      </h3>
+
+      <div class="shap-chart-container">
+        <p-chart
+          type="bar"
+          [data]="shapData"
+          [options]="shapOptions"
+          height="200px"
+        ></p-chart>
+      </div>
+    </div>
+
+    <hr
+      class="divider"
+      style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0"
+    />
+
+    <div
+      class="clinical-notes-section"
+      style="display: grid; grid-template-columns: 1fr; gap: 15px"
+    >
+      <div
+        class="ai-feedback-box"
+        style="
+          background: #eff6ff;
+          border: 1px solid #bfdbfe;
+          padding: 15px;
+          border-radius: 10px;
+        "
+      >
+        <h4
+          style="
+            margin: 0 0 10px 0;
+            color: #1e40af;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          "
+        >
+          <i class="pi pi-sparkles"></i> Análisis Sugerido por IA
+        </h4>
+        <p
+          style="margin: 0; font-size: 0.9rem; color: #1e3a8a; line-height: 1.5"
+        >
+          {{ selectedEval()?.ia_feedback || 'Inferencia pendiente / No
+          disponible.' }}
+        </p>
+      </div>
+
+      <div
+        class="doctor-notes-box"
+        style="
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          padding: 15px;
+          border-radius: 10px;
+        "
+      >
+        <h4
+          style="
+            margin: 0 0 10px 0;
+            color: #334155;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          "
+        >
+          <i class="pi pi-user-edit"></i> Notas Clínicas del Médico
+        </h4>
+        <textarea
+          class="form-input"
+          rows="3"
+          style="
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            resize: vertical;
+          "
+          placeholder="Escribe tus observaciones clínicas aquí..."
+          [value]="selectedEval()?.notas_doctor || ''"
+          readonly
+        >
+        </textarea>
+      </div>
+    </div>
+    <div
+      class="modal-footer"
+      style="
+        margin-top: 25px;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+      "
+    >
+      <button class="btn-secondary" (click)="displayModal.set(false)">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<p-dialog 
+    header="Editar Datos del Paciente" 
+    [visible]="displayEditModal()" 
+    (visibleChange)="displayEditModal.set($event)"
+    [modal]="true" 
+    [style]="{ width: '90vw', maxWidth: '500px'}">
+    
+    <form [formGroup]="editForm" (ngSubmit)="guardarEdicion()" style="padding: 15px;">
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label class="form-label">Nombre Completo</label>
+            <input type="text" class="form-input" formControlName="nombre_completo" style="width: 100%;">
+        </div>
+        
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group">
+                <label class="form-label">Fecha de Nacimiento</label>
+                <input type="date" class="form-input" formControlName="fecha_nacimiento" style="width: 100%;">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sexo</label>  
+                <select class="form-input native-select" formControlName="sexo" style="width: 100%;">
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label class="form-label">Teléfono</label>
+            <input type="tel" class="form-input" formControlName="telefono" style="width: 100%;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" class="btn-secondary" (click)="displayEditModal.set(false)">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="editForm.invalid">Guardar Cambios</button>
+        </div>
+    </form>
 </p-dialog>

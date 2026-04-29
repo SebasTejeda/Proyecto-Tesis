@@ -27,7 +27,7 @@ export class AuthService {
   }
 
   register(data: RegisterData): Observable<UserResponse> {
-    return this.http.post<UserResponse>(`${this.apiUrl}/usuarios/`, data);
+    return this.http.post<UserResponse>(`${this.apiUrl}/users/`, data);
   }
 
   login(email: string, password: string, recordarme: boolean): Observable<AuthResponse> {
@@ -39,7 +39,7 @@ export class AuthService {
       'Content-Type': 'application/x-www-form-urlencoded'
     });
 
-    return this.http.post<AuthResponse>(`${this.apiUrl}/token`, body, { headers }).pipe(
+    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/token`, body, { headers }).pipe(
       tap(res => {
         if (res.access_token) {
           const storage = recordarme ? localStorage : sessionStorage;
@@ -96,19 +96,16 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
-  verifyCode(email: string, codigo: string) {
+verifyCode(email: string, codigo: string) {
     return this.http.post(`${this.apiUrl}/auth/verify-code`, { email, codigo });
   }
 
   resetPassword(email: string, codigo: string, new_password: string) {
-    return this.http.post(`${this.apiUrl}/auth/reset-password`, {
-      email,
-      codigo,
-      new_password
-    });
+    return this.http.post(`${this.apiUrl}/auth/reset-password`, { email, codigo, new_password });
   }
 
   verifyAccount(email: string, codigo: string) {
+    // ¡La que usará Axel ahora mismo!
     return this.http.post(`${this.apiUrl}/auth/verify-account`, { email, codigo });
   }
 

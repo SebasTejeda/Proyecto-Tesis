@@ -12,10 +12,14 @@ export interface EvaluationCreate {
     historial_familiar?: string;
 }
 
-export interface EvaluationResponse extends EvaluationCreate {
+// Reemplaza tu EvaluationResponse por este:
+export interface EvaluationResponse {
     id: number;
-    puntaje_total: number;
-    nivel_riesgo: string;
-    resultado_ia?: string;
+    patient_id: number;
     fecha: string;
+    phq9_puntaje: number; // <-- Nuevo nombre
+    resultado: string;    // <-- Nuevo nombre
+    ia_feedback?: string;
+    notas_doctor?: string;
+    status: string;
 }

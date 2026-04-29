@@ -38,7 +38,12 @@ def login_para_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db
     }
 
     access_token = utils.HashUtils.create_access_token(data=token_data)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "user_id": user.id,      # <--- Agregado
+        "role": user.role        # <--- Agregado
+    }
 
 @router.post("/google", response_model=schemas.Token, summary="Inicio de sesión con Google (SSO)")
 def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(get_db)):
@@ -88,7 +93,7 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
         "picture": user.picture
     }
     access_token = utils.HashUtils.create_access_token(data=token_data)
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer", "user_id": user.id, "role": user.role}
 
 @router.post("/verify-account", summary="Verificación de cuenta nueva")
 def verify_account(request: schemas.VerifyCodeRequest, db: Session = Depends(get_db)):
