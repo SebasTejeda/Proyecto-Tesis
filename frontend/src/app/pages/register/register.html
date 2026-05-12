@@ -1,8 +1,8 @@
-<div class="register-container">
+<div class="register-container fade-in">
     
     <div class="page-header center-header">
         <h1 class="welcome-text">Registrar Nuevo Paciente</h1>
-        <p class="page-subtitle">Ingresa los datos para crear un nuevo expediente.</p>
+        <p class="page-subtitle">Apertura de expediente clínico en NeuroMind AI.</p>
     </div>
 
     <div class="form-card centered-card">
@@ -11,38 +11,49 @@
             <div class="form-grid">
                 <div class="form-group full-width">
                     <label class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-input" formControlName="nombre" placeholder="Ej: Juan Pérez">
+                    <input type="text" class="form-input" 
+                           [class.error-border]="registerForm.get('nombre_completo')?.invalid && registerForm.get('nombre_completo')?.touched"
+                           formControlName="nombre_completo" placeholder="Ej: Juan Pérez">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Edad</label>
-                        <input type="number" class="form-input" formControlName="edad" placeholder="Ej: 30">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <input type="date" class="form-input" 
+                               [class.error-border]="registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched"
+                               formControlName="fecha_nacimiento">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Sexo</label>  
-                        <select class="form-input" formControlName="sexo">
-                            <option value="">Seleccionar...</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Femenino</option>
-                            <option value="O">Otro</option>
-                        </select>
+                        <div class="custom-select-wrapper">
+                            <select class="form-input" style="width: 100%;" 
+                                    [class.error-border]="registerForm.get('sexo')?.invalid && registerForm.get('sexo')?.touched"
+                                    formControlName="sexo">
+                                <option value="" disabled selected>Seleccionar...</option>
+                                <option value="Masculino">Masculino</option>
+                                <option value="Femenino">Femenino</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group full-width">
-                    <label class="form-label">Teléfono</label>
-                    <input type="tel" class="form-input" formControlName="telefono" placeholder="+51 999 999 999">
+                    <label class="form-label">Teléfono (Opcional)</label>
+                    <input type="tel" class="form-input" 
+                           [class.error-border]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched"
+                           formControlName="telefono" placeholder="+51 999 999 999">
                 </div>
             </div>
 
             <div class="form-actions centered-actions">
-                <button type="submit" class="btn-primary" [disabled]="registerForm.invalid">
-                    <i class="pi pi-save" style="margin-right: 8px;"></i> Guardar Paciente
+                <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading()">
+                    <i class="pi pi-save" style="margin-right: 8px;"></i> 
+                    {{ isLoading() ? 'Guardando...' : 'Guardar Expediente' }}
                 </button>
             </div>
 
         </form>
     </div>
-</div> 
+</div>

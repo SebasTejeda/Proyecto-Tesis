@@ -1,20 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { EvaluationCreate, EvaluationResponse } from '../../models/evaluations';
 
 @Injectable({
   providedIn: 'root'
 })
 export class EvaluationService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000';
+  private readonly apiUrl = environment.apiUrl;
 
-  private getHeaders() {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({ 'Authorization': `Bearer ${token}` });
+  createEvaluation(data: EvaluationCreate): Observable<EvaluationResponse> {
+    return this.http.post<EvaluationResponse>(`${this.apiUrl}/evaluations/`, data)
   }
 
-  createEvaluation(data: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/evaluations/`, data, { headers: this.getHeaders() });
+  getPatientEvaluations(patientId: number): Observable<EvaluationResponse[]> {
+    return this.http.get<EvaluationResponse[]>(`${this.apiUrl}/evaluations/patient/${patientId}`);
   }
 }

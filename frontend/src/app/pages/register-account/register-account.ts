@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
-import { AuthService, RegisterData } from '../../services/auth/auth';
+import { AuthService } from '../../services/auth/auth';
 import { AlertService } from '../../services/alert/alert';
+import { RegisterData } from '../../models/auth';
 
 @Component({
   selector: 'app-register-account',
@@ -17,12 +18,11 @@ export class RegisterAccountComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
-  private cdr = inject(ChangeDetectorRef);
   private alertService = inject(AlertService);
 
-  currentStep: number = 1;
-  emailRegistrado: string = '';
-  isLoading: boolean = false;
+  currentStep = signal(1);
+  emailRegistrado = signal('');
+  isLoading = signal(false);
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
@@ -30,79 +30,83 @@ export class RegisterAccountComponent {
     return password === confirm ? null : { mismatch: true };
   }
 
-  registerForm = this.fb.group({
+  registerForm = this.fb.nonNullable.group({
     nombres: ['', [Validators.required, Validators.minLength(2)]],
     apellidos: ['', [Validators.required, Validators.minLength(2)]],
-    codigo_colegiatura: ['', [Validators.required, Validators.minLength(4)]], 
+    codigo_colegiatura: ['', [Validators.required, Validators.minLength(4)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', [Validators.required]]
   }, { validators: this.passwordMatchValidator });
 
-  // PASO 1: Enviar datos y recibir el código
   onSubmit() {
     if (this.registerForm.invalid) {
-        this.alertService.error('Formulario Inválido', 'Por favor revisa todos los campos.');
-        return;
+      this.registerForm.markAllAsTouched();
+      this.alertService.error('Formulario Inválido', 'Por favor revisa todos los campos.');
+      return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
+    this.alertService.loading('Registrando y enviando código...');
+
+    const {nombres, apellidos, codigo_colegiatura, email, password} = this.registerForm.getRawValue();
 
     const formData: RegisterData = {
-      nombres: this.registerForm.value.nombres!,
-      apellidos: this.registerForm.value.apellidos!,
-      codigo_colegiatura: this.registerForm.value.codigo_colegiatura!,
-      email: this.registerForm.value.email!,
-      password: this.registerForm.value.password!
+      nombres, apellidos, codigo_colegiatura, email, password
     };
 
-    this.alertService.loading('Registrando y enviando código...');
-    
     this.authService.register(formData)
       .pipe(
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        })
-      )
+        finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
-          this.emailRegistrado = formData.email;
-          this.currentStep = 2; 
+          this.emailRegistrado.set(email);
+          this.currentStep.set(2);
           this.alertService.success('¡Registro Exitoso!', 'Te hemos enviado un código a tu correo.');
         },
         error: (err) => {
-          if (err.status === 400) {
-            this.alertService.error('Error de Registro', 'El correo electrónico ya está registrado.');
-          } else {
-            this.alertService.error('Error', 'No se pudo crear la cuenta. Intenta nuevamente.');
-          }
+          const detail = err.error?.detail;
+          const msg = detail === 'El correo ya está registrado.'
+                      ? detail
+                      : 'No se pudo crear la cuenta. Intenta nuevamente.';
+          this.alertService.error('Error de Registro', msg);
         }
       });
   }
 
-  // PASO 2: Verificar el código ingresado
   onVerifyCode(codigo: string) {
     if (!codigo || codigo.length !== 4) {
-      this.alertService.error('Error', 'El código debe tener 4 dígitos.');
+      this.alertService.error('Código Inválido', 'El código debe tener 4 dígitos.');
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.alertService.loading('Verificando cuenta...');
 
-    this.authService.verifyAccount(this.emailRegistrado, codigo)
-      .pipe(finalize(() => { 
-          this.isLoading = false; 
-          this.cdr.detectChanges(); 
-      }))
+    this.authService.verifyAccount(this.emailRegistrado(), codigo)
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
           this.alertService.success('¡Cuenta Verificada!', 'Bienvenido a NeuroMind AI. Ahora puedes iniciar sesión.');
           this.router.navigate(['/login']);
         },
-        error: () => {
-          this.alertService.error('Error', 'Código incorrecto. Verifica tu correo.');
+        error: (err) => {
+          // --- NUEVO MANEJO DE ERRORES INTELIGENTE ---
+          let msg = 'Código incorrecto. Intenta nuevamente.';
+          
+          if (err.error?.detail) {
+            if (typeof err.error.detail === 'string') {
+              // Si es un mensaje simple (ej. "Código expirado")
+              msg = err.error.detail;
+            } else if (Array.isArray(err.error.detail)) {
+              // Si es un error 422 de Pydantic, extraemos el campo exacto que falló
+              const campoFallido = err.error.detail[0].loc[err.error.detail[0].loc.length - 1];
+              msg = `Falta el campo o tiene formato incorrecto: ${campoFallido}`;
+            }
+          }
+          // -------------------------------------------
+          
+          this.alertService.error('Error de Verificación', msg);
         }
       });
   }

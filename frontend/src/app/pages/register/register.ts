@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 
@@ -13,32 +14,47 @@ import { PatientService } from '../../services/patients/patient';
 })
 export class RegisterComponent {
   private fb = inject(FormBuilder);
-  private alertService = inject(AlertService); // Asegúrate de tener un AlertService para mostrar alertas
-  private patientService = inject(PatientService); // Inyecta el servicio de pacientes
+  private alertService = inject(AlertService);
+  private patientService = inject(PatientService);
+  private router = inject(Router);
 
-  registerForm: FormGroup = this.fb.group({
-    nombre: ['', Validators.required],
-    edad: ['', [Validators.required, Validators.min(0)]],
+  isLoading = signal(false);
+
+  // Formulario actualizado con los nombres exactos del Backend (Pydantic)
+  registerForm = this.fb.nonNullable.group({
+    nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
+    fecha_nacimiento: ['', Validators.required], // Ahora es una fecha (String YYYY-MM-DD)
     sexo: ['', Validators.required],
-    telefono: ['']
+    telefono: ['', [Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')]]
   });
 
   onSubmit() {
     if (this.registerForm.invalid) {
-      this.alertService.error('Error', 'Completa los campos obligatorios.');
-      return
+      this.registerForm.markAllAsTouched();
+      this.alertService.error('Formulario Inválido', 'Por favor, completa los campos requeridos marcados en rojo.');
+      return;
     }
 
+    this.isLoading.set(true);
     this.alertService.loading('Registrando paciente...');
 
-    this.patientService.createPatient(this.registerForm.value).
-    subscribe({
-      next: (res) => {
-        this.alertService.success('¡Registrado!', `Paciente ${res.nombre_completo} guardado exitosamente.`);
+    const patientData = this.registerForm.getRawValue();
+
+    this.patientService.createPatient(patientData).subscribe({
+      next: (response: any) => {
+        this.isLoading.set(false);
+        this.alertService.success('¡Registro Exitoso!', `El paciente ${response.nombre_completo} ha sido guardado.`, true);
+        
         this.registerForm.reset();
+        
+        // Redirige al expediente del paciente usando el nuevo ID
+        this.router.navigate(['/dashboard/patient', response.id]);
       },
       error: (err) => {
-        this.alertService.error('Error', 'Ocurrió un error al registrar el paciente.');
+        this.isLoading.set(false);
+        this.alertService.close();
+        this.alertService.error('Error', 'No se pudo guardar el paciente en la base de datos.');
+        console.error(err);
       }
     });
   }

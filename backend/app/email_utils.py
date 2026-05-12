@@ -1,21 +1,23 @@
+import os
+from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from pydantic import EmailStr
 from typing import List
 
-# --- CONFIGURACIÓN ---
+load_dotenv(override=True)
+
 conf = ConnectionConfig(
-    MAIL_USERNAME = "tejedasebastian129@gmail.com",
-    MAIL_PASSWORD = "iydx qfyo bpoi wchv",
-    MAIL_FROM = "tejedasebastian129@gmail.com",
-    MAIL_PORT = 587,
-    MAIL_SERVER = "smtp.gmail.com",
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME"),
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD"),
+    MAIL_FROM = os.getenv("MAIL_FROM"),
+    MAIL_PORT = int(os.getenv("MAIL_PORT")),
+    MAIL_SERVER = os.getenv("MAIL_SERVER"),
     MAIL_STARTTLS = True,
     MAIL_SSL_TLS = False,
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = True
 )
 
-# Función 1: Recuperación de contraseña (YA LA TENÍAS)
 async def enviar_correo_recuperacion(email_destino: EmailStr, codigo: str):
     html = f"""
     <html>

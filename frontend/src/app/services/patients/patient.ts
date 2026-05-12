@@ -1,36 +1,29 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface PatientData {
-  nombre: string;
-  edad: number;
-  sexo: string;
-  telefono?: string;
-}
+import { environment } from '../../../environments/environment';
+import { PatientData, Patient } from '../../models/patients';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PatientService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000'; // Tu URL backend
+  private apiUrl = environment.apiUrl;
 
-  // Helper para headers con token
-  private getHeaders() {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
+  createPatient(data: PatientData): Observable<Patient> {
+    return this.http.post<Patient>(`${this.apiUrl}/patients/`, data);
   }
 
-  // Crear paciente
-  createPatient(data: PatientData): Observable<any> {
-    return this.http.post(`${this.apiUrl}/patients/`, data, { headers: this.getHeaders() });
+  getPatients(): Observable<Patient[]> {
+    return this.http.get<Patient[]>(`${this.apiUrl}/patients/`);
   }
 
-  // Obtener lista de pacientes
-  getPatients(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/patients/`, { headers: this.getHeaders() });
+  getPatientById(id: number): Observable<Patient> {
+    return this.http.get<Patient>(`${this.apiUrl}/patients/${id}/`);
+  }
+
+  updatePatient(id: number, patientData: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/patients/${id}`, patientData);
   }
 }

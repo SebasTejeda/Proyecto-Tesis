@@ -1,0 +1,116 @@
+<div class="page-section fade-in">
+  <div class="page-header">
+    <h1 class="welcome-text">Panel de Control</h1>
+    <p class="page-subtitle">Resumen de actividad clínica</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Pacientes Totales</div>
+        <div class="stat-icon-box blue">
+          <i class="pi pi-users"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ totalPacientes() }}</div>
+      <div class="stat-change">Pacientes registrados</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Evaluaciones Hoy</div>
+        <div class="stat-icon-box teal">
+          <i class="pi pi-clipboard"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ evaluacionesHoy() }}</div>
+      <div class="stat-change">Actividad reciente</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Casos Alto Riesgo</div>
+        <div class="stat-icon-box coral">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ casosAltoRiesgo() }}</div>
+      <div class="stat-change warn-text">Requieren atención</div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="section-header">
+      <h2 class="section-title">Últimos Pacientes Evaluados</h2>
+      
+      <div class="search-box">
+        <i class="pi pi-search search-icon-i"></i>
+        <input 
+          type="text" 
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+          placeholder="Buscar paciente..." 
+          class="search-input"
+        />
+      </div>
+    </div>
+
+    <p-table 
+      #dt
+      [value]="pacientes()" 
+      [paginator]="true" 
+      [rows]="10" 
+      [resizableColumns]="true" 
+      columnResizeMode="expand"
+      [globalFilterFields]="['nombre_completo', 'riesgo']"
+      [tableStyle]="{ 'min-width': '100%' }"
+      [loading]="isLoading()">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="nombre_completo" pResizableColumn>
+            Paciente <p-sortIcon field="nombre_completo"></p-sortIcon>
+          </th>
+          <th pSortableColumn="fecha_raw" pResizableColumn>
+            Última Eval. <p-sortIcon field="fecha_raw"></p-sortIcon>
+          </th>
+          <th pSortableColumn="edad" pResizableColumn>
+            Edad <p-sortIcon field="edad"></p-sortIcon>
+          </th>
+          <th pSortableColumn="prob" pResizableColumn>
+            Riesgo Estimado <p-sortIcon field="prob"></p-sortIcon>
+          </th>
+          <th pSortableColumn="riesgo" pResizableColumn>
+            Estado <p-sortIcon field="riesgo"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-p>
+        <tr>
+          <td class="patient-name" [routerLink]="['/dashboard/patient', p.id]">
+            {{ p.nombre_completo }}
+          </td>
+          <td>{{ p.fecha_ultima_eval }}</td>
+          <td>{{ p.edad }} {{ p.edad !== '--' ? 'años' : '' }}</td>
+          <td>
+             <span *ngIf="p.riesgo !== 'Sin evaluar'">{{ p.prob }}%</span>
+             <span *ngIf="p.riesgo === 'Sin evaluar'" style="color: #94a3b8;">--</span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)" [style.background]="p.riesgo === 'Sin evaluar' ? '#f1f5f9' : ''" [style.color]="p.riesgo === 'Sin evaluar' ? '#64748b' : ''">
+              {{ p.riesgo }}
+            </span>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="empty-state">
+            No se encontraron pacientes registrados.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
