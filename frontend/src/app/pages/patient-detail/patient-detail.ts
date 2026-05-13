@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart'; 
@@ -33,6 +33,9 @@ export class PatientDetailComponent implements OnInit {
   patient = signal<any | null>(null);
   historial = signal<any[]>([]);
   isLoading = signal(true);
+
+  paginaActual = signal(1);
+  itemsPorPagina = 4;
 
   // Datos de Gráficos
   chartData: any;
@@ -275,5 +278,27 @@ export class PatientDetailComponent implements OnInit {
       },
       error: () => this.alertService.error('Error', 'No se pudo actualizar el paciente.')
     });
+  }
+
+  historialPaginado = computed(() => {
+    const inicio = (this.paginaActual() - 1) * this.itemsPorPagina;
+    const fin = inicio + this.itemsPorPagina;
+    return this.historial().slice(inicio, fin);
+  })
+
+  totalPaginas = computed(() => {
+    return Math.ceil(this.historial().length / this.itemsPorPagina) || 1;
+  })
+
+  paginaSiguiente() {
+    if(this.paginaActual() < this.totalPaginas()) {
+      this.paginaActual.update(p => p + 1);
+    }
+  }
+
+  paginaAnterior() {
+    if(this.paginaActual() > 1) {
+      this.paginaActual.update(p => p - 1);
+    }
   }
 }

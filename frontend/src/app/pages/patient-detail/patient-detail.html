@@ -105,10 +105,14 @@
         </div>
 
         <p-table
-          [value]="historial()"
-          styleClass="p-datatable-gridlines-none modern-table"
-          [rowHover]="true"
-        >
+  [value]="historial()"
+  styleClass="p-datatable-gridlines-none modern-table"
+  [rowHover]="true"
+  [paginator]="true"
+  [rows]="3"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords} evaluaciones"
+>
           <ng-template pTemplate="header">
             <tr>
               <th style="width: 25%">Fecha</th>

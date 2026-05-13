@@ -8,70 +8,66 @@ from .. import models, schemas
 
 router = APIRouter()
 
+
 @router.post("/", response_model=schemas.EvaluationResponse, status_code=status.HTTP_201_CREATED)
 def create_evaluation(
-    eval_data: schemas.EvaluationCreate, 
+    eval_data: schemas.EvaluationCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Crea una nueva evaluación, separando síntomas y datos extra en tablas relacionales."""
-    
-    # 1. Seguridad: Verificar que el paciente exista y pertenezca a este doctor
+    """
+    Crea una nueva evaluación con sus features de entrada.
+    La predicción del modelo (ModelPrediction) y las recomendaciones (Recommendation)
+    se generan en un paso posterior cuando el modelo XGBoost esté integrado.
+    """
+
+    # 1. Verificar que el paciente pertenezca al doctor autenticado
     patient = db.query(models.Patient).filter(
         models.Patient.id == eval_data.patient_id,
         models.Patient.doctor_id == current_user.id
     ).first()
-    
+
     if not patient:
         raise HTTPException(status_code=403, detail="Paciente no autorizado o no encontrado")
 
-    # 2. Cálculo manual del PHQ-9 (Sumando los 9 síntomas del esquema anidado)
-    s = eval_data.symptoms
-    puntaje = sum([
-        s.interes_poco_placer, s.desanimado_deprimido, s.dificultad_dormir,
-        s.sentirse_cansado, s.poco_apetito, s.sentirse_mal_consigo_mismo,
-        s.dificultad_concentracion, s.moverse_hablar_lento_rapido, s.pensamientos_muerte
-    ])
-
-    # 3. Clasificación clínica estándar
-    if puntaje <= 4:
-        riesgo = "Mínimo"
-    elif puntaje <= 9:
-        riesgo = "Leve"
-    elif puntaje <= 14:
-        riesgo = "Moderado"
-    elif puntaje <= 19:
-        riesgo = "Moderadamente Severo"
-    else:
-        riesgo = "Severo"
-
-    # 4. TODO: Conexión con XGBoost y SHAP (Aquí se llamará al modelo con eval_data.extra_data)
-    feedback_ia = "Inferencia pendiente"
-
-    # 5. Guardar en Base de Datos (Estructura Relacional)
     try:
-        # Paso A: Crear la "Cabecera" de la evaluación
+        # 2. Crear la cabecera de la evaluación
         new_eval = models.Evaluation(
             patient_id=eval_data.patient_id,
-            phq9_puntaje=puntaje,
-            resultado=riesgo,
-            ia_feedback=feedback_ia,
-            notas_doctor=eval_data.notas_doctor,
-            status="Completado"
+            doctor_notes=eval_data.doctor_notes,
+            status="Pendiente"   # Pasa a "Completado" una vez que el modelo infiera
         )
-        
-        # Paso B: Asignar los datos anidados usando las relaciones de SQLAlchemy.
-        # NOTA: model_dump() es para Pydantic v2. Si usas v1, cámbialo por dict()
-        new_eval.symptoms = models.PHQ9Symptoms(**eval_data.symptoms.model_dump())
-        new_eval.extra_data = models.ExtraDataPatient(**eval_data.extra_data.model_dump())
-        
-        # Paso C: Guardar (SQLAlchemy es inteligente y guardará en las 3 tablas en orden correcto)
+
+        # 3. Guardar las features de entrada del modelo
+        new_eval.model_features = models.ModelFeatures(
+            **eval_data.model_features.model_dump()
+        )
+
+        # 4. TODO: Llamar al modelo XGBoost con las features y guardar ModelPrediction
+        #    Ejemplo de integración futura:
+        #
+        #    prediction = xgboost_service.predict(eval_data.model_features)
+        #
+        #    new_eval.model_prediction = models.ModelPrediction(
+        #        risk_binary=prediction.risk_binary,
+        #        risk_probability=prediction.risk_probability,
+        #        severity=prediction.severity,
+        #        severity_probability=prediction.severity_probability,
+        #        shap_values=prediction.shap_values
+        #    )
+        #
+        #    new_eval.recommendations = [
+        #        models.Recommendation(**r) for r in prediction.recommendations
+        #    ]
+        #
+        #    new_eval.status = "Completado"
+
         db.add(new_eval)
         db.commit()
         db.refresh(new_eval)
-        
+
         return new_eval
-        
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al guardar evaluación: {str(e)}")
@@ -79,27 +75,51 @@ def create_evaluation(
 
 @router.get("/patient/{patient_id}", response_model=List[schemas.EvaluationResponse])
 def get_patient_evaluations(
-    patient_id: int, 
+    patient_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Retorna el historial completo, incluyendo la data relacional de síntomas y extras."""
-    
-    # Seguridad de aislamiento
+    """Retorna el historial completo de evaluaciones de un paciente, con features, predicción y recomendaciones."""
+
+    # Verificar acceso
     patient = db.query(models.Patient).filter(
         models.Patient.id == patient_id,
         models.Patient.doctor_id == current_user.id
     ).first()
-    
+
     if not patient:
         raise HTTPException(status_code=403, detail="Paciente no autorizado")
 
-    # Hacemos joinedload para traer las 3 tablas cruzadas en 1 sola consulta SQL (Optimización)
+    # joinedload trae las 4 tablas relacionadas en una sola consulta SQL
     evaluations = db.query(models.Evaluation).options(
-        joinedload(models.Evaluation.symptoms),
-        joinedload(models.Evaluation.extra_data)
+        joinedload(models.Evaluation.model_features),
+        joinedload(models.Evaluation.model_prediction),
+        joinedload(models.Evaluation.recommendations)
     ).filter(
         models.Evaluation.patient_id == patient_id
-    ).order_by(models.Evaluation.fecha.desc()).all()
-    
+    ).order_by(models.Evaluation.date.desc()).all()
+
     return evaluations
+
+
+@router.get("/{evaluation_id}", response_model=schemas.EvaluationResponse)
+def get_evaluation(
+    evaluation_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Retorna el detalle completo de una evaluación específica."""
+
+    evaluation = db.query(models.Evaluation).options(
+        joinedload(models.Evaluation.model_features),
+        joinedload(models.Evaluation.model_prediction),
+        joinedload(models.Evaluation.recommendations)
+    ).join(models.Patient).filter(
+        models.Evaluation.id == evaluation_id,
+        models.Patient.doctor_id == current_user.id
+    ).first()
+
+    if not evaluation:
+        raise HTTPException(status_code=404, detail="Evaluación no encontrada o acceso denegado")
+
+    return evaluation

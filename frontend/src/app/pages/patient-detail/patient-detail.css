@@ -1,15 +1,40 @@
 /* --- LAYOUT GENERAL --- */
+/* --- LAYOUT GENERAL --- */
 .detail-container {
     padding: 2rem 3rem;
-    background-color: #f8fafc; /* Fondo gris muy suave */
-    min-height: 100vh;
+    background-color: #f8fafc;
+    height: 100vh; /* Fijo a la altura exacta de la ventana */
+    box-sizing: border-box; /* CRÍTICO: Evita que el padding sume altura extra */
+    overflow: hidden; /* Mantiene tu regla de oro: el body no hace scroll */
+    display: flex;
+    flex-direction: column; /* Apila el header y el grid */
 }
 
 .content-grid {
     display: grid;
-    grid-template-columns: 320px 1fr; /* Sidebar fijo, contenido flexible */
+    grid-template-columns: 320px 1fr;
     gap: 2rem;
     align-items: start;
+    flex: 1; /* Toma todo el espacio que sobra debajo del nav-header */
+    overflow: hidden; /* Evita que el grid rompa el contenedor */
+}
+
+.analysis-column {
+    height: 100%; /* Toma la altura exacta del grid */
+    overflow-y: auto; /* Solo esta parte hace scroll si el contenido es muy largo */
+    padding-right: 15px; /* Evita que el contenido choque con la barra */
+}
+
+/* Opcional: Una barra de scroll súper delgada y elegante tipo Mac */
+.analysis-column::-webkit-scrollbar {
+    width: 6px;
+}
+.analysis-column::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+.analysis-column::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* --- HEADER DE NAVEGACIÓN --- */
@@ -208,10 +233,7 @@
 .btn-icon:hover { color: #3b82f6; }
 
 /* Responsive */
-@media (max-width: 900px) {
-    .content-grid { grid-template-columns: 1fr; }
-    .profile-card { position: static; margin-bottom: 2rem; }
-}
+
 
 /* --- ESTILO TABLA PREMIUM --- */
 
@@ -400,4 +422,129 @@
 .btn-secondary:hover {
     background-color: #f1f5f9;
     color: #1e293b;
+}
+
+/* --- ESTILOS DE PAGINACIÓN --- */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 25px;
+  padding-top: 15px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.page-btn {
+  background-color: white;
+  border: 1px solid #E2E8F0;
+  color: #475569;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #F8FAFC;
+  border-color: #CBD5E1;
+  color: #1E293B;
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #F8FAFC;
+}
+
+.page-info {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+}
+
+/* ========================================= */
+/* 📱 RESPONSIVE DESIGN (MÓVILES Y TABLETS)  */
+/* ========================================= */
+
+@media (max-width: 1400px) {
+    /* 1. Reducir los márgenes gigantes del contenedor principal */
+    .detail-container {
+        padding: 1rem; /* Pasamos de 3rem a 1rem para aprovechar la pantalla */
+        height: auto;  /* Quitamos la altura fija de escritorio */
+        display: block; /* Quitamos el flex estricto */
+    }
+
+    /* 2. Colapsar las columnas (Perfil arriba, Gráficos y Tabla abajo) */
+    .content-grid {
+        grid-template-columns: 1fr; /* Todo en 1 sola columna */
+        gap: 1.5rem;
+    }
+
+    /* 3. Descongelar la tarjeta de perfil (ya no se queda pegada al hacer scroll) */
+    .profile-card {
+        position: relative;
+        top: 0;
+        margin-bottom: 1rem;
+    }
+
+    /* 4. Liberar la columna derecha para que fluya naturalmente */
+    .analysis-column {
+        height: auto;
+        overflow-y: visible;
+        padding-right: 0;
+    }
+}
+
+/* ========================================= */
+/* 📱 CELULARES PEQUEÑOS (PANTALLAS < 600px) */
+/* ========================================= */
+
+@media (max-width: 600px) {
+    /* 1. Apilar los botones del header si no hay espacio */
+    .nav-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap; /* Si los botones no caben, bajan de línea */
+        gap: 0.5rem;
+    }
+
+    /* Reducimos el tamaño de los botones para que entren mejor */
+    .btn-primary, .btn-secondary {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.8rem;
+        flex: 1; /* Hacemos que ocupen el ancho disponible */
+        justify-content: center;
+    }
+
+    /* 2. Reducir el padding de las tarjetas blancas */
+    .card {
+        padding: 1rem;
+    }
+
+    /* 3. ¡EL TRUCO VITAL PARA LA TABLA! */
+    /* Como la tabla de historial tiene 4 columnas, en celular no cabe. 
+       Esto crea un "mini-scroll" horizontal solo para la tabla. */
+    :host ::ng-deep .p-datatable-wrapper {
+        overflow-x: auto;
+        border-radius: 8px;
+    }
+    
+    /* Achicamos la letra de la tabla */
+    :host ::ng-deep .modern-table .p-datatable-thead > tr > th,
+    :host ::ng-deep .modern-table .p-datatable-tbody > tr > td {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
 }

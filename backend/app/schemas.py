@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
+
+
+# ─── Auth ────────────────────────────────────────────────────────────────────
 
 class Token(BaseModel):
     access_token: str
@@ -10,7 +13,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
-    
+
 class GoogleLoginRequest(BaseModel):
     credential: str
 
@@ -18,13 +21,16 @@ class VerifyCodeRequest(BaseModel):
     email: EmailStr
     codigo: str
 
-class EmailRequest(BaseModel): 
+class EmailRequest(BaseModel):
     email: EmailStr
 
-class NewPasswordRequest(BaseModel): # <--- CAMBIA EL NOMBRE AQUÍ
+class NewPasswordRequest(BaseModel):
     email: EmailStr
     codigo: str
     new_password: str
+
+
+# ─── Users ───────────────────────────────────────────────────────────────────
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -45,17 +51,17 @@ class UserResponse(UserBase):
     codigo_colegiatura: Optional[str] = None
     picture: Optional[str] = None
     is_verified: bool = False
-    google_id: Optional[str] = None 
+    google_id: Optional[str] = None
 
     class Config:
         from_attributes = True
 
-# ==========================================
-# SCHEMAS DE PACIENTES
-# ==========================================
+
+# ─── Patients ────────────────────────────────────────────────────────────────
+
 class PatientBase(BaseModel):
     nombre_completo: str
-    fecha_nacimiento: date  # Cambiado de edad (int) a fecha_nacimiento (date)
+    fecha_nacimiento: date
     sexo: str
     telefono: Optional[str] = None
 
@@ -71,82 +77,85 @@ class PatientResponse(PatientBase):
         from_attributes = True
 
 
-# ==========================================
-# SCHEMAS DE SÍNTOMAS (PHQ-9)
-# ==========================================
-class PHQ9SymptomsBase(BaseModel):
-    interes_poco_placer: int
-    desanimado_deprimido: int
-    dificultad_dormir: int
-    sentirse_cansado: int
-    poco_apetito: int
-    sentirse_mal_consigo_mismo: int
-    dificultad_concentracion: int
-    moverse_hablar_lento_rapido: int
-    pensamientos_muerte: int
+# ─── Model Features ──────────────────────────────────────────────────────────
 
-class PHQ9SymptomsCreate(PHQ9SymptomsBase):
+class ModelFeaturesBase(BaseModel):
+    sleep_hours: Optional[float] = None
+    social_life: Optional[float] = None
+    exercise_frequency: Optional[float] = None
+    social_media_usage: Optional[float] = None
+    stress_level: Optional[float] = None
+    sleep_quality: Optional[float] = None
+    perceived_loneliness: Optional[float] = None
+    family_support: Optional[float] = None
+    self_steem: Optional[float] = None
+    marital_status: Optional[str] = None
+
+class ModelFeaturesCreate(ModelFeaturesBase):
     pass
 
-class PHQ9SymptomsResponse(PHQ9SymptomsBase):
+class ModelFeaturesResponse(ModelFeaturesBase):
     id: int
     evaluation_id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ==========================================
-# SCHEMAS DE DATA EXTRA (ENDES / Clínico)
-# ==========================================
-class ExtraDataPatientBase(BaseModel):
-    estado_civil: Optional[str] = None
-    nivel_educativo: Optional[str] = None
-    peso: Optional[float] = None
-    talla: Optional[float] = None
-    imc: Optional[float] = None
-    fuma_30_dias: Optional[str] = None
-    bebe_30_dias: Optional[str] = None
-    alcohol_dificultad_estudio: Optional[str] = None
-    violencia_fisica_pareja: Optional[str] = None
-    diagnostico_hipertension: Optional[str] = None
-    diagnostico_diabetes: Optional[str] = None
+# ─── Model Prediction ────────────────────────────────────────────────────────
 
-class ExtraDataPatientCreate(ExtraDataPatientBase):
-    pass
+class ModelPredictionBase(BaseModel):
+    risk_binary: Optional[int] = None
+    risk_probability: Optional[float] = None
+    severity: Optional[str] = None
+    severity_probability: Optional[float] = None
+    shap_values: Optional[Dict[str, Any]] = None
 
-class ExtraDataPatientResponse(ExtraDataPatientBase):
+class ModelPredictionResponse(ModelPredictionBase):
     id: int
     evaluation_id: int
+    created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ==========================================
-# SCHEMAS DE EVALUACIÓN GENERAL
-# ==========================================
-class EvaluationBase(BaseModel):
+# ─── Recommendations ─────────────────────────────────────────────────────────
+
+class RecommendationBase(BaseModel):
+    source_variable: str
+    alert_level: str
+    recommendation: str
+    priority: int
+
+class RecommendationResponse(RecommendationBase):
+    id: int
+    evaluation_id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# ─── Evaluations ─────────────────────────────────────────────────────────────
+
+class EvaluationCreate(BaseModel):
     patient_id: int
-    notas_doctor: Optional[str] = None
+    doctor_notes: Optional[str] = None
+    model_features: ModelFeaturesCreate
 
-class EvaluationCreate(EvaluationBase):
-    # Aquí anidamos los schemas para que Angular envíe todo en una sola petición POST
-    symptoms: PHQ9SymptomsCreate
-    extra_data: ExtraDataPatientCreate
-
-class EvaluationResponse(EvaluationBase):
+class EvaluationResponse(BaseModel):
     id: int
-    fecha: datetime
-    phq9_puntaje: int
-    resultado: str
-    ia_feedback: Optional[str] = None
-    notas_doctor: Optional[str] = None
+    patient_id: int
+    date: datetime
     status: str
-    
-    # Anidamos las respuestas para que al pedir el historial, venga todo junto
-    symptoms: Optional[PHQ9SymptomsResponse] = None
-    extra_data: Optional[ExtraDataPatientResponse] = None
+    doctor_notes: Optional[str] = None
+    created_at: datetime
+
+    model_features: Optional[ModelFeaturesResponse] = None
+    model_prediction: Optional[ModelPredictionResponse] = None
+    recommendations: Optional[List[RecommendationResponse]] = []
 
     class Config:
         from_attributes = True
