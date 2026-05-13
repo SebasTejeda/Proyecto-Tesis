@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 
 
-# ─── Auth ────────────────────────────────────────────────────────────────────
+# ── Auth ─────────────────────────────────────────────────────────────────────
 
 class Token(BaseModel):
     access_token: str
@@ -30,7 +30,7 @@ class NewPasswordRequest(BaseModel):
     new_password: str
 
 
-# ─── Users ───────────────────────────────────────────────────────────────────
+# ── Users ─────────────────────────────────────────────────────────────────────
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -57,10 +57,11 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
-# ─── Patients ────────────────────────────────────────────────────────────────
+# ── Patients ──────────────────────────────────────────────────────────────────
 
 class PatientBase(BaseModel):
     nombre_completo: str
+    dni: str
     fecha_nacimiento: date
     sexo: str
     telefono: Optional[str] = None
@@ -77,19 +78,20 @@ class PatientResponse(PatientBase):
         from_attributes = True
 
 
-# ─── Model Features ──────────────────────────────────────────────────────────
+# ── Model Features ────────────────────────────────────────────────────────────
 
 class ModelFeaturesBase(BaseModel):
-    sleep_hours: Optional[float] = None
-    social_life: Optional[float] = None
-    exercise_frequency: Optional[float] = None
-    social_media_usage: Optional[float] = None
-    stress_level: Optional[float] = None
-    sleep_quality: Optional[float] = None
-    perceived_loneliness: Optional[float] = None
-    family_support: Optional[float] = None
-    self_steem: Optional[float] = None
-    marital_status: Optional[str] = None
+    horas_sueno: Optional[float] = None
+    vida_social: Optional[int] = None
+    frecuencia_ejercicio: Optional[int] = None
+    redes_sociales: Optional[float] = None
+    nivel_estres: Optional[int] = None
+    calidad_sueno: Optional[int] = None
+    soledad_percibida: Optional[int] = None
+    apoyo_familiar: Optional[int] = None
+    autoestima: Optional[int] = None
+    estado_civil: Optional[int] = None
+    genero: Optional[int] = None       # 1=Masculino, 2=Femenino — jalado de Patient.sexo
 
 class ModelFeaturesCreate(ModelFeaturesBase):
     pass
@@ -103,42 +105,38 @@ class ModelFeaturesResponse(ModelFeaturesBase):
         from_attributes = True
 
 
-# ─── Model Prediction ────────────────────────────────────────────────────────
+# ── Model Prediction ──────────────────────────────────────────────────────────
 
-class ModelPredictionBase(BaseModel):
+class ModelPredictionResponse(BaseModel):
+    id: int
+    evaluation_id: int
     risk_binary: Optional[int] = None
     risk_probability: Optional[float] = None
     severity: Optional[str] = None
     severity_probability: Optional[float] = None
     shap_values: Optional[Dict[str, Any]] = None
-
-class ModelPredictionResponse(ModelPredictionBase):
-    id: int
-    evaluation_id: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ─── Recommendations ─────────────────────────────────────────────────────────
+# ── Recommendations ───────────────────────────────────────────────────────────
 
-class RecommendationBase(BaseModel):
+class RecommendationResponse(BaseModel):
+    id: int
+    evaluation_id: int
     source_variable: str
     alert_level: str
     recommendation: str
     priority: int
-
-class RecommendationResponse(RecommendationBase):
-    id: int
-    evaluation_id: int
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# ─── Evaluations ─────────────────────────────────────────────────────────────
+# ── Evaluations ───────────────────────────────────────────────────────────────
 
 class EvaluationCreate(BaseModel):
     patient_id: int

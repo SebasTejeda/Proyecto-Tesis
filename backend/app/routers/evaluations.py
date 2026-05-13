@@ -17,8 +17,8 @@ def create_evaluation(
 ):
     """
     Crea una nueva evaluación con sus features de entrada.
-    La predicción del modelo (ModelPrediction) y las recomendaciones (Recommendation)
-    se generan en un paso posterior cuando el modelo XGBoost esté integrado.
+    El género se valida desde el paciente para garantizar consistencia con el dataset.
+    La predicción (ModelPrediction) y recomendaciones se generarán cuando XGBoost esté integrado.
     """
 
     # 1. Verificar que el paciente pertenezca al doctor autenticado
@@ -30,36 +30,39 @@ def create_evaluation(
     if not patient:
         raise HTTPException(status_code=403, detail="Paciente no autorizado o no encontrado")
 
+    # 2. Mapear el sexo del paciente al formato numérico del dataset
+    genero_map = {"Masculino": 1, "Femenino": 2}
+    genero_numerico = genero_map.get(patient.sexo, None)
+
     try:
-        # 2. Crear la cabecera de la evaluación
+        # 3. Crear cabecera de la evaluación
         new_eval = models.Evaluation(
             patient_id=eval_data.patient_id,
             doctor_notes=eval_data.doctor_notes,
-            status="Pendiente"   # Pasa a "Completado" una vez que el modelo infiera
+            status="Pendiente"
         )
 
-        # 3. Guardar las features de entrada del modelo
-        new_eval.model_features = models.ModelFeatures(
-            **eval_data.model_features.model_dump()
-        )
+        # 4. Guardar features — el género viene del paciente, no del form
+        features_data = eval_data.model_features.model_dump()
+        features_data["genero"] = genero_numerico
 
-        # 4. TODO: Llamar al modelo XGBoost con las features y guardar ModelPrediction
-        #    Ejemplo de integración futura:
+        new_eval.model_features = models.ModelFeatures(**features_data)
+
+        # 5. TODO: Llamar al modelo XGBoost con las features y guardar ModelPrediction
         #
-        #    prediction = xgboost_service.predict(eval_data.model_features)
+        #    prediction = xgboost_service.predict(features_data)
         #
         #    new_eval.model_prediction = models.ModelPrediction(
         #        risk_binary=prediction.risk_binary,
         #        risk_probability=prediction.risk_probability,
         #        severity=prediction.severity,
         #        severity_probability=prediction.severity_probability,
-        #        shap_values=prediction.shap_values
+        #        shap_values=prediction.shap_values   # {"nivel_estres": 0.41, "horas_sueno": 0.23, ...}
         #    )
         #
         #    new_eval.recommendations = [
         #        models.Recommendation(**r) for r in prediction.recommendations
         #    ]
-        #
         #    new_eval.status = "Completado"
 
         db.add(new_eval)
@@ -79,9 +82,8 @@ def get_patient_evaluations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Retorna el historial completo de evaluaciones de un paciente, con features, predicción y recomendaciones."""
+    """Historial completo de evaluaciones de un paciente con features, predicción y recomendaciones."""
 
-    # Verificar acceso
     patient = db.query(models.Patient).filter(
         models.Patient.id == patient_id,
         models.Patient.doctor_id == current_user.id
@@ -90,7 +92,6 @@ def get_patient_evaluations(
     if not patient:
         raise HTTPException(status_code=403, detail="Paciente no autorizado")
 
-    # joinedload trae las 4 tablas relacionadas en una sola consulta SQL
     evaluations = db.query(models.Evaluation).options(
         joinedload(models.Evaluation.model_features),
         joinedload(models.Evaluation.model_prediction),
@@ -108,7 +109,7 @@ def get_evaluation(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Retorna el detalle completo de una evaluación específica."""
+    """Detalle completo de una evaluación específica."""
 
     evaluation = db.query(models.Evaluation).options(
         joinedload(models.Evaluation.model_features),

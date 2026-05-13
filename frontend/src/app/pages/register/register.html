@@ -1,59 +1,78 @@
 <div class="register-container fade-in">
-    
-    <div class="page-header center-header">
-        <h1 class="welcome-text">Registrar Nuevo Paciente</h1>
-        <p class="page-subtitle">Apertura de expediente clínico en NeuroMind AI.</p>
-    </div>
 
-    <div class="form-card centered-card">
-        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
-            
-            <div class="form-grid">
-                <div class="form-group full-width">
-                    <label class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-input" 
-                           [class.error-border]="registerForm.get('nombre_completo')?.invalid && registerForm.get('nombre_completo')?.touched"
-                           formControlName="nombre_completo" placeholder="Ej: Juan Pérez">
-                </div>
+  <div class="page-header center-header">
+    <h1 class="welcome-text">Registrar Nuevo Paciente</h1>
+    <p class="page-subtitle">Apertura de expediente clínico en NeuroMind AI.</p>
+  </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Fecha de Nacimiento</label>
-                        <input type="date" class="form-input" 
-                               [class.error-border]="registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched"
-                               formControlName="fecha_nacimiento">
-                    </div>
+  <div class="form-card centered-card">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
 
-                    <div class="form-group">
-                        <label class="form-label">Sexo</label>  
-                        <div class="custom-select-wrapper">
-                            <select class="form-input" style="width: 100%;" 
-                                    [class.error-border]="registerForm.get('sexo')?.invalid && registerForm.get('sexo')?.touched"
-                                    formControlName="sexo">
-                                <option value="" disabled selected>Seleccionar...</option>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Femenino">Femenino</option>
-                                <option value="Otro">Otro</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
+      <div class="form-grid">
 
-                <div class="form-group full-width">
-                    <label class="form-label">Teléfono (Opcional)</label>
-                    <input type="tel" class="form-input" 
-                           [class.error-border]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched"
-                           formControlName="telefono" placeholder="+51 999 999 999">
-                </div>
-            </div>
+        <div class="form-group full-width">
+          <label class="form-label">Nombre Completo</label>
+          <input type="text" class="form-input"
+            [class.error-border]="registerForm.get('nombre_completo')?.invalid && registerForm.get('nombre_completo')?.touched"
+            formControlName="nombre_completo" placeholder="Ej: Juan Pérez">
+          @if (registerForm.get('nombre_completo')?.invalid && registerForm.get('nombre_completo')?.touched) {
+            <span class="error-msg">Mínimo 3 caracteres</span>
+          }
+        </div>
 
-            <div class="form-actions centered-actions">
-                <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading()">
-                    <i class="pi pi-save" style="margin-right: 8px;"></i> 
-                    {{ isLoading() ? 'Guardando...' : 'Guardar Expediente' }}
-                </button>
-            </div>
+        <div class="form-group full-width">
+          <label class="form-label">DNI</label>
+          <input type="text" class="form-input"
+            [class.error-border]="registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched"
+            formControlName="dni" placeholder="Ej: 12345678" maxlength="8" inputmode="numeric">
+          @if (registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched) {
+            <span class="error-msg">El DNI debe tener exactamente 8 dígitos numéricos</span>
+          }
+        </div>
 
-        </form>
-    </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fecha de Nacimiento</label>
+            <input type="date" class="form-input"
+              [class.error-border]="registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched"
+              formControlName="fecha_nacimiento">
+            @if (registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched) {
+              <span class="error-msg">Campo requerido</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sexo</label>
+            <select class="form-input" style="width: 100%;"
+              [class.error-border]="registerForm.get('sexo')?.invalid && registerForm.get('sexo')?.touched"
+              formControlName="sexo">
+              <option value="" disabled selected>Seleccionar...</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+              <option value="Otro">Otro</option>
+            </select>
+            @if (registerForm.get('sexo')?.invalid && registerForm.get('sexo')?.touched) {
+              <span class="error-msg">Campo requerido</span>
+            }
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label class="form-label">Teléfono <span style="color: #94a3b8; font-weight: 400;">(Opcional)</span></label>
+          <input type="tel" class="form-input"
+            [class.error-border]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched"
+            formControlName="telefono" placeholder="+51 999 999 999">
+        </div>
+
+      </div>
+
+      <div class="form-actions centered-actions">
+        <button type="submit" class="btn-primary" [disabled]="registerForm.invalid || isLoading()">
+          <i class="pi pi-save" style="margin-right: 8px;"></i>
+          {{ isLoading() ? 'Guardando...' : 'Guardar Expediente' }}
+        </button>
+      </div>
+
+    </form>
+  </div>
 </div>

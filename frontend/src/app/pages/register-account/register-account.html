@@ -1,44 +1,53 @@
 <div class="auth-page">
   <div class="auth-container">
-    
+
     <div class="auth-card fade-in">
-      
+
       <div class="auth-header">
         <div class="logo-icon">N</div>
         <h1 class="app-name">NeuroMind AI</h1>
       </div>
 
+      <!-- ── PASO 1: Formulario de registro ── -->
       @if (currentStep() === 1) {
         <h2 class="auth-title">Crear Cuenta</h2>
         <p class="auth-subtitle">Únete a nuestra red de especialistas</p>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
-          
+
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">Nombres</label>
               <input type="text" class="form-input" formControlName="nombres" placeholder="Juan"
                 [class.input-error]="registerForm.get('nombres')?.invalid && registerForm.get('nombres')?.touched">
+              @if (registerForm.get('nombres')?.invalid && registerForm.get('nombres')?.touched) {
+                <span class="error-msg">Mínimo 2 caracteres</span>
+              }
             </div>
-            
+
             <div class="form-group">
               <label class="form-label">Apellidos</label>
               <input type="text" class="form-input" formControlName="apellidos" placeholder="Pérez"
                 [class.input-error]="registerForm.get('apellidos')?.invalid && registerForm.get('apellidos')?.touched">
+              @if (registerForm.get('apellidos')?.invalid && registerForm.get('apellidos')?.touched) {
+                <span class="error-msg">Mínimo 2 caracteres</span>
+              }
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">N° Colegiatura (CMP/CPP)</label>
             <input type="text" class="form-input" formControlName="codigo_colegiatura" placeholder="Ej: 12345"
-                   [class.input-error]="registerForm.get('codigo_colegiatura')?.invalid && registerForm.get('codigo_colegiatura')?.touched">
+              [class.input-error]="registerForm.get('codigo_colegiatura')?.invalid && registerForm.get('codigo_colegiatura')?.touched">
+            @if (registerForm.get('codigo_colegiatura')?.invalid && registerForm.get('codigo_colegiatura')?.touched) {
+              <span class="error-msg">Mínimo 4 caracteres</span>
+            }
           </div>
 
           <div class="form-group">
             <label class="form-label">Correo Electrónico</label>
             <input type="email" class="form-input" formControlName="email" placeholder="doctor@ejemplo.com"
               [class.input-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
-            
             @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
               <span class="error-msg">Ingresa un correo electrónico válido</span>
             }
@@ -47,25 +56,23 @@
           <div class="form-group">
             <label class="form-label">Contraseña</label>
             <input type="password" class="form-input" formControlName="password" placeholder="Mínimo 6 caracteres"
-                   [class.input-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+              [class.input-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+              <span class="error-msg">La contraseña debe tener al menos 6 caracteres</span>
+            }
           </div>
 
           <div class="form-group">
             <label class="form-label">Confirmar Contraseña</label>
             <input type="password" class="form-input" formControlName="confirmPassword" placeholder="Repite tu contraseña"
-                   [class.input-error]="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
-            
+              [class.input-error]="registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched">
             @if (registerForm.errors?.['mismatch'] && registerForm.get('confirmPassword')?.touched) {
-              <div class="error-msg">Las contraseñas no coinciden.</div>
+              <span class="error-msg">Las contraseñas no coinciden</span>
             }
           </div>
 
           <button type="submit" class="btn-submit" [disabled]="registerForm.invalid || isLoading()">
-            @if (isLoading()) {
-              Enviando...
-            } @else {
-              Registrarse
-            }
+            @if (isLoading()) { Enviando... } @else { Registrarse }
           </button>
         </form>
 
@@ -74,34 +81,44 @@
         </div>
       }
 
+      <!-- ── PASO 2: Verificación de código ── -->
       @if (currentStep() === 2) {
         <div class="fade-in">
           <h2 class="auth-title">Verifica tu Cuenta</h2>
-          <p class="auth-subtitle">Hemos enviado un código a <br><strong>{{ emailRegistrado() }}</strong></p>
+          <p class="auth-subtitle">
+            Hemos enviado un código a <br>
+            <strong>{{ emailRegistrado() }}</strong>
+          </p>
 
           <div class="auth-form">
             <div class="form-group">
               <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
-              <input 
-                #codeInput 
-                type="text" 
-                class="form-input" 
-                placeholder="0000" 
-                maxlength="4" 
+              <input
+                type="text"
+                class="form-input"
+                [formControl]="verificationCode"
+                placeholder="0000"
+                maxlength="4"
+                inputmode="numeric"
                 style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
-                (keyup.enter)="onVerifyCode(codeInput.value)"
-              >
+                [class.input-error]="verificationCode.invalid && verificationCode.touched"
+                (keyup.enter)="onVerifyCode()">
+              @if (verificationCode.invalid && verificationCode.touched) {
+                <span class="error-msg" style="text-align: center;">
+                  El código debe tener exactamente 4 dígitos numéricos
+                </span>
+              }
             </div>
 
-            <button (click)="onVerifyCode(codeInput.value)" class="btn-submit" [disabled]="isLoading()">
-              @if (isLoading()) {
-                Verificando...
-              } @else {
-                Verificar y Entrar
-              }
+            <button (click)="onVerifyCode()" class="btn-submit" [disabled]="verificationCode.invalid || isLoading()">
+              @if (isLoading()) { Verificando... } @else { Verificar y Entrar }
             </button>
+
             <div class="auth-footer">
-              <p>¿No recibiste el código? <a href="javascript:void(0)" (click)="currentStep.set(1)" class="link-primary">Intentar de nuevo</a></p>
+              <p>
+                ¿No recibiste el código?
+                <a href="javascript:void(0)" (click)="currentStep.set(1)" class="link-primary">Intentar de nuevo</a>
+              </p>
             </div>
           </div>
         </div>

@@ -44,6 +44,8 @@ export class AuthService {
         if (res.access_token) {
           const storage = recordarme ? localStorage : sessionStorage;
           storage.setItem('token', res.access_token);
+          storage.setItem('user_id', res.user_id.toString());
+          storage.setItem('role', res.role);
         }
       })
     );
@@ -51,17 +53,32 @@ export class AuthService {
 
   loginWithGoogle(token: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/google`, { credential: token }).pipe(
-      tap(res => sessionStorage.setItem('token', res.access_token))
+      tap(res =>{
+        sessionStorage.setItem('token', res.access_token)
+        sessionStorage.setItem('user_id', res.user_id.toString())
+        sessionStorage.setItem('role', res.role)
+      }
+      )
     )
   }
 
   logout() {
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('token');
+    ['token', 'user_id', 'role'].forEach(k =>{
+      localStorage.removeItem(k);
+      sessionStorage.removeItem(k);
+    })
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    try{
+      const decoded: any = jwtDecode(token);
+      return decoded.exp * 1000 > Date.now();
+    }
+    catch{
+      return false;
+    }
   }
 
   getUserData() {
@@ -80,16 +97,11 @@ export class AuthService {
   }
 
   getProfile(): Observable<UserResponse> {
-    const headers = new HttpHeaders({
-        'Authorization': `Bearer ${this.getToken()}`
-    })
-    return this.http.get<UserResponse>(`${this.apiUrl}/users/me/`, { headers });
+    return this.http.get<UserResponse>(`${this.apiUrl}/users/me/`);
   }
 
   updateProfile(data: FormData): Observable<UserResponse> {
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${this.getToken()}` });
-
-    return this.http.put<UserResponse>(`${this.apiUrl}/users/me/`, data, { headers });
+    return this.http.put<UserResponse>(`${this.apiUrl}/users/me/`, data);
   }
 
   requestRecovery(email: string) {

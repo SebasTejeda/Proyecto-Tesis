@@ -1,62 +1,120 @@
-<div class="recovery-container">
-    <div class="recovery-card fade-in">
-        
-        <div class="card-header">
-            <h2 class="title">Recuperar Cuenta</h2>
-            <p class="subtitle">Sigue los pasos para restablecer tu acceso</p>
-        </div>
+<div class="auth-page">
+  <div class="auth-container">
 
-        <div [ngSwitch]="currentStep">
+    <div class="auth-card">
 
-            <div *ngSwitchCase="1">
-                <form [formGroup]="emailForm" (ngSubmit)="sendCode()">
-                    <div class="form-group">
-                        <label>Correo Electrónico</label>
-                        <input type="email" formControlName="email" placeholder="ejemplo@correo.com">
-                    </div>
-                    <button type="submit" [disabled]="emailForm.invalid || isLoading" class="btn-primary">
-                        {{ isLoading ? 'Enviando...' : 'Enviar Código' }}
-                    </button>
-                </form>
+      <div class="auth-header">
+        <div class="logo-icon">N</div>
+        <h1 class="app-name">NeuroMind AI</h1>
+      </div>
+
+      @switch (currentStep()) {
+
+        @case (1) {
+          <h2 class="auth-title">Recuperar Cuenta</h2>
+          <p class="auth-subtitle">Ingresa tu correo y te enviaremos un código</p>
+
+          <form [formGroup]="emailForm" (ngSubmit)="sendCode()" class="auth-form">
+            <div class="form-group">
+              <label class="form-label">Correo Electrónico</label>
+              <input
+                type="email"
+                class="form-input"
+                formControlName="email"
+                placeholder="doctor@ejemplo.com"
+                [class.input-error]="emailForm.get('email')?.invalid && emailForm.get('email')?.touched">
+              @if (emailForm.get('email')?.invalid && emailForm.get('email')?.touched) {
+                <span class="error-msg">Ingresa un correo electrónico válido</span>
+              }
             </div>
 
-            <div *ngSwitchCase="2">
-                <p class="instruction">Hemos enviado un código de 4 dígitos a <strong>{{ emailGuardado }}</strong></p>
-                <form [formGroup]="codeForm" (ngSubmit)="verifyCode()">
-                    <div class="form-group">
-                        <label>Código de Verificación</label>
-                        <input type="text" formControlName="code" placeholder="Ej: 1234" maxlength="4" class="code-input">
-                    </div>
-                    <button type="submit" [disabled]="codeForm.invalid || isLoading" class="btn-primary">
-    {{ isLoading ? 'Verificando...' : 'Verificar Código' }}
-</button>
-                    <button type="button" class="btn-link" (click)="currentStep = 1">Cambiar correo</button>
-                </form>
+            <button type="submit" class="btn-submit" [disabled]="emailForm.invalid || isLoading()">
+              @if (isLoading()) { Enviando... } @else { Enviar Código }
+            </button>
+          </form>
+        }
+
+        @case (2) {
+          <h2 class="auth-title">Verifica tu Identidad</h2>
+          <p class="auth-subtitle">
+            Hemos enviado un código a <br>
+            <strong>{{ emailGuardado() }}</strong>
+          </p>
+
+          <form [formGroup]="codeForm" (ngSubmit)="verifyCode()" class="auth-form">
+            <div class="form-group">
+              <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
+              <input
+                type="text"
+                class="form-input code-input"
+                formControlName="code"
+                placeholder="0000"
+                maxlength="4"
+                inputmode="numeric"
+                [class.input-error]="codeForm.get('code')?.invalid && codeForm.get('code')?.touched">
+              @if (codeForm.get('code')?.invalid && codeForm.get('code')?.touched) {
+                <span class="error-msg" style="text-align: center;">El código debe tener exactamente 4 dígitos numéricos</span>
+              }
             </div>
 
-            <div *ngSwitchCase="3">
-                <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
-                    <div class="form-group">
-                        <label>Nueva Contraseña</label>
-                        <input type="password" formControlName="newPassword" placeholder="Mínimo 6 caracteres">
-                    </div>
-                    <div class="form-group">
-                        <label>Confirmar Contraseña</label>
-                        <input type="password" formControlName="confirmPassword" placeholder="Repite la contraseña">
-                    </div>
-                    <button type="submit" [disabled]="passwordForm.invalid || isLoading" class="btn-primary">
-                        Cambiar Contraseña
-                    </button>
-                </form>
+            <button type="submit" class="btn-submit" [disabled]="codeForm.invalid || isLoading()">
+              @if (isLoading()) { Verificando... } @else { Verificar Código }
+            </button>
+
+            <button type="button" class="btn-link" (click)="currentStep.set(1)">
+              ← Cambiar correo
+            </button>
+          </form>
+        }
+
+        @case (3) {
+          <h2 class="auth-title">Nueva Contraseña</h2>
+          <p class="auth-subtitle">Elige una contraseña segura para tu cuenta</p>
+
+          <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" class="auth-form">
+            <div class="form-group">
+              <label class="form-label">Nueva Contraseña</label>
+              <input
+                type="password"
+                class="form-input"
+                formControlName="newPassword"
+                placeholder="Mínimo 6 caracteres"
+                [class.input-error]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched">
+              @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+                <span class="error-msg">La contraseña debe tener al menos 6 caracteres</span>
+              }
             </div>
 
-        </div>
+            <div class="form-group">
+              <label class="form-label">Confirmar Contraseña</label>
+              <input
+                type="password"
+                class="form-input"
+                formControlName="confirmPassword"
+                placeholder="Repite tu contraseña"
+                [class.input-error]="passwordForm.errors?.['mismatch'] && passwordForm.get('confirmPassword')?.touched">
+              @if (passwordForm.errors?.['mismatch'] && passwordForm.get('confirmPassword')?.touched) {
+                <span class="error-msg">Las contraseñas no coinciden</span>
+              }
+            </div>
 
-        <div class="card-footer">
-            <a routerLink="/login" class="back-link">
-    <i class="pi pi-arrow-left" style="margin-right: 5px;"></i> Volver al inicio de sesión
-</a>
-        </div>
+            <button type="submit" class="btn-submit" [disabled]="passwordForm.invalid || isLoading()">
+              @if (isLoading()) { Actualizando... } @else { Cambiar Contraseña }
+            </button>
+          </form>
+        }
+
+      }
+
+      <div class="auth-footer">
+        <a routerLink="/login" class="link-primary">← Volver al inicio de sesión</a>
+      </div>
 
     </div>
+
+    <div class="auth-decorative">
+      <div class="decorative-circle circle-1"></div>
+      <div class="decorative-circle circle-2"></div>
+    </div>
+  </div>
 </div>

@@ -30,6 +30,7 @@ class Patient(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nombre_completo = Column(String, index=True)
+    dni = Column(String, unique=True, nullable=False, index=True)
     fecha_nacimiento = Column(Date)
     sexo = Column(String)
     telefono = Column(String, nullable=True)
@@ -46,7 +47,7 @@ class Evaluation(Base):
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"))
     date = Column(DateTime, default=datetime.utcnow)
-    status = Column(String, default="Completado")
+    status = Column(String, default="Pendiente")
     doctor_notes = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -66,56 +67,56 @@ class Evaluation(Base):
 
 
 class ModelFeatures(Base):
-    """Features de entrada para el modelo XGBoost."""
+    """Features de entrada para el modelo XGBoost — nomenclatura del dataset."""
     __tablename__ = "model_features"
 
     id = Column(Integer, primary_key=True, index=True)
     evaluation_id = Column(Integer, ForeignKey("evaluations.id"), unique=True)
 
-    # Lifestyle features
-    sleep_hours = Column(Float, nullable=True)
-    social_life = Column(Float, nullable=True)
-    exercise_frequency = Column(Float, nullable=True)
-    social_media_usage = Column(Float, nullable=True)
-    stress_level = Column(Float, nullable=True)
-    sleep_quality = Column(Float, nullable=True)
-    perceived_loneliness = Column(Float, nullable=True)
-    family_support = Column(Float, nullable=True)
-    self_steem = Column(Float, nullable=True)
-    marital_status = Column(String, nullable=True)
+    horas_sueno = Column(Float, nullable=True)            # Numérico (horas diarias)
+    vida_social = Column(Integer, nullable=True)          # 1=Muy baja, 2=Baja, 3=Activa, 4=Muy activa
+    frecuencia_ejercicio = Column(Integer, nullable=True) # 0=Nunca, 1=Ocasionalmente, 2=Frecuentemente
+    redes_sociales = Column(Float, nullable=True)         # Numérico (horas diarias)
+    nivel_estres = Column(Integer, nullable=True)         # 1=Muy bajo ... 5=Muy alto
+    calidad_sueno = Column(Integer, nullable=True)        # 1=Muy mala ... 4=Muy buena
+    soledad_percibida = Column(Integer, nullable=True)    # 1=Nunca ... 4=Siempre
+    apoyo_familiar = Column(Integer, nullable=True)       # 1=Muy bajo ... 4=Muy alto
+    autoestima = Column(Integer, nullable=True)           # 1=Muy baja ... 5=Muy alta
+    estado_civil = Column(Integer, nullable=True)         # 0=Soltero,1=Casado,2=Conviviente,3=Divorciado,4=Viudo,5=Otro
+    genero = Column(Integer, nullable=True)               # 1=Masculino, 2=Femenino (jalado de Patient.sexo)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     evaluation = relationship("Evaluation", back_populates="model_features")
 
 
 class ModelPrediction(Base):
-    """Resultados del modelo IA: predicción binaria, probabilidades y valores SHAP."""
+    """Resultados del modelo IA."""
     __tablename__ = "model_predictions"
 
     id = Column(Integer, primary_key=True, index=True)
     evaluation_id = Column(Integer, ForeignKey("evaluations.id"), unique=True)
 
-    risk_binary = Column(Integer, nullable=True)           # 0 = sin riesgo, 1 = con riesgo
-    risk_probability = Column(Float, nullable=True)        # probabilidad de riesgo (0.0 - 1.0)
-    severity = Column(String, nullable=True)               # Mínimo / Leve / Moderado / Severo
-    severity_probability = Column(Float, nullable=True)    # probabilidad de la severidad predicha
-    shap_values = Column(JSON, nullable=True)              # dict con el aporte de cada feature
+    risk_binary = Column(Integer, nullable=True)
+    risk_probability = Column(Float, nullable=True)
+    severity = Column(String, nullable=True)
+    severity_probability = Column(Float, nullable=True)
+    shap_values = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     evaluation = relationship("Evaluation", back_populates="model_prediction")
 
 
 class Recommendation(Base):
-    """Recomendaciones clínicas generadas a partir de los valores SHAP del modelo."""
+    """Recomendaciones clínicas generadas a partir de los valores SHAP."""
     __tablename__ = "recommendations"
 
     id = Column(Integer, primary_key=True, index=True)
     evaluation_id = Column(Integer, ForeignKey("evaluations.id"))
 
-    source_variable = Column(String)       # feature SHAP que originó la recomendación
-    alert_level = Column(String)           # bajo / medio / alto
-    recommendation = Column(String)        # texto de la recomendación
-    priority = Column(Integer)             # 1 = más urgente
+    source_variable = Column(String)
+    alert_level = Column(String)
+    recommendation = Column(String)
+    priority = Column(Integer)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     evaluation = relationship("Evaluation", back_populates="recommendations")
