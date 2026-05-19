@@ -144,6 +144,31 @@ input[type=range]::-webkit-slider-thumb:hover {
 .btn-analyze:hover { transform: translateY(-2px); }
 .error-text { color: #ef4444; font-size: 0.85rem; margin-top: 5px; display: block; }
 
+/* Input numérico para horas de sueño y redes sociales */
+.form-input-num {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: #f1f5f9;
+    font-size: 1rem;
+    color: #334155;
+    outline: none;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.form-input-num:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-input-num::-webkit-inner-spin-button,
+.form-input-num::-webkit-outer-spin-button {
+    opacity: 1; /* Mantiene las flechas del number input visibles */
+}
+
 /* --- ESTILOS DE SELECT NATIVO (Gris Suave) --- */
 
 .custom-select-wrapper {
@@ -520,5 +545,3 @@ input[type=range]::-webkit-slider-thumb:hover {
     cursor: wait; /* Cursor de reloj de arena */
     opacity: 0.7;
 }
-
-

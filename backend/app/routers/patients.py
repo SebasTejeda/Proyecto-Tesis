@@ -20,6 +20,7 @@ def create_patient(
         fecha_nacimiento=patient.fecha_nacimiento,
         sexo=patient.sexo,
         telefono=patient.telefono,
+        dni=patient.dni,
         doctor_id=current_user.id
     )
     
@@ -84,7 +85,7 @@ def update_patient(
     patient.fecha_nacimiento = patient_data.fecha_nacimiento
     patient.sexo = patient_data.sexo
     patient.telefono = patient_data.telefono
-    
+    patient.dni = patient_data.dni
     try:
         db.commit()
         db.refresh(patient)

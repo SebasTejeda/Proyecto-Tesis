@@ -12,10 +12,14 @@ export class EvaluationService {
   private readonly apiUrl = environment.apiUrl;
 
   createEvaluation(data: EvaluationCreate): Observable<EvaluationResponse> {
-    return this.http.post<EvaluationResponse>(`${this.apiUrl}/evaluations/`, data)
+    return this.http.post<EvaluationResponse>(`${this.apiUrl}/evaluations/`, data);
   }
 
   getPatientEvaluations(patientId: number): Observable<EvaluationResponse[]> {
     return this.http.get<EvaluationResponse[]>(`${this.apiUrl}/evaluations/patient/${patientId}`);
+  }
+
+  getEvaluationById(evaluationId: number): Observable<EvaluationResponse> {
+    return this.http.get<EvaluationResponse>(`${this.apiUrl}/evaluations/${evaluationId}`);
   }
 }

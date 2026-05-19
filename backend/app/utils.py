@@ -7,12 +7,10 @@ import os
 
 load_dotenv(override=True)
 
-# Configuración de JWT
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-# Configuramos el contexto de encriptación
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class HashUtils:

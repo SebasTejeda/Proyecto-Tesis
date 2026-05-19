@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { Component, inject, signal } from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { finalize } from 'rxjs';
 import { AuthService } from '../../services/auth/auth';
@@ -23,6 +23,14 @@ export class RegisterAccountComponent {
   currentStep = signal(1);
   emailRegistrado = signal('');
   isLoading = signal(false);
+
+  // FormControl dedicado para el código de verificación
+  verificationCode = new FormControl('', [
+    Validators.required,
+    Validators.minLength(4),
+    Validators.maxLength(4),
+    Validators.pattern('^[0-9]{4}$')
+  ]);
 
   passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password')?.value;
@@ -49,41 +57,40 @@ export class RegisterAccountComponent {
     this.isLoading.set(true);
     this.alertService.loading('Registrando y enviando código...');
 
-    const {nombres, apellidos, codigo_colegiatura, email, password} = this.registerForm.getRawValue();
+    const { nombres, apellidos, codigo_colegiatura, email, password } = this.registerForm.getRawValue();
 
-    const formData: RegisterData = {
-      nombres, apellidos, codigo_colegiatura, email, password
-    };
+    const formData: RegisterData = { nombres, apellidos, codigo_colegiatura, email, password };
 
     this.authService.register(formData)
-      .pipe(
-        finalize(() => this.isLoading.set(false)))
+      .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
           this.emailRegistrado.set(email);
+          this.verificationCode.reset();
           this.currentStep.set(2);
           this.alertService.success('¡Registro Exitoso!', 'Te hemos enviado un código a tu correo.');
         },
         error: (err) => {
           const detail = err.error?.detail;
           const msg = detail === 'El correo ya está registrado.'
-                      ? detail
-                      : 'No se pudo crear la cuenta. Intenta nuevamente.';
+            ? detail
+            : 'No se pudo crear la cuenta. Intenta nuevamente.';
           this.alertService.error('Error de Registro', msg);
         }
       });
   }
 
-  onVerifyCode(codigo: string) {
-    if (!codigo || codigo.length !== 4) {
-      this.alertService.error('Código Inválido', 'El código debe tener 4 dígitos.');
+  onVerifyCode() {
+    if (this.verificationCode.invalid) {
+      this.verificationCode.markAsTouched();
+      this.alertService.error('Código Inválido', 'El código debe tener exactamente 4 dígitos numéricos.');
       return;
     }
 
     this.isLoading.set(true);
     this.alertService.loading('Verificando cuenta...');
 
-    this.authService.verifyAccount(this.emailRegistrado(), codigo)
+    this.authService.verifyAccount(this.emailRegistrado(), this.verificationCode.value!)
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
@@ -91,21 +98,15 @@ export class RegisterAccountComponent {
           this.router.navigate(['/login']);
         },
         error: (err) => {
-          // --- NUEVO MANEJO DE ERRORES INTELIGENTE ---
           let msg = 'Código incorrecto. Intenta nuevamente.';
-          
           if (err.error?.detail) {
             if (typeof err.error.detail === 'string') {
-              // Si es un mensaje simple (ej. "Código expirado")
               msg = err.error.detail;
             } else if (Array.isArray(err.error.detail)) {
-              // Si es un error 422 de Pydantic, extraemos el campo exacto que falló
               const campoFallido = err.error.detail[0].loc[err.error.detail[0].loc.length - 1];
               msg = `Falta el campo o tiene formato incorrecto: ${campoFallido}`;
             }
           }
-          // -------------------------------------------
-          
           this.alertService.error('Error de Verificación', msg);
         }
       });

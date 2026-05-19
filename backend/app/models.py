@@ -1,14 +1,15 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date, ForeignKey, Float, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
+
 
 class User(Base):
     __tablename__ = "usuarios"
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True)
-    password = Column(String)
+    password = Column(String, nullable=True)
     nombres = Column(String)
     apellidos = Column(String)
     codigo_colegiatura = Column(String, nullable=True)
@@ -21,81 +22,101 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
 
-    # Relación 1 a muchos: Un doctor tiene muchos pacientes
     patients = relationship("Patient", back_populates="doctor")
+
 
 class Patient(Base):
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True, index=True)
     nombre_completo = Column(String, index=True)
-    fecha_nacimiento = Column(Date) # Cambiado de 'edad' a 'fecha_nacimiento'
+    dni = Column(String, unique=True, nullable=False, index=True)
+    fecha_nacimiento = Column(Date)
     sexo = Column(String)
     telefono = Column(String, nullable=True)
     doctor_id = Column(Integer, ForeignKey("usuarios.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relaciones
     doctor = relationship("User", back_populates="patients")
     evaluations = relationship("Evaluation", back_populates="patient")
+
 
 class Evaluation(Base):
     __tablename__ = "evaluations"
 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"))
-    fecha = Column(DateTime, default=datetime.utcnow)
-    phq9_puntaje = Column(Integer)
-    resultado = Column(String)
-    ia_feedback = Column(String, nullable=True)
-    notas_doctor = Column(String, nullable=True)
-    status = Column(String, default="Completado")
+    date = Column(DateTime, default=datetime.utcnow)
+    status = Column(String, default="Pendiente")
+    doctor_notes = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Relación principal
     patient = relationship("Patient", back_populates="evaluations")
-    
-    # Relaciones 1 a 1 (Una evaluación tiene UN registro de síntomas y UN registro de data extra)
-    symptoms = relationship("PHQ9Symptoms", back_populates="evaluation", uselist=False, cascade="all, delete-orphan")
-    extra_data = relationship("ExtraDataPatient", back_populates="evaluation", uselist=False, cascade="all, delete-orphan")
+    model_features = relationship(
+        "ModelFeatures", back_populates="evaluation",
+        uselist=False, cascade="all, delete-orphan"
+    )
+    model_prediction = relationship(
+        "ModelPrediction", back_populates="evaluation",
+        uselist=False, cascade="all, delete-orphan"
+    )
+    recommendations = relationship(
+        "Recommendation", back_populates="evaluation",
+        cascade="all, delete-orphan"
+    )
 
-class PHQ9Symptoms(Base):
-    __tablename__ = "PHQ9_symptoms"
 
-    id = Column(Integer, primary_key=True, index=True)
-    evaluation_id = Column(Integer, ForeignKey("evaluations.id"), unique=True) # unique=True garantiza 1 a 1
-    
-    # Las 9 preguntas (Puntajes 0 a 3)
-    interes_poco_placer = Column(Integer)
-    desanimado_deprimido = Column(Integer)
-    dificultad_dormir = Column(Integer)
-    sentirse_cansado = Column(Integer)
-    poco_apetito = Column(Integer)
-    sentirse_mal_consigo_mismo = Column(Integer)
-    dificultad_concentracion = Column(Integer)
-    moverse_hablar_lento_rapido = Column(Integer)
-    pensamientos_muerte = Column(Integer)
-
-    # Relación inversa
-    evaluation = relationship("Evaluation", back_populates="symptoms")
-
-class ExtraDataPatient(Base):
-    __tablename__ = "extra_data_patients"
+class ModelFeatures(Base):
+    """Features de entrada para el modelo XGBoost — nomenclatura del dataset."""
+    __tablename__ = "model_features"
 
     id = Column(Integer, primary_key=True, index=True)
     evaluation_id = Column(Integer, ForeignKey("evaluations.id"), unique=True)
-    
-    # Variables ENDES y clínicas para XGBoost
-    estado_civil = Column(String, nullable=True)
-    nivel_educativo = Column(String, nullable=True)
-    peso = Column(Float, nullable=True)
-    talla = Column(Float, nullable=True)
-    imc = Column(Float, nullable=True)
-    fuma_30_dias = Column(String, nullable=True)
-    bebe_30_dias = Column(String, nullable=True)
-    alcohol_dificultad_estudio = Column(String, nullable=True)
-    violencia_fisica_pareja = Column(String, nullable=True)
-    diagnostico_hipertension = Column(String, nullable=True)
-    diagnostico_diabetes = Column(String, nullable=True)
 
-    # Relación inversa
-    evaluation = relationship("Evaluation", back_populates="extra_data")
+    horas_sueno = Column(Float, nullable=True)            # Numérico (horas diarias)
+    vida_social = Column(Integer, nullable=True)          # 1=Muy baja, 2=Baja, 3=Activa, 4=Muy activa
+    frecuencia_ejercicio = Column(Integer, nullable=True) # 0=Nunca, 1=Ocasionalmente, 2=Frecuentemente
+    redes_sociales = Column(Float, nullable=True)         # Numérico (horas diarias)
+    nivel_estres = Column(Integer, nullable=True)         # 1=Muy bajo ... 5=Muy alto
+    calidad_sueno = Column(Integer, nullable=True)        # 1=Muy mala ... 4=Muy buena
+    soledad_percibida = Column(Integer, nullable=True)    # 1=Nunca ... 4=Siempre
+    apoyo_familiar = Column(Integer, nullable=True)       # 1=Muy bajo ... 4=Muy alto
+    autoestima = Column(Integer, nullable=True)           # 1=Muy baja ... 5=Muy alta
+    estado_civil = Column(Integer, nullable=True)         # 0=Soltero,1=Casado,2=Conviviente,3=Divorciado,4=Viudo,5=Otro
+    genero = Column(Integer, nullable=True)               # 1=Masculino, 2=Femenino (jalado de Patient.sexo)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    evaluation = relationship("Evaluation", back_populates="model_features")
+
+
+class ModelPrediction(Base):
+    """Resultados del modelo IA."""
+    __tablename__ = "model_predictions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    evaluation_id = Column(Integer, ForeignKey("evaluations.id"), unique=True)
+
+    risk_binary = Column(Integer, nullable=True)
+    risk_probability = Column(Float, nullable=True)
+    severity = Column(String, nullable=True)
+    severity_probability = Column(Float, nullable=True)
+    shap_values = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    evaluation = relationship("Evaluation", back_populates="model_prediction")
+
+
+class Recommendation(Base):
+    """Recomendaciones clínicas generadas a partir de los valores SHAP."""
+    __tablename__ = "recommendations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    evaluation_id = Column(Integer, ForeignKey("evaluations.id"))
+
+    source_variable = Column(String)
+    alert_level = Column(String)
+    recommendation = Column(String)
+    priority = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    evaluation = relationship("Evaluation", back_populates="recommendations")

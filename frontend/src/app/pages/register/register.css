@@ -189,6 +189,18 @@
     box-shadow: none;
 }
 
+.error-border {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.error-msg {
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: -4px;
+}
+
 /* --- CONTENEDOR PRINCIPAL --- */
 .register-container {
     width: 100%;
