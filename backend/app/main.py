@@ -1,12 +1,16 @@
 import os
 import cloudinary
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from .limiter import limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
 from .database import engine
 from . import models
-
-from .routers import patients, auth, users, evaluations
+from .routers import evaluations_final, patients, auth, users
 
 load_dotenv()
 
@@ -19,7 +23,19 @@ cloudinary.config(
     secure=True
 )
 
+# ── Rate Limiting ─────────────────────────────────────────────────────────────
+def _rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Demasiados intentos. Espera un minuto e inténtalo de nuevo."}
+    )
+
+# ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(title="API Tesis de Salud Mental - NeuroMind AI")
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +52,4 @@ def read_root():
 app.include_router(auth.router, prefix="/auth", tags=["Autenticación"])
 app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(patients.router, prefix="/patients", tags=["Pacientes"])
-app.include_router(evaluations.router, prefix="/evaluations", tags=["Evaluaciones"])
-
-
+app.include_router(evaluations_final.router, prefix="/evaluations", tags=["Evaluaciones"])
