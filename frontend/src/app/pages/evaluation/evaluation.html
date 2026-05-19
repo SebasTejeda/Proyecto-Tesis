@@ -231,6 +231,29 @@
       </div>
     </div>
 
+    <!-- ── Agregar DESPUÉS del bloque xai-section en evaluation.html ── -->
+
+@if (ultimaEvaluacion()?.recommendations?.length) {
+  <hr class="divider">
+  <div class="recommendations-section">
+    <h3 class="xai-title" style="margin-bottom: 12px;">
+      <i class="pi pi-list-check"></i> Recomendaciones Clínicas
+    </h3>
+    <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
+
+    @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
+      <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
+        <div class="rec-header">
+          <span class="rec-badge">{{ rec.priority }}°</span>
+          <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
+          <span class="rec-level">{{ rec.alert_level | titlecase }}</span>
+        </div>
+        <p class="rec-text">{{ rec.recommendation }}</p>
+      </div>
+    }
+  </div>
+}
+
     <div class="modal-footer">
       <button class="btn-secondary" (click)="exportarPDF()">
         <i class="pi pi-file-pdf"></i> Exportar PDF

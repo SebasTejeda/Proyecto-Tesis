@@ -545,3 +545,68 @@ input[type=range]::-webkit-slider-thumb:hover {
     cursor: wait; /* Cursor de reloj de arena */
     opacity: 0.7;
 }
+
+/* ── Agregar al final de evaluation.css ── */
+
+/* Sección de recomendaciones */
+.recommendations-section {
+  text-align: left;
+  margin-top: 10px;
+}
+
+.rec-item {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border-left: 4px solid transparent;
+}
+
+.rec-alto  { background: #fef2f2; border-left-color: #ef4444; }
+.rec-medio { background: #fffbeb; border-left-color: #f59e0b; }
+.rec-bajo  { background: #f0fdf4; border-left-color: #10b981; }
+
+.rec-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rec-badge {
+  background: #1e293b;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+.rec-level {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rec-text {
+  margin: 0;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.recommendations-section {
+  text-align: left;
+  margin-top: 10px;
+  padding: 0 4px;  /* agregar */
+}
+
+.rec-item {
+  padding: 14px 16px;  /* aumentar padding */
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border-left: 4px solid transparent;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);  /* agregar sombra suave */
+}

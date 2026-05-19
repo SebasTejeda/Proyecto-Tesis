@@ -18,7 +18,6 @@
     @if (patient()) {
       <div class="content-grid">
 
-        <!-- ── Columna izquierda: Perfil ── -->
         <aside class="profile-column">
           <div class="profile-card">
             <div class="profile-cover"></div>
@@ -26,7 +25,6 @@
               <div class="avatar-wrapper">
                 <span class="avatar-text">{{ patient()?.nombre_completo?.charAt(0) || 'P' }}</span>
               </div>
-
               <h2 class="patient-name">{{ patient()?.nombre_completo }}</h2>
               <p class="patient-role">
                 Paciente Registrado
@@ -34,16 +32,13 @@
                   <i class="pi pi-pencil"></i> Editar
                 </button>
               </p>
-
               @if (historial().length > 0) {
                 <div class="status-badge" [ngClass]="getClassRiesgo(ultimaSeverity)">
                   <i class="pi pi-circle-fill"></i>
                   {{ ultimaSeverity }}
                 </div>
               }
-
               <div class="divider"></div>
-
               <div class="info-grid">
                 <div class="info-group">
                   <label>Edad</label>
@@ -70,10 +65,7 @@
           </div>
         </aside>
 
-        <!-- ── Columna derecha: Análisis ── -->
         <main class="analysis-column">
-
-          <!-- Gráfico de evolución -->
           <div class="card graph-card">
             <div class="card-header">
               <h3><i class="pi pi-chart-line"></i> Evolución del Riesgo</h3>
@@ -84,7 +76,6 @@
             </div>
           </div>
 
-          <!-- Historial clínico -->
           <div class="card history-card">
             <div class="card-header">
               <h3><i class="pi pi-history"></i> Historial Clínico</h3>
@@ -158,11 +149,13 @@
   [visible]="displayModal()"
   (visibleChange)="displayModal.set($event)"
   [modal]="true"
-  [style]="{ width: '50vw', maxWidth: '600px' }"
+  [style]="{ width: '50vw', maxWidth: '620px' }"
   [draggable]="false" [resizable]="false" [closable]="true">
 
   @if (selectedEval()) {
     <div class="result-content">
+
+      <!-- Gauge -->
       <div class="verdict-section">
         <h3 class="result-title">Resultado del Análisis</h3>
         <div class="gauge-wrapper" style="width: 250px; margin: 0 auto; position: relative">
@@ -171,9 +164,7 @@
             <span class="percentage" style="font-size: 3rem; font-weight: 800; display: block; line-height: 1;">
               @if (selectedEval()?.model_prediction?.risk_probability != null) {
                 {{ (selectedEval()!.model_prediction!.risk_probability! * 100).toFixed(0) }}%
-              } @else {
-                --
-              }
+              } @else { -- }
             </span>
             <span class="label" style="font-size: 1rem; font-weight: 700; color: #64748b">
               {{ selectedEval()?.model_prediction?.severity ?? 'Pendiente' }}
@@ -182,36 +173,47 @@
         </div>
       </div>
 
-      <hr class="divider" style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0">
+      <hr class="modal-divider">
 
-      <div class="xai-section" style="background: #f8fafc; padding: 20px; border-radius: 12px; text-align: left;">
-        <h3 class="xai-title" style="margin: 0 0 15px 0; font-size: 1rem; color: #1e293b">
-          <i class="pi pi-bolt"></i> Factores Clave (SHAP)
-        </h3>
+      <!-- SHAP -->
+      <div class="xai-section">
+        <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Clave (SHAP)</h3>
+        <p class="xai-subtitle">Impacto relativo de cada factor en la predicción</p>
         <div class="shap-chart-container">
-          <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
+          <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="220px"></p-chart>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
+          <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
         </div>
       </div>
 
-      <hr class="divider" style="border: 0; height: 1px; background: #f1f5f9; margin: 20px 0">
-
       <!-- Recomendaciones -->
       @if (selectedEval()?.recommendations?.length) {
-        <div style="margin-bottom: 16px;">
-          <h4 style="margin: 0 0 10px 0; color: #1e293b; font-size: 0.9rem;">
-            <i class="pi pi-list-check"></i> Recomendaciones
-          </h4>
+        <hr class="modal-divider">
+        <div class="recommendations-section">
+          <h3 class="xai-title" style="margin-bottom: 12px;">
+            <i class="pi pi-list-check"></i> Recomendaciones Clínicas
+          </h3>
+          <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
+
           @for (rec of selectedEval()!.recommendations!; track rec.id) {
-            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 0.9rem; color: #166534;">
-              <strong>{{ rec.source_variable }}</strong> — {{ rec.recommendation }}
+            <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
+              <div class="rec-header">
+                <span class="rec-badge">{{ rec.priority }}°</span>
+                <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
+                <span class="rec-level">{{ rec.alert_level }}</span>
+              </div>
+              <p class="rec-text">{{ rec.recommendation }}</p>
             </div>
           }
         </div>
       }
 
       <!-- Notas del doctor -->
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px;">
-        <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 0.9rem;">
+      <hr class="modal-divider">
+      <div class="notes-section">
+        <h4 class="notes-title">
           <i class="pi pi-user-edit"></i> Notas Clínicas del Médico
         </h4>
         <textarea class="form-input" rows="3"
@@ -220,7 +222,7 @@
           readonly></textarea>
       </div>
 
-      <div class="modal-footer" style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+      <div class="modal-footer">
         <button class="btn-secondary" (click)="displayModal.set(false)">Cerrar</button>
       </div>
     </div>
@@ -236,7 +238,6 @@
   [style]="{ width: '90vw', maxWidth: '500px' }">
 
   <form [formGroup]="editForm" (ngSubmit)="guardarEdicion()" style="padding: 15px;">
-
     <div class="form-group" style="margin-bottom: 15px;">
       <label class="form-label">Nombre Completo</label>
       <input type="text" class="form-input" formControlName="nombre_completo" style="width: 100%;"
