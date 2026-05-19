@@ -587,3 +587,40 @@
         font-size: 0.85rem;
     }
 }
+
+.semaforo-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 20px auto;
+}
+
+.semaforo-luz {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.2;
+  transition: opacity 0.3s, box-shadow 0.3s;
+}
+
+.semaforo-luz.activa {
+  opacity: 1;
+  box-shadow: 0 0 20px rgba(0,0,0,0.25);
+}
+
+.semaforo-texto {
+  text-align: center;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.semaforo-texto strong { font-size: 1.1rem; }
+.semaforo-texto span   { font-size: 0.9rem; color: #64748b; }
+
+.texto-riesgo strong { color: #ef4444; }
+.texto-ok strong     { color: #10b981; }

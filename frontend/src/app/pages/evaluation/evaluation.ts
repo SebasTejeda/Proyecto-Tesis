@@ -33,16 +33,17 @@ export class EvaluationComponent implements OnInit {
   pacientes = signal<Patient[]>([]);
   displayModal = signal(false);
   isLoading = signal(false);
-  riesgoPorcentaje = signal(0);
+
+  // Semáforo
+  riesgoBinario = signal<number>(0);       // 0 = sin riesgo, 1 = con riesgo
   riesgoEtiqueta = signal('Pendiente');
+  riesgoPorcentaje = signal(0);            // Mantenemos para el PDF
+
   ultimaEvaluacion = signal<EvaluationResponse | null>(null);
 
-  gaugeData: any;
-  gaugeOptions: any;
   shapData: any;
   shapOptions: any;
 
-  // Etiquetas legibles por campo
   readonly etiquetasVidaSocial     = ['', 'Muy baja', 'Baja', 'Activa', 'Muy activa'];
   readonly etiquetasFrecEjercicio  = ['Nunca', 'Ocasionalmente', 'Frecuentemente'];
   readonly etiquetasNivelEstres    = ['', 'Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Muy alto'];
@@ -116,17 +117,14 @@ export class EvaluationComponent implements OnInit {
       this.evalForm.markAllAsTouched();
       return;
     }
-
     this.isLoading.set(true);
     this.alertService.loading('Guardando evaluación...');
-
     const raw = this.evalForm.getRawValue();
     const dataToSend: EvaluationCreate = {
-      patient_id:    raw.patient_id,
-      doctor_notes:  raw.doctor_notes,
+      patient_id:     raw.patient_id,
+      doctor_notes:   raw.doctor_notes,
       model_features: raw.model_features
     };
-
     this.evalService.createEvaluation(dataToSend).subscribe({
       next: (response: EvaluationResponse) => {
         this.isLoading.set(false);
@@ -145,106 +143,82 @@ export class EvaluationComponent implements OnInit {
   mostrarResultados(response: EvaluationResponse) {
     this.ultimaEvaluacion.set(response);
     const pred = response.model_prediction;
-    const porcentaje = pred?.risk_probability != null
-      ? Math.round(pred.risk_probability * 100) : 0;
-    const severidad = pred?.severity ?? 'Pendiente';
 
-    this.riesgoPorcentaje.set(porcentaje);
-    this.riesgoEtiqueta.set(severidad);
-    this.initGaugeChart(porcentaje);
+    // Semáforo — risk_binary: 0 sin riesgo, 1 con riesgo
+    this.riesgoBinario.set(pred?.risk_binary ?? 0);
+    this.riesgoEtiqueta.set(pred?.severity ?? 'Pendiente');
+    this.riesgoPorcentaje.set(
+      pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0
+    );
+
     this.initShapChart(pred?.shap_values ?? null);
     this.displayModal.set(true);
   }
 
-  initGaugeChart(valor: number) {
-    const display = valor || 1;
-    this.gaugeData = {
-      labels: ['Riesgo', 'Restante'],
+  initShapChart(shapValues: Record<string, number> | null) {
+    const labelMap: Record<string, string> = {
+      horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
+      frecuencia_ejercicio: 'Ejercicio', redes_sociales: 'Redes sociales',
+      nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
+      soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
+      autoestima: 'Autoestima', estado_civil: 'Estado civil', genero: 'Género'
+    };
+
+    const entradas = shapValues
+      ? Object.entries(shapValues).filter(([k]) => labelMap[k] !== undefined)
+      : [];
+
+    const top6 = entradas
+      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .slice(0, 6);
+
+    const maxAbsoluto = top6.length > 0
+      ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
+
+    const labels  = top6.map(([k]) => labelMap[k]);
+    const valores = top6.map(([, v]) => Math.round((v / maxAbsoluto) * 100));
+    const colores = valores.map(v => v >= 0 ? '#ef4444' : '#10b981');
+
+    this.shapData = {
+      labels,
       datasets: [{
-        data: [display, 100 - display],
-        backgroundColor: [
-          valor > 50 ? '#ef4444' : (valor > 20 ? '#d97706' : '#10b981'),
-          '#e2e8f0'
-        ],
-        borderWidth: 0,
-        cutout: '85%'
+        label: 'Impacto en el riesgo (%)',
+        data: valores,
+        backgroundColor: colores,
+        borderRadius: 5
       }]
     };
-    this.gaugeOptions = {
-      rotation: -90, circumference: 180,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      aspectRatio: 1.5, maintainAspectRatio: false
+    this.shapOptions = {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const val = ctx.raw;
+              const efecto = val >= 0 ? 'Aumenta el riesgo' : 'Disminuye el riesgo';
+              return ` ${efecto}: ${val >= 0 ? '+' : ''}${val}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: { min: -100, max: 100, ticks: { callback: (v: any) => `${v}%` }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
+      }
     };
   }
 
-// ── REEMPLAZA initShapChart() en evaluation.ts ───────────────────────────────
-// Convierte valores SHAP crudos a porcentajes legibles para el médico
-
-initShapChart(shapValues: Record<string, number> | null) {
-  const labelMap: Record<string, string> = {
-    horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-    frecuencia_ejercicio: 'Ejercicio', redes_sociales: 'Redes sociales',
-    nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
-    soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
-    autoestima: 'Autoestima', estado_civil: 'Estado civil', genero: 'Género'
-  };
-
-  // Filtrar solo features con nombre en labelMap (ignorar estado_civil_1, genero_2, etc.)
-  const entradas = shapValues
-    ? Object.entries(shapValues).filter(([k]) => labelMap[k] !== undefined)
-    : [];
-
-  // Ordenar por valor absoluto descendente y tomar top 6
-  const top6 = entradas
-    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-    .slice(0, 6);
-
-  // Convertir a porcentaje relativo: el mayor valor absoluto = 100%
-  const maxAbsoluto = top6.length > 0 ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
-
-  const labels   = top6.map(([k]) => labelMap[k]);
-  const valores  = top6.map(([, v]) => Math.round((v / maxAbsoluto) * 100));
-  const colores  = valores.map(v => v >= 0 ? '#ef4444' : '#10b981');
-
-  this.shapData = {
-    labels,
-    datasets: [{
-      label: 'Impacto en el riesgo (%)',
-      data: valores,
-      backgroundColor: colores,
-      borderRadius: 5
-    }]
-  };
-
-  this.shapOptions = {
-    indexAxis: 'y',
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx: any) => {
-            const val = ctx.raw;
-            const signo = val >= 0 ? '+' : '';
-            const efecto = val >= 0 ? 'Aumenta el riesgo' : 'Disminuye el riesgo';
-            return ` ${efecto}: ${signo}${val}%`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        min: -100, max: 100,
-        ticks: {
-          callback: (v: any) => `${v}%`
-        },
-        grid: { color: '#f1f5f9' }
-      },
-      y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
-    }
-  };
-}
+  getLabelFeature(key: string): string {
+    const labelMap: Record<string, string> = {
+      horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
+      frecuencia_ejercicio: 'Frecuencia de ejercicio',
+      redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés',
+      calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida',
+      apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima'
+    };
+    return labelMap[key] ?? key;
+  }
 
   exportarPDF() {
     const patientId = this.evalForm.get('patient_id')?.value;
@@ -260,16 +234,4 @@ initShapChart(shapValues: Record<string, number> | null) {
     const idPaciente = this.evalForm.get('patient_id')?.value;
     this.router.navigate(idPaciente ? ['/dashboard/patient', idPaciente] : ['/dashboard']);
   }
-
-  getLabelFeature(key: string): string {
-  const labelMap: Record<string, string> = {
-    horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-    frecuencia_ejercicio: 'Frecuencia de ejercicio',
-    redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés',
-    calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida',
-    apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima'
-  };
-  return labelMap[key] ?? key;
 }
-}
-

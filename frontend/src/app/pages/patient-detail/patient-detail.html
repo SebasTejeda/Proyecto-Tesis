@@ -66,9 +66,11 @@
         </aside>
 
         <main class="analysis-column">
+
+          <!-- Gráfico de evolución por nivel -->
           <div class="card graph-card">
             <div class="card-header">
-              <h3><i class="pi pi-chart-line"></i> Evolución del Riesgo</h3>
+              <h3><i class="pi pi-chart-line"></i> Evolución del Nivel de Riesgo</h3>
               <span class="card-subtitle">Últimas 5 evaluaciones</span>
             </div>
             <div class="chart-wrapper">
@@ -76,6 +78,7 @@
             </div>
           </div>
 
+          <!-- Historial clínico -->
           <div class="card history-card">
             <div class="card-header">
               <h3><i class="pi pi-history"></i> Historial Clínico</h3>
@@ -95,10 +98,10 @@
 
               <ng-template pTemplate="header">
                 <tr>
-                  <th style="width: 25%">Fecha</th>
-                  <th style="width: 30%">Nivel de Riesgo</th>
-                  <th style="width: 25%">Probabilidad</th>
-                  <th style="width: 20%"></th>
+                  <th style="width: 20%">Fecha</th>
+                  <th style="width: 20%">Nivel</th>
+                  <th style="width: 45%">Principales Factores de Riesgo</th>
+                  <th style="width: 15%"></th>
                 </tr>
               </ng-template>
 
@@ -113,16 +116,12 @@
                       {{ eval.model_prediction?.severity ?? 'Pendiente' }}
                     </div>
                   </td>
-                  <td>
-                    @if (eval.model_prediction?.risk_probability != null) {
-                      <strong>{{ (eval.model_prediction.risk_probability * 100).toFixed(1) }}%</strong>
-                    } @else {
-                      <span style="color: #94a3b8;">--</span>
-                    }
+                  <td style="font-size: 0.85rem; color: #475569;">
+                    {{ getTopFactores(eval) }}
                   </td>
                   <td style="text-align: right">
                     <button class="btn-action" (click)="verDetalle(eval)">
-                      Ver Detalle <i class="pi pi-chevron-right"></i>
+                      Ver <i class="pi pi-chevron-right"></i>
                     </button>
                   </td>
                 </tr>
@@ -155,21 +154,31 @@
   @if (selectedEval()) {
     <div class="result-content">
 
-      <!-- Gauge -->
+      <!-- SEMÁFORO -->
       <div class="verdict-section">
         <h3 class="result-title">Resultado del Análisis</h3>
-        <div class="gauge-wrapper" style="width: 250px; margin: 0 auto; position: relative">
-          <p-chart type="doughnut" [data]="gaugeData" [options]="gaugeOptions" height="180px"></p-chart>
-          <div class="gauge-center-text" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
-            <span class="percentage" style="font-size: 3rem; font-weight: 800; display: block; line-height: 1;">
-              @if (selectedEval()?.model_prediction?.risk_probability != null) {
-                {{ (selectedEval()!.model_prediction!.risk_probability! * 100).toFixed(0) }}%
-              } @else { -- }
-            </span>
-            <span class="label" style="font-size: 1rem; font-weight: 700; color: #64748b">
-              {{ selectedEval()?.model_prediction?.severity ?? 'Pendiente' }}
-            </span>
+        <div class="semaforo-wrapper">
+          <div class="semaforo-luz"
+            [class.activa]="selectedEval()!.model_prediction?.risk_binary === 1"
+            style="background: #ef4444;">
+            <i class="pi pi-exclamation-triangle" style="color: white; font-size: 1.6rem;"></i>
           </div>
+          <div class="semaforo-luz"
+            [class.activa]="selectedEval()!.model_prediction?.risk_binary === 0"
+            style="background: #10b981;">
+            <i class="pi pi-check-circle" style="color: white; font-size: 1.6rem;"></i>
+          </div>
+        </div>
+        <div class="semaforo-texto"
+          [class.texto-riesgo]="selectedEval()!.model_prediction?.risk_binary === 1"
+          [class.texto-ok]="selectedEval()!.model_prediction?.risk_binary === 0">
+          @if (selectedEval()!.model_prediction?.risk_binary === 1) {
+            <strong>Riesgo Depresivo Detectado</strong>
+            <span>Nivel: {{ selectedEval()!.model_prediction?.severity }}</span>
+          } @else {
+            <strong>Sin Riesgo Detectado</strong>
+            <span>El paciente no presenta indicadores de riesgo depresivo</span>
+          }
         </div>
       </div>
 
@@ -196,7 +205,6 @@
             <i class="pi pi-list-check"></i> Recomendaciones Clínicas
           </h3>
           <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
-
           @for (rec of selectedEval()!.recommendations!; track rec.id) {
             <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
               <div class="rec-header">
@@ -243,7 +251,6 @@
       <input type="text" class="form-input" formControlName="nombre_completo" style="width: 100%;"
         [class.error-border]="editForm.get('nombre_completo')?.invalid && editForm.get('nombre_completo')?.touched">
     </div>
-
     <div class="form-group" style="margin-bottom: 15px;">
       <label class="form-label">DNI</label>
       <input type="text" class="form-input" formControlName="dni" maxlength="8" inputmode="numeric" style="width: 100%;"
@@ -252,7 +259,6 @@
         <span style="color: #ef4444; font-size: 12px;">El DNI debe tener exactamente 8 dígitos</span>
       }
     </div>
-
     <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
       <div class="form-group">
         <label class="form-label">Fecha de Nacimiento</label>
@@ -267,12 +273,10 @@
         </select>
       </div>
     </div>
-
     <div class="form-group" style="margin-bottom: 25px;">
       <label class="form-label">Teléfono</label>
       <input type="tel" class="form-input" formControlName="telefono" style="width: 100%;">
     </div>
-
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
       <button type="button" class="btn-secondary" (click)="displayEditModal.set(false)">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="editForm.invalid">Guardar Cambios</button>
