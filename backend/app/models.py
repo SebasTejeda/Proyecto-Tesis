@@ -43,15 +43,18 @@ class Patient(Base):
 
 class Evaluation(Base):
     __tablename__ = "evaluations"
-
+ 
     id = Column(Integer, primary_key=True, index=True)
     patient_id = Column(Integer, ForeignKey("patients.id"))
+    doctor_id = Column(Integer, ForeignKey("usuarios.id"), nullable=True)  # US007 trazabilidad
     date = Column(DateTime, default=datetime.utcnow)
     status = Column(String, default="Pendiente")
     doctor_notes = Column(String, nullable=True)
+    doctor_agreement = Column(String, nullable=True)  # US007: "confirmed" | "rejected" | null
     created_at = Column(DateTime, default=datetime.utcnow)
-
+ 
     patient = relationship("Patient", back_populates="evaluations")
+    doctor = relationship("User", foreign_keys=[doctor_id])
     model_features = relationship(
         "ModelFeatures", back_populates="evaluation",
         uselist=False, cascade="all, delete-orphan"

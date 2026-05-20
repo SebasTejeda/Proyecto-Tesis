@@ -33,24 +33,24 @@ export class EvaluationComponent implements OnInit {
   pacientes = signal<Patient[]>([]);
   displayModal = signal(false);
   isLoading = signal(false);
+  isSavingAgreement = signal(false);
 
-  // Semáforo
-  riesgoBinario = signal<number>(0);       // 0 = sin riesgo, 1 = con riesgo
+  riesgoBinario = signal<number>(0);
   riesgoEtiqueta = signal('Pendiente');
-  riesgoPorcentaje = signal(0);            // Mantenemos para el PDF
-
+  riesgoPorcentaje = signal(0);
   ultimaEvaluacion = signal<EvaluationResponse | null>(null);
+  doctorAgreement = signal<string | null>(null); // US007
 
   shapData: any;
   shapOptions: any;
 
-  readonly etiquetasVidaSocial     = ['', 'Muy baja', 'Baja', 'Activa', 'Muy activa'];
-  readonly etiquetasFrecEjercicio  = ['Nunca', 'Ocasionalmente', 'Frecuentemente'];
-  readonly etiquetasNivelEstres    = ['', 'Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Muy alto'];
-  readonly etiquetasCalidadSueno   = ['', 'Muy mala', 'Mala', 'Buena', 'Muy buena'];
-  readonly etiquetasSoledad        = ['', 'Nunca', 'Ocasionalmente', 'Frecuentemente', 'Siempre'];
-  readonly etiquetasApoyoFamiliar  = ['', 'Muy bajo', 'Bajo', 'Alto', 'Muy alto'];
-  readonly etiquetasAutoestima     = ['', 'Muy baja', 'Baja', 'Media', 'Alta', 'Muy alta'];
+  readonly etiquetasVidaSocial    = ['', 'Muy baja', 'Baja', 'Activa', 'Muy activa'];
+  readonly etiquetasFrecEjercicio = ['Nunca', 'Ocasionalmente', 'Frecuentemente'];
+  readonly etiquetasNivelEstres   = ['', 'Muy bajo', 'Bajo', 'Moderado', 'Alto', 'Muy alto'];
+  readonly etiquetasCalidadSueno  = ['', 'Muy mala', 'Mala', 'Buena', 'Muy buena'];
+  readonly etiquetasSoledad       = ['', 'Nunca', 'Ocasionalmente', 'Frecuentemente', 'Siempre'];
+  readonly etiquetasApoyoFamiliar = ['', 'Muy bajo', 'Bajo', 'Alto', 'Muy alto'];
+  readonly etiquetasAutoestima    = ['', 'Muy baja', 'Baja', 'Media', 'Alta', 'Muy alta'];
 
   evalForm = this.fb.nonNullable.group({
     patient_id:   [0, [Validators.required, Validators.min(1)]],
@@ -69,13 +69,9 @@ export class EvaluationComponent implements OnInit {
     })
   });
 
-  constructor() {
-    Chart.register(...registerables);
-  }
+  constructor() { Chart.register(...registerables); }
 
-  ngOnInit(): void {
-    this.cargarPacientes();
-  }
+  ngOnInit(): void { this.cargarPacientes(); }
 
   getEtiqueta(campo: string): string {
     const val = Number(this.evalForm.get(`model_features.${campo}`)?.value ?? 0);
@@ -104,10 +100,7 @@ export class EvaluationComponent implements OnInit {
           }
         });
       },
-      error: () => {
-        this.alertService.close();
-        this.alertService.error('Error', 'No se pudieron cargar los pacientes');
-      }
+      error: () => { this.alertService.close(); this.alertService.error('Error', 'No se pudieron cargar los pacientes'); }
     });
   }
 
@@ -118,11 +111,11 @@ export class EvaluationComponent implements OnInit {
       return;
     }
     this.isLoading.set(true);
-    this.alertService.loading('Guardando evaluación...');
+    this.alertService.loading('Ejecutando análisis predictivo...');
     const raw = this.evalForm.getRawValue();
     const dataToSend: EvaluationCreate = {
-      patient_id:     raw.patient_id,
-      doctor_notes:   raw.doctor_notes,
+      patient_id: raw.patient_id,
+      doctor_notes: raw.doctor_notes,
       model_features: raw.model_features
     };
     this.evalService.createEvaluation(dataToSend).subscribe({
@@ -142,17 +135,34 @@ export class EvaluationComponent implements OnInit {
 
   mostrarResultados(response: EvaluationResponse) {
     this.ultimaEvaluacion.set(response);
+    this.doctorAgreement.set(response.doctor_agreement ?? null);
     const pred = response.model_prediction;
-
-    // Semáforo — risk_binary: 0 sin riesgo, 1 con riesgo
     this.riesgoBinario.set(pred?.risk_binary ?? 0);
     this.riesgoEtiqueta.set(pred?.severity ?? 'Pendiente');
-    this.riesgoPorcentaje.set(
-      pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0
-    );
-
+    this.riesgoPorcentaje.set(pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0);
     this.initShapChart(pred?.shap_values ?? null);
     this.displayModal.set(true);
+  }
+
+  // US007 — Conformidad del doctor
+  registrarConformidad(agreement: 'confirmed' | 'rejected') {
+    const evalId = this.ultimaEvaluacion()?.id;
+    if (!evalId) return;
+    this.isSavingAgreement.set(true);
+    this.evalService.updateAgreement(evalId, agreement).subscribe({
+      next: (updated) => {
+        this.doctorAgreement.set(updated.doctor_agreement ?? null);
+        this.isSavingAgreement.set(false);
+        const msg = agreement === 'confirmed'
+          ? 'Diagnóstico confirmado correctamente.'
+          : 'Desacuerdo registrado correctamente.';
+        this.alertService.success('Registrado', msg, true);
+      },
+      error: () => {
+        this.isSavingAgreement.set(false);
+        this.alertService.error('Error', 'No se pudo registrar la conformidad.');
+      }
+    });
   }
 
   initShapChart(shapValues: Record<string, number> | null) {
@@ -163,28 +173,16 @@ export class EvaluationComponent implements OnInit {
       soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
       autoestima: 'Autoestima', estado_civil: 'Estado civil', genero: 'Género'
     };
-
     const entradas = shapValues
-      ? Object.entries(shapValues).filter(([k]) => labelMap[k] !== undefined)
-      : [];
-
-    const top6 = entradas
-      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-      .slice(0, 6);
-
-    const maxAbsoluto = top6.length > 0
-      ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
-
-    const labels  = top6.map(([k]) => labelMap[k]);
-    const valores = top6.map(([, v]) => Math.round((v / maxAbsoluto) * 100));
-    const colores = valores.map(v => v >= 0 ? '#ef4444' : '#10b981');
-
+      ? Object.entries(shapValues).filter(([k]) => labelMap[k] !== undefined) : [];
+    const top6 = entradas.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6);
+    const maxAbs = top6.length > 0 ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
     this.shapData = {
-      labels,
+      labels: top6.map(([k]) => labelMap[k]),
       datasets: [{
         label: 'Impacto en el riesgo (%)',
-        data: valores,
-        backgroundColor: colores,
+        data: top6.map(([, v]) => Math.round((v / maxAbs) * 100)),
+        backgroundColor: top6.map(([, v]) => v >= 0 ? '#ef4444' : '#10b981'),
         borderRadius: 5
       }]
     };
@@ -192,15 +190,7 @@ export class EvaluationComponent implements OnInit {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx: any) => {
-              const val = ctx.raw;
-              const efecto = val >= 0 ? 'Aumenta el riesgo' : 'Disminuye el riesgo';
-              return ` ${efecto}: ${val >= 0 ? '+' : ''}${val}%`;
-            }
-          }
-        }
+        tooltip: { callbacks: { label: (ctx: any) => ` ${ctx.raw >= 0 ? 'Aumenta' : 'Disminuye'} el riesgo: ${ctx.raw >= 0 ? '+' : ''}${ctx.raw}%` } }
       },
       scales: {
         x: { min: -100, max: 100, ticks: { callback: (v: any) => `${v}%` }, grid: { color: '#f1f5f9' } },
@@ -210,22 +200,23 @@ export class EvaluationComponent implements OnInit {
   }
 
   getLabelFeature(key: string): string {
-    const labelMap: Record<string, string> = {
+    const m: Record<string, string> = {
       horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-      frecuencia_ejercicio: 'Frecuencia de ejercicio',
-      redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés',
-      calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida',
-      apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima'
+      frecuencia_ejercicio: 'Frecuencia de ejercicio', redes_sociales: 'Redes sociales',
+      nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
+      soledad_percibida: 'Soledad percibida', apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima'
     };
-    return labelMap[key] ?? key;
+    return m[key] ?? key;
   }
 
   exportarPDF() {
     const patientId = this.evalForm.get('patient_id')?.value;
     const selectedPatient = this.pacientes().find(p => p.id === patientId);
     if (!selectedPatient) return;
-    const resultado = { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta() };
-    this.pdfService.generateEvaluationReport(selectedPatient, resultado, this.shapData);
+    this.pdfService.generateEvaluationReport(selectedPatient,
+      { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta() },
+      this.shapData
+    );
     this.alertService.success('Informe Generado', 'El PDF se ha guardado en tus descargas.', true);
   }
 

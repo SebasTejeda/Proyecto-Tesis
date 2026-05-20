@@ -169,3 +169,71 @@
     text-overflow: ellipsis;
 }
 :host ::ng-deep .p-column-resizer-helper { background-color: #3b82f6 !important; }
+
+.mes-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.mes-label { font-size: 14px; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px; }
+.mes-select {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+}
+.mes-select:focus { border-color: #3b82f6; }
+
+/* ── US006 Filtro riesgo + búsqueda ── */
+.header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.filtro-riesgo { display: flex; align-items: center; gap: 8px; }
+.filtro-select {
+  padding: 8px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50px;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+.filtro-select:focus { background: white; border-color: #3b82f6; }
+
+/* ── Colores de badges corregidos ── */
+.badge-high { background: #fee2e2; color: #b91c1c; }   /* Moderado/Alto → rojo */
+.badge-mod  { background: #fef3c7; color: #92400e; }   /* Leve → amarillo */
+.badge-low  { background: #dcfce7; color: #166534; }   /* Ninguno → verde */
+.badge-none { background: #f1f5f9; color: #64748b; }   /* Sin evaluar → gris */
+
+/* ── US007 Conformidad del doctor ── */
+.agreement-section { margin-top: 4px; }
+.agreement-buttons { display: flex; gap: 12px; margin-top: 8px; }
+.btn-agree {
+  flex: 1; padding: 10px 16px; border: none; border-radius: 8px;
+  background: #dcfce7; color: #166534; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+}
+.btn-agree:hover { background: #bbf7d0; }
+.btn-disagree {
+  flex: 1; padding: 10px 16px; border: none; border-radius: 8px;
+  background: #fee2e2; color: #b91c1c; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+}
+.btn-disagree:hover { background: #fecaca; }
+.btn-agree:disabled, .btn-disagree:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.agreement-registered {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-top: 8px;
+}
+.agreement-confirmed { background: #dcfce7; color: #166534; }
+.agreement-rejected  { background: #fee2e2; color: #b91c1c; }
+.agreement-registered i { font-size: 1.2rem; }

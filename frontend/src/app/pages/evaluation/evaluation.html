@@ -10,8 +10,7 @@
       <div class="form-section-top">
         <div class="form-group">
           <label class="section-label">
-            <i class="pi pi-user section-icon icon-blue"></i>
-            Seleccionar Paciente
+            <i class="pi pi-user section-icon icon-blue"></i> Seleccionar Paciente
           </label>
           <div class="custom-select-wrapper">
             <select formControlName="patient_id" class="native-select"
@@ -27,12 +26,10 @@
       </div>
 
       <hr class="divider-compact">
-
       <h3 class="col-title" style="margin-bottom: 16px;">📊 Factores Psicosociales y de Estilo de Vida</h3>
 
       <div class="form-grid" formGroupName="model_features">
         <div class="col-left">
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-moon section-icon icon-indigo"></i> Horas de sueño diarias</label>
@@ -40,7 +37,6 @@
             </div>
             <input type="number" formControlName="horas_sueno" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 7.5">
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-users section-icon icon-blue"></i> Vida social</label>
@@ -49,7 +45,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="vida_social">
             <div class="labels"><span>Muy baja</span><span>Muy activa</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-bolt section-icon icon-amber"></i> Frecuencia de ejercicio</label>
@@ -58,7 +53,6 @@
             <input type="range" min="0" max="2" step="1" formControlName="frecuencia_ejercicio">
             <div class="labels"><span>Nunca</span><span>Frecuentemente</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-mobile section-icon icon-slate"></i> Horas en redes sociales</label>
@@ -66,7 +60,6 @@
             </div>
             <input type="number" formControlName="redes_sociales" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 3">
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-exclamation-circle section-icon icon-rose"></i> Nivel de estrés</label>
@@ -75,11 +68,9 @@
             <input type="range" min="1" max="5" step="1" formControlName="nivel_estres">
             <div class="labels"><span>Muy bajo</span><span>Muy alto</span></div>
           </div>
-
         </div>
 
         <div class="col-right">
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-star section-icon icon-indigo"></i> Calidad del sueño</label>
@@ -88,7 +79,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="calidad_sueno">
             <div class="labels"><span>Muy mala</span><span>Muy buena</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-heart section-icon icon-rose"></i> Soledad percibida</label>
@@ -97,7 +87,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="soledad_percibida">
             <div class="labels"><span>Nunca</span><span>Siempre</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-home section-icon icon-slate"></i> Apoyo familiar</label>
@@ -106,7 +95,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="apoyo_familiar">
             <div class="labels"><span>Muy bajo</span><span>Muy alto</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-shield section-icon icon-slate"></i> Autoestima</label>
@@ -115,7 +103,6 @@
             <input type="range" min="1" max="5" step="1" formControlName="autoestima">
             <div class="labels"><span>Muy baja</span><span>Muy alta</span></div>
           </div>
-
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-id-card section-icon icon-slate"></i> Estado civil</label>
@@ -132,12 +119,10 @@
               <span class="select-arrow">▼</span>
             </div>
           </div>
-
         </div>
       </div>
 
       <hr class="divider-compact" style="margin-top: 20px;">
-
       <h3 class="col-title" style="margin-bottom: 12px;">👨‍⚕️ Observaciones de la Entrevista</h3>
       <div class="form-group full-width" style="margin-bottom: 25px;">
         <textarea formControlName="doctor_notes" class="form-input" rows="4"
@@ -148,10 +133,9 @@
       <div class="button-wrapper" style="text-align: center;">
         <button type="submit" class="btn-analyze" [disabled]="isLoading()">
           <i class="pi pi-microchip-ai" style="margin-right: 10px;"></i>
-          {{ isLoading() ? 'Guardando...' : 'Ejecutar Análisis Predictivo' }}
+          {{ isLoading() ? 'Ejecutando análisis...' : 'Ejecutar Análisis Predictivo' }}
         </button>
       </div>
-
     </form>
   </div>
 </div>
@@ -162,33 +146,43 @@
   [visible]="displayModal()"
   (visibleChange)="displayModal.set($event)"
   [modal]="true"
-  [style]="{ width: '50vw', maxWidth: '600px' }"
+  [style]="{ width: '50vw', maxWidth: '620px' }"
   [draggable]="false" [resizable]="false" [closable]="false">
 
   <div class="result-content">
 
-    <!-- ── SEMÁFORO ── -->
+    <!-- SEMÁFORO + BADGE DE NIVEL -->
     <div class="verdict-section">
       <h3 class="result-title">Resultado del Análisis</h3>
-
       <div class="semaforo-wrapper">
-        <!-- Luz roja -->
         <div class="semaforo-luz" [class.activa]="riesgoBinario() === 1" style="background: #ef4444;">
           <i class="pi pi-exclamation-triangle" style="color: white; font-size: 1.6rem;"></i>
         </div>
-        <!-- Luz verde -->
         <div class="semaforo-luz" [class.activa]="riesgoBinario() === 0" style="background: #10b981;">
           <i class="pi pi-check-circle" style="color: white; font-size: 1.6rem;"></i>
         </div>
       </div>
 
-      <div class="semaforo-texto" [class.texto-riesgo]="riesgoBinario() === 1" [class.texto-ok]="riesgoBinario() === 0">
+      <div class="semaforo-texto"
+        [class.texto-riesgo]="riesgoBinario() === 1"
+        [class.texto-ok]="riesgoBinario() === 0">
         @if (riesgoBinario() === 1) {
           <strong>Riesgo Depresivo Detectado</strong>
-          <span>Nivel: {{ riesgoEtiqueta() }}</span>
+          <!-- Badge llamativo del nivel -->
+          <span class="nivel-badge"
+            [class.nivel-alto]="riesgoEtiqueta() === 'Moderado/Alto'"
+            [class.nivel-leve]="riesgoEtiqueta() === 'Leve'">
+            @if (riesgoEtiqueta() === 'Moderado/Alto') {
+              <i class="pi pi-exclamation-circle"></i> Nivel Moderado / Alto
+            } @else {
+              <i class="pi pi-info-circle"></i> Nivel Leve
+            }
+          </span>
         } @else {
           <strong>Sin Riesgo Detectado</strong>
-          <span>El paciente no presenta indicadores de riesgo depresivo</span>
+          <span class="nivel-badge nivel-ninguno">
+            <i class="pi pi-check-circle"></i> Sin indicadores depresivos
+          </span>
         }
       </div>
     </div>
@@ -228,6 +222,54 @@
         }
       </div>
     }
+
+    <!-- US007 — Conformidad del doctor -->
+    <hr class="divider">
+    <div class="agreement-section">
+      <h3 class="xai-title" style="margin-bottom: 6px;">
+        <i class="pi pi-user-edit"></i> Conformidad del Especialista
+      </h3>
+      <p class="xai-subtitle">¿Concuerda con el diagnóstico generado por el modelo?</p>
+
+      @if (doctorAgreement()) {
+        <!-- Estado ya registrado -->
+        <div class="agreement-registered"
+          [class.agreement-confirmed]="doctorAgreement() === 'confirmed'"
+          [class.agreement-rejected]="doctorAgreement() === 'rejected'">
+          @if (doctorAgreement() === 'confirmed') {
+            <i class="pi pi-check-circle"></i>
+            <div>
+              <strong>Diagnóstico confirmado por el especialista</strong>
+              <p>El médico concuerda con la predicción generada por el modelo</p>
+            </div>
+          } @else {
+            <i class="pi pi-times-circle"></i>
+            <div>
+              <strong>El especialista no concuerda con el diagnóstico</strong>
+              <p>El médico ha registrado su desacuerdo con la predicción del modelo</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Botones de conformidad -->
+        <div class="agreement-buttons">
+          <button class="btn-agree" (click)="registrarConformidad('confirmed')" [disabled]="isSavingAgreement()">
+            <i class="pi pi-check-circle"></i>
+            <span>
+              <strong>Confirmo el diagnóstico</strong>
+              <small>Concuerdo con la predicción del modelo</small>
+            </span>
+          </button>
+          <button class="btn-disagree" (click)="registrarConformidad('rejected')" [disabled]="isSavingAgreement()">
+            <i class="pi pi-times-circle"></i>
+            <span>
+              <strong>No concuerdo</strong>
+              <small>El diagnóstico no refleja mi evaluación clínica</small>
+            </span>
+          </button>
+        </div>
+      }
+    </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="exportarPDF()">
