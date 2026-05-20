@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { EvaluationCreate, EvaluationResponse } from '../../models/evaluations';
+import { EjecucionModelo, EvaluationCreate, EvaluationResponse } from '../../models/evaluations';
 
 @Injectable({
   providedIn: 'root',
@@ -37,6 +37,12 @@ export class EvaluationService {
     return this.http.patch<EvaluationResponse>(
       `${this.apiUrl}/evaluations/${evaluationId}/agreement`,
       { doctor_agreement: agreement },
+    );
+  }
+
+  getHistorialEjecuciones(): Observable<EjecucionModelo[]> {
+    return this.http.get<EjecucionModelo[]>(
+      `${this.apiUrl}/evaluations/historial`,
     );
   }
 }

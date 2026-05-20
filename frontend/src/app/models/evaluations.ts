@@ -59,3 +59,16 @@ export interface EvaluationResponse {
   model_prediction?: ModelPredictionResponse;
   recommendations?: RecommendationResponse[];
 }
+
+export interface EjecucionModelo {
+  evaluation_id: number;
+  fecha: string;
+  paciente_nombre: string;
+  paciente_dni: string;
+  doctor_nombre: string;
+  modelo: string;
+  resultado: string | null;
+  risk_probability: number | null;
+  doctor_agreement: string | null;
+  status: string;
+}

@@ -8,11 +8,14 @@
 
       <div class="user-profile">
         @if (userPhoto()) {
-          <img [src]="userPhoto()" alt="Perfil" class="avatar" referrerpolicy="no-referrer"/>
+        <img
+          [src]="userPhoto()"
+          alt="Perfil"
+          class="avatar"
+          referrerpolicy="no-referrer"
+        />
         } @else {
-          <div class="avatar-circle">
-            {{ userInitial() }}
-          </div>
+        <div class="avatar-circle">{{ userInitial() }}</div>
         }
         <div class="user-info">
           <span class="user-name">{{ userName() | titlecase }}</span>
@@ -24,27 +27,50 @@
     <nav class="sidebar-nav-content">
       <ul class="nav-menu">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+          <a
+            class="nav-link"
+            routerLink="/dashboard"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: true}"
+          >
             <i class="pi pi-home nav-icon-i"></i>
             <span>Dashboard</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/dashboard/registro" routerLinkActive="active">
+          <a
+            class="nav-link"
+            routerLink="/dashboard/registro"
+            routerLinkActive="active"
+          >
             <i class="pi pi-user-plus nav-icon-i"></i>
             <span>Registrar Paciente</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/dashboard/evaluacion" routerLinkActive="active">
+          <a
+            class="nav-link"
+            routerLink="/dashboard/evaluacion"
+            routerLinkActive="active"
+          >
             <i class="pi pi-list nav-icon-i"></i>
             <span>Nueva Evaluación</span>
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/dashboard/settings" routerLinkActive="active">
+          <a
+            class="nav-link"
+            routerLink="/dashboard/settings"
+            routerLinkActive="active"
+          >
             <i class="pi pi-cog nav-icon-i"></i>
             <span>Configuración</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a routerLink="/dashboard/auditoria" routerLinkActive="active" class="nav-link">
+            <i class="pi pi-shield nav-icon-i"></i>
+            <span>Historial del Modelo</span>
           </a>
         </li>
       </ul>
