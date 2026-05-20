@@ -1,0 +1,173 @@
+<div class="auditoria-container fade-in">
+  <div class="page-header">
+    <h1 class="page-title">Historial de Ejecuciones del Modelo</h1>
+    <p class="page-subtitle">
+      Registro completo de cada vez que el modelo XGBoost fue ejecutado por el
+      especialista
+    </p>
+  </div>
+
+  <!-- Tarjetas de resumen -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Total Ejecuciones</div>
+        <div class="stat-icon-box blue"><i class="pi pi-microchip-ai"></i></div>
+      </div>
+      <div class="stat-value">{{ totalEjecuciones }}</div>
+      <div class="stat-change">Evaluaciones completadas</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Diagnósticos Confirmados</div>
+        <div class="stat-icon-box green">
+          <i class="pi pi-check-circle"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ totalConfirmadas }}</div>
+      <div class="stat-change">Concordancia con el modelo</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">No Concuerda</div>
+        <div class="stat-icon-box coral">
+          <i class="pi pi-times-circle"></i>
+        </div>
+      </div>
+      <div class="stat-value">{{ totalRechazadas }}</div>
+      <div class="stat-change warn-text">Discrepancias registradas</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-header">
+        <div class="stat-label">Sin Respuesta</div>
+        <div class="stat-icon-box gray"><i class="pi pi-clock"></i></div>
+      </div>
+      <div class="stat-value">{{ totalSinRespuesta }}</div>
+      <div class="stat-change neutral-text">Pendientes de conformidad</div>
+    </div>
+  </div>
+
+  <!-- Tabla de ejecuciones -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="pi pi-history"></i> Registro de Uso del Modelo
+      </h2>
+      <div class="search-box">
+        <i class="pi pi-search search-icon-i"></i>
+        <input
+          type="text"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+          placeholder="Buscar paciente..."
+          class="search-input"
+        />
+      </div>
+    </div>
+
+    <p-table
+      #dt
+      [value]="ejecuciones()"
+      [paginator]="true"
+      [rows]="10"
+      [globalFilterFields]="['paciente_nombre', 'paciente_dni', 'resultado', 'doctor_agreement']"
+      [loading]="isLoading()"
+      [tableStyle]="{ 'min-width': '100%' }"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="fecha">
+            Fecha y Hora <p-sortIcon field="fecha"></p-sortIcon>
+          </th>
+          <th pSortableColumn="paciente_nombre">
+            Paciente <p-sortIcon field="paciente_nombre"></p-sortIcon>
+          </th>
+          <th>DNI</th>
+          <th>Modelo Ejecutado</th>
+          <th pSortableColumn="resultado">
+            Resultado <p-sortIcon field="resultado"></p-sortIcon>
+          </th>
+          <th pSortableColumn="doctor_agreement">
+            Conformidad <p-sortIcon field="doctor_agreement"></p-sortIcon>
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-e>
+        <tr>
+          <td class="date-cell">
+            <i class="pi pi-calendar" style="color: #cbd5e1"></i>
+            {{ formatearFecha(e.fecha) }}
+          </td>
+          <td>
+            <div class="paciente-cell">
+              <span class="paciente-nombre">{{ e.paciente_nombre }}</span>
+              <span class="doctor-tag">{{ e.doctor_nombre }}</span>
+            </div>
+          </td>
+          <td style="color: #64748b; font-size: 0.9rem">
+            {{ e.paciente_dni }}
+          </td>
+          <td>
+            <div class="modelo-cell">
+              <i class="pi pi-microchip-ai" style="color: #6366f1"></i>
+              <span>{{ e.modelo }}</span>
+            </div>
+          </td>
+          <td>
+            <span
+              class="resultado-badge"
+              [ngClass]="getClassResultado(e.resultado)"
+            >
+              {{ e.resultado ?? 'Sin resultado' }}
+            </span>
+          </td>
+          <td>
+            @if (e.doctor_agreement) {
+            <span
+              class="agreement-badge"
+              [ngClass]="getAgreementClass(e.doctor_agreement)"
+            >
+              @if (e.doctor_agreement === 'confirmed') {
+              <i class="pi pi-check-circle"></i> Confirmado } @else {
+              <i class="pi pi-times-circle"></i> No concuerda }
+            </span>
+            } @else {
+            <div class="pending-actions">
+              <button
+                class="btn-confirm-sm"
+                (click)="registrarConformidad(e, 'confirmed')"
+              >
+                <i class="pi pi-check"></i> Confirmar
+              </button>
+              <button
+                class="btn-reject-sm"
+                (click)="registrarConformidad(e, 'rejected')"
+              >
+                <i class="pi pi-times"></i> No concuerdo
+              </button>
+            </div>
+            }
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td
+            colspan="6"
+            style="text-align: center; padding: 3rem; color: #94a3b8"
+          >
+            <i
+              class="pi pi-inbox"
+              style="font-size: 2rem; display: block; margin-bottom: 10px"
+            ></i>
+            No hay ejecuciones del modelo registradas aún.
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

@@ -7,12 +7,10 @@
   <div class="eval-card">
     <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
 
-      <!-- ── Selección de paciente ── -->
       <div class="form-section-top">
         <div class="form-group">
           <label class="section-label">
-            <i class="pi pi-user section-icon icon-blue"></i>
-            Seleccionar Paciente
+            <i class="pi pi-user section-icon icon-blue"></i> Seleccionar Paciente
           </label>
           <div class="custom-select-wrapper">
             <select formControlName="patient_id" class="native-select"
@@ -28,26 +26,17 @@
       </div>
 
       <hr class="divider-compact">
-
-      <!-- ── Features del modelo ── -->
       <h3 class="col-title" style="margin-bottom: 16px;">📊 Factores Psicosociales y de Estilo de Vida</h3>
 
       <div class="form-grid" formGroupName="model_features">
-
-        <!-- Columna izquierda -->
         <div class="col-left">
-
-          <!-- Horas de sueño — numérico -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-moon section-icon icon-indigo"></i> Horas de sueño diarias</label>
               <span class="badge-value">{{ evalForm.get('model_features.horas_sueno')?.value }} h</span>
             </div>
-            <input type="number" formControlName="horas_sueno" class="form-input-num"
-              min="0" max="24" step="0.5" placeholder="Ej: 7.5">
+            <input type="number" formControlName="horas_sueno" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 7.5">
           </div>
-
-          <!-- Vida social — slider 1-4 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-users section-icon icon-blue"></i> Vida social</label>
@@ -56,8 +45,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="vida_social">
             <div class="labels"><span>Muy baja</span><span>Muy activa</span></div>
           </div>
-
-          <!-- Frecuencia de ejercicio — slider 0-2 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-bolt section-icon icon-amber"></i> Frecuencia de ejercicio</label>
@@ -66,18 +53,13 @@
             <input type="range" min="0" max="2" step="1" formControlName="frecuencia_ejercicio">
             <div class="labels"><span>Nunca</span><span>Frecuentemente</span></div>
           </div>
-
-          <!-- Redes sociales — numérico -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-mobile section-icon icon-slate"></i> Horas en redes sociales</label>
               <span class="badge-value">{{ evalForm.get('model_features.redes_sociales')?.value }} h</span>
             </div>
-            <input type="number" formControlName="redes_sociales" class="form-input-num"
-              min="0" max="24" step="0.5" placeholder="Ej: 3">
+            <input type="number" formControlName="redes_sociales" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 3">
           </div>
-
-          <!-- Nivel de estrés — slider 1-5 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-exclamation-circle section-icon icon-rose"></i> Nivel de estrés</label>
@@ -86,13 +68,9 @@
             <input type="range" min="1" max="5" step="1" formControlName="nivel_estres">
             <div class="labels"><span>Muy bajo</span><span>Muy alto</span></div>
           </div>
-
         </div>
 
-        <!-- Columna derecha -->
         <div class="col-right">
-
-          <!-- Calidad de sueño — slider 1-4 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-star section-icon icon-indigo"></i> Calidad del sueño</label>
@@ -101,8 +79,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="calidad_sueno">
             <div class="labels"><span>Muy mala</span><span>Muy buena</span></div>
           </div>
-
-          <!-- Soledad percibida — slider 1-4 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-heart section-icon icon-rose"></i> Soledad percibida</label>
@@ -111,8 +87,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="soledad_percibida">
             <div class="labels"><span>Nunca</span><span>Siempre</span></div>
           </div>
-
-          <!-- Apoyo familiar — slider 1-4 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-home section-icon icon-slate"></i> Apoyo familiar</label>
@@ -121,8 +95,6 @@
             <input type="range" min="1" max="4" step="1" formControlName="apoyo_familiar">
             <div class="labels"><span>Muy bajo</span><span>Muy alto</span></div>
           </div>
-
-          <!-- Autoestima — slider 1-5 -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-shield section-icon icon-slate"></i> Autoestima</label>
@@ -131,8 +103,6 @@
             <input type="range" min="1" max="5" step="1" formControlName="autoestima">
             <div class="labels"><span>Muy baja</span><span>Muy alta</span></div>
           </div>
-
-          <!-- Estado civil — select -->
           <div class="slider-group compact">
             <div class="slider-header">
               <label><i class="pi pi-id-card section-icon icon-slate"></i> Estado civil</label>
@@ -149,13 +119,10 @@
               <span class="select-arrow">▼</span>
             </div>
           </div>
-
         </div>
       </div>
 
       <hr class="divider-compact" style="margin-top: 20px;">
-
-      <!-- ── Notas del doctor ── -->
       <h3 class="col-title" style="margin-bottom: 12px;">👨‍⚕️ Observaciones de la Entrevista</h3>
       <div class="form-group full-width" style="margin-bottom: 25px;">
         <textarea formControlName="doctor_notes" class="form-input" rows="4"
@@ -166,10 +133,9 @@
       <div class="button-wrapper" style="text-align: center;">
         <button type="submit" class="btn-analyze" [disabled]="isLoading()">
           <i class="pi pi-microchip-ai" style="margin-right: 10px;"></i>
-          {{ isLoading() ? 'Guardando...' : 'Ejecutar Análisis Predictivo' }}
+          {{ isLoading() ? 'Ejecutando análisis...' : 'Ejecutar Análisis Predictivo' }}
         </button>
       </div>
-
     </form>
   </div>
 </div>
@@ -180,47 +146,52 @@
   [visible]="displayModal()"
   (visibleChange)="displayModal.set($event)"
   [modal]="true"
-  [style]="{ width: '50vw', maxWidth: '600px' }"
-  [draggable]="false"
-  [resizable]="false"
-  [closable]="false">
+  [style]="{ width: '50vw', maxWidth: '620px' }"
+  [draggable]="false" [resizable]="false" [closable]="false">
 
   <div class="result-content">
-    <div class="verdict-section">
-      <h3 class="result-title">Nivel de Riesgo Estimado</h3>
 
-      <div class="gauge-wrapper">
-        <p-chart type="doughnut" [data]="gaugeData" [options]="gaugeOptions" height="180px"></p-chart>
-        <div class="gauge-center-text">
-          <span class="percentage" [style.color]="riesgoPorcentaje() > 50 ? '#ef4444' : '#1e293b'">
-            {{ riesgoPorcentaje() }}%
-          </span>
-          <span class="label" [style.color]="riesgoPorcentaje() > 50 ? '#ef4444' : '#10b981'">
-            {{ riesgoEtiqueta() }}
-          </span>
+    <!-- SEMÁFORO + BADGE DE NIVEL -->
+    <div class="verdict-section">
+      <h3 class="result-title">Resultado del Análisis</h3>
+      <div class="semaforo-wrapper">
+        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 1" style="background: #ef4444;">
+          <i class="pi pi-exclamation-triangle" style="color: white; font-size: 1.6rem;"></i>
+        </div>
+        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 0" style="background: #10b981;">
+          <i class="pi pi-check-circle" style="color: white; font-size: 1.6rem;"></i>
         </div>
       </div>
 
-      @if (riesgoEtiqueta() === 'Pendiente') {
-        <p class="result-description" style="color: #94a3b8;">
-          El modelo predictivo aún no está integrado. La evaluación fue guardada correctamente
-          y el análisis estará disponible cuando XGBoost esté en línea.
-        </p>
-      } @else {
-        <p class="result-description">
-          El modelo estima un riesgo
-          <strong [style.color]="riesgoPorcentaje() > 50 ? '#ef4444' : '#10b981'">{{ riesgoEtiqueta() }}</strong>
-          de depresión para este paciente.
-        </p>
-      }
+      <div class="semaforo-texto"
+        [class.texto-riesgo]="riesgoBinario() === 1"
+        [class.texto-ok]="riesgoBinario() === 0">
+        @if (riesgoBinario() === 1) {
+          <strong>Riesgo Depresivo Detectado</strong>
+          <!-- Badge llamativo del nivel -->
+          <span class="nivel-badge"
+            [class.nivel-alto]="riesgoEtiqueta() === 'Moderado/Alto'"
+            [class.nivel-leve]="riesgoEtiqueta() === 'Leve'">
+            @if (riesgoEtiqueta() === 'Moderado/Alto') {
+              <i class="pi pi-exclamation-circle"></i> Nivel Moderado / Alto
+            } @else {
+              <i class="pi pi-info-circle"></i> Nivel Leve
+            }
+          </span>
+        } @else {
+          <strong>Sin Riesgo Detectado</strong>
+          <span class="nivel-badge nivel-ninguno">
+            <i class="pi pi-check-circle"></i> Sin indicadores depresivos
+          </span>
+        }
+      </div>
     </div>
 
     <hr class="divider">
 
+    <!-- SHAP -->
     <div class="xai-section">
-      <h3 class="xai-title">
-        <i class="pi pi-bolt"></i> Factores Determinantes (SHAP)
-      </h3>
+      <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Determinantes (SHAP)</h3>
       <p class="xai-subtitle">Variables con mayor impacto en la predicción</p>
       <div class="shap-chart-container">
         <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
@@ -231,28 +202,74 @@
       </div>
     </div>
 
-    <!-- ── Agregar DESPUÉS del bloque xai-section en evaluation.html ── -->
-
-@if (ultimaEvaluacion()?.recommendations?.length) {
-  <hr class="divider">
-  <div class="recommendations-section">
-    <h3 class="xai-title" style="margin-bottom: 12px;">
-      <i class="pi pi-list-check"></i> Recomendaciones Clínicas
-    </h3>
-    <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
-
-    @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
-      <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
-        <div class="rec-header">
-          <span class="rec-badge">{{ rec.priority }}°</span>
-          <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
-          <span class="rec-level">{{ rec.alert_level | titlecase }}</span>
-        </div>
-        <p class="rec-text">{{ rec.recommendation }}</p>
+    <!-- Recomendaciones -->
+    @if (ultimaEvaluacion()?.recommendations?.length) {
+      <hr class="divider">
+      <div class="recommendations-section">
+        <h3 class="xai-title" style="margin-bottom: 12px;">
+          <i class="pi pi-list-check"></i> Recomendaciones Clínicas
+        </h3>
+        <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
+        @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
+          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
+            <div class="rec-header">
+              <span class="rec-badge">{{ rec.priority }}°</span>
+              <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
+              <span class="rec-level">{{ rec.alert_level | titlecase }}</span>
+            </div>
+            <p class="rec-text">{{ rec.recommendation }}</p>
+          </div>
+        }
       </div>
     }
-  </div>
-}
+
+    <!-- US007 — Conformidad del doctor -->
+    <hr class="divider">
+    <div class="agreement-section">
+      <h3 class="xai-title" style="margin-bottom: 6px;">
+        <i class="pi pi-user-edit"></i> Conformidad del Especialista
+      </h3>
+      <p class="xai-subtitle">¿Concuerda con el diagnóstico generado por el modelo?</p>
+
+      @if (doctorAgreement()) {
+        <!-- Estado ya registrado -->
+        <div class="agreement-registered"
+          [class.agreement-confirmed]="doctorAgreement() === 'confirmed'"
+          [class.agreement-rejected]="doctorAgreement() === 'rejected'">
+          @if (doctorAgreement() === 'confirmed') {
+            <i class="pi pi-check-circle"></i>
+            <div>
+              <strong>Diagnóstico confirmado por el especialista</strong>
+              <p>El médico concuerda con la predicción generada por el modelo</p>
+            </div>
+          } @else {
+            <i class="pi pi-times-circle"></i>
+            <div>
+              <strong>El especialista no concuerda con el diagnóstico</strong>
+              <p>El médico ha registrado su desacuerdo con la predicción del modelo</p>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- Botones de conformidad -->
+        <div class="agreement-buttons">
+          <button class="btn-agree" (click)="registrarConformidad('confirmed')" [disabled]="isSavingAgreement()">
+            <i class="pi pi-check-circle"></i>
+            <span>
+              <strong>Confirmo el diagnóstico</strong>
+              <small>Concuerdo con la predicción del modelo</small>
+            </span>
+          </button>
+          <button class="btn-disagree" (click)="registrarConformidad('rejected')" [disabled]="isSavingAgreement()">
+            <i class="pi pi-times-circle"></i>
+            <span>
+              <strong>No concuerdo</strong>
+              <small>El diagnóstico no refleja mi evaluación clínica</small>
+            </span>
+          </button>
+        </div>
+      }
+    </div>
 
     <div class="modal-footer">
       <button class="btn-secondary" (click)="exportarPDF()">

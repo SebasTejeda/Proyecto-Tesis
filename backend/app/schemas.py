@@ -143,12 +143,18 @@ class EvaluationCreate(BaseModel):
     doctor_notes: Optional[str] = None
     model_features: ModelFeaturesCreate
 
+
+class DoctorAgreementUpdate(BaseModel):
+    doctor_agreement: str  # "confirmed" | "rejected"
+
+
 class EvaluationResponse(BaseModel):
     id: int
     patient_id: int
     date: datetime
     status: str
     doctor_notes: Optional[str] = None
+    doctor_agreement: Optional[str] = None
     created_at: datetime
 
     model_features: Optional[ModelFeaturesResponse] = None

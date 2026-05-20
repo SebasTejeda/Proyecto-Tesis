@@ -18,9 +18,17 @@ import { EvaluationResponse } from '../../models/evaluations';
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChartModule, TableModule, ButtonModule, DialogModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ChartModule,
+    TableModule,
+    ButtonModule,
+    DialogModule,
+    ReactiveFormsModule,
+  ],
   templateUrl: './patient-detail.html',
-  styleUrls: ['./patient-detail.css']
+  styleUrls: ['./patient-detail.css'],
 })
 export class PatientDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
@@ -41,19 +49,38 @@ export class PatientDetailComponent implements OnInit {
 
   displayModal = signal(false);
   selectedEval = signal<EvaluationResponse | null>(null);
-  gaugeData: any;
-  gaugeOptions: any;
   shapData: any;
   shapOptions: any;
 
   displayEditModal = signal(false);
   editForm = this.fb.nonNullable.group({
-    nombre_completo:  ['', [Validators.required, Validators.minLength(3)]],
-    dni:              ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
+    nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
+    dni: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
     fecha_nacimiento: ['', [Validators.required]],
-    sexo:             ['', [Validators.required]],
-    telefono:         [''],
+    sexo: ['', [Validators.required]],
+    telefono: [''],
   });
+
+  // Mapa de severidad a valor numérico para el gráfico
+  private readonly SEVERITY_SCORE: Record<string, number> = {
+    Ninguno: 0,
+    Leve: 1,
+    'Moderado/Alto': 2,
+  };
+
+  private readonly LABEL_MAP: Record<string, string> = {
+    horas_sueno: 'Horas de sueño',
+    vida_social: 'Vida social',
+    frecuencia_ejercicio: 'Ejercicio',
+    redes_sociales: 'Redes sociales',
+    nivel_estres: 'Nivel de estrés',
+    calidad_sueno: 'Calidad de sueño',
+    soledad_percibida: 'Soledad',
+    apoyo_familiar: 'Apoyo familiar',
+    autoestima: 'Autoestima',
+    estado_civil: 'Estado civil',
+    genero: 'Género',
+  };
 
   constructor() {
     Chart.register(...registerables);
@@ -101,30 +128,56 @@ export class PatientDetailComponent implements OnInit {
             this.alertService.close();
             this.isLoading.set(false);
             this.alertService.error('Error', 'No se pudo cargar el historial.');
-          }
+          },
         });
       },
       error: () => {
         this.alertService.close();
         this.alertService.error('Error', 'Paciente no encontrado.');
         this.router.navigate(['/dashboard']);
-      }
+      },
     });
   }
 
   prepararGraficoEvolucion(evaluaciones: EvaluationResponse[]) {
     if (!evaluaciones || evaluaciones.length === 0) return;
-    const ordenadas = [...evaluaciones]
-      .sort((a, b) => this.parsearFecha(a.date).getTime() - this.parsearFecha(b.date).getTime());
+
+    const ordenadas = [...evaluaciones].sort(
+      (a, b) =>
+        this.parsearFecha(a.date).getTime() -
+        this.parsearFecha(b.date).getTime(),
+    );
     const ultimas5 = ordenadas.slice(-5);
-    const labels = ultimas5.map(e =>
-      this.parsearFecha(e.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+
+    const labels = ultimas5.map((e) =>
+      this.parsearFecha(e.date).toLocaleDateString('es-PE', {
+        timeZone: 'America/Lima',
+        month: 'short',
+        day: 'numeric',
+      }),
     );
-    const dataPoints = ultimas5.map(e =>
-      e.model_prediction?.risk_probability != null
-        ? Math.round(e.model_prediction.risk_probability * 100) : 0
-    );
+
+    // Gráfico por nivel de severidad: Ninguno=0, Leve=1, Moderado/Alto=2
+    const dataPoints = ultimas5.map((e) => {
+      const severity = e.model_prediction?.severity ?? 'Ninguno';
+      return this.SEVERITY_SCORE[severity] ?? 0;
+    });
+
     this.initMainChart(labels, dataPoints);
+  }
+
+  // Top 3 factores SHAP positivos (que aumentan riesgo) para la tabla
+  getTopFactores(evaluacion: EvaluationResponse): string {
+    const shap = evaluacion.model_prediction?.shap_values;
+    if (!shap) return '--';
+
+    const top3 = Object.entries(shap)
+      .filter(([k, v]) => this.LABEL_MAP[k] !== undefined && v > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([k]) => this.LABEL_MAP[k]);
+
+    return top3.length > 0 ? top3.join(', ') : 'Sin factores de riesgo';
   }
 
   get ultimaSeverity(): string {
@@ -133,7 +186,7 @@ export class PatientDetailComponent implements OnInit {
 
   irANuevaEvaluacion() {
     this.router.navigate(['/dashboard/evaluacion'], {
-      queryParams: { patientId: this.patient()?.id }
+      queryParams: { patientId: this.patient()?.id },
     });
   }
 
@@ -142,20 +195,29 @@ export class PatientDetailComponent implements OnInit {
     if (!dataPaciente) return;
     const ultimaEval = this.historial()[0];
     if (!ultimaEval) {
-      this.alertService.error('Sin datos', 'El paciente no tiene evaluaciones para generar un informe.');
+      this.alertService.error(
+        'Sin datos',
+        'El paciente no tiene evaluaciones para generar un informe.',
+      );
       return;
     }
     const pred = ultimaEval.model_prediction;
-    const puntajePorcentaje = pred?.risk_probability != null
-      ? Math.round(pred.risk_probability * 100) : 0;
+    const puntajePorcentaje =
+      pred?.risk_probability != null
+        ? Math.round(pred.risk_probability * 100)
+        : 0;
     const datosResultado = {
       riesgoPorcentaje: puntajePorcentaje,
-      riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase()
+      riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase(),
     };
     const shapParaPdf = pred?.shap_values
       ? this.buildShapData(pred.shap_values)
       : { labels: ['Pendiente'], datasets: [{ data: [0] }] };
-    this.pdfService.generateEvaluationReport(dataPaciente, datosResultado, shapParaPdf);
+    this.pdfService.generateEvaluationReport(
+      dataPaciente,
+      datosResultado,
+      shapParaPdf,
+    );
     this.alertService.success('Informe Generado', 'Descarga iniciada.', true);
   }
 
@@ -165,109 +227,110 @@ export class PatientDetailComponent implements OnInit {
       return;
     }
     const doctorData = this.authService.getUserData();
-    const nombreDoctor = doctorData ? `Dr/a. ${doctorData.nombre}` : 'Especialista Médico';
+    const nombreDoctor = doctorData
+      ? `Dr/a. ${doctorData.nombre}`
+      : 'Especialista Médico';
     const pacienteParaPdf = {
       ...this.patient(),
-      edad: this.calcularEdad(this.patient()?.fecha_nacimiento)
+      edad: this.calcularEdad(this.patient()?.fecha_nacimiento),
     };
-    const historialFormateado = this.historial().map(e => ({
+    const historialFormateado = this.historial().map((e) => ({
       fecha: this.parsearFecha(e.date).toLocaleDateString(),
       doctor: nombreDoctor,
       severity: e.model_prediction?.severity ?? 'Pendiente',
       riskProbability: e.model_prediction?.risk_probability ?? 0,
-      status: e.status
+      status: e.status,
     }));
     this.pdfService.generateHistoryReport(pacienteParaPdf, historialFormateado);
-    this.alertService.success('Historial Exportado', 'Se ha generado el PDF.', true);
+    this.alertService.success(
+      'Historial Exportado',
+      'Se ha generado el PDF.',
+      true,
+    );
   }
 
   verDetalle(evaluacion: EvaluationResponse) {
     this.selectedEval.set(evaluacion);
-    const porcentaje = evaluacion.model_prediction?.risk_probability != null
-      ? Math.round(evaluacion.model_prediction.risk_probability * 100) : 0;
-    this.initGaugeChart(porcentaje);
     this.initShapChart(evaluacion.model_prediction?.shap_values ?? null);
     this.displayModal.set(true);
   }
 
-  // ── Gráficos ─────────────────────────────────────────────────────────────────
+  // ── Gráficos ──────────────────────────────────────────────────────────────
 
   initMainChart(labels: string[], dataPoints: number[]) {
     this.chartData = {
       labels,
-      datasets: [{
-        label: 'Nivel de Riesgo (%)',
-        data: dataPoints,
-        fill: true,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: '#3b82f6',
-        pointBorderWidth: 2
-      }]
+      datasets: [
+        {
+          label: 'Nivel de Riesgo',
+          data: dataPoints,
+          fill: true,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#3b82f6',
+          pointBorderWidth: 2,
+        },
+      ],
     };
     this.chartOptions = {
-      maintainAspectRatio: false, responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { x: { grid: { display: false } }, y: { min: 0, max: 100 } }
-    };
-  }
-
-  initGaugeChart(valor: number) {
-    const display = valor || 1;
-    this.gaugeData = {
-      labels: ['Riesgo', 'Restante'],
-      datasets: [{
-        data: [display, 100 - display],
-        backgroundColor: [valor > 50 ? '#ef4444' : '#10b981', '#e2e8f0'],
-        borderWidth: 0, cutout: '85%'
-      }]
-    };
-    this.gaugeOptions = {
-      rotation: -90, circumference: 180,
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      aspectRatio: 1.5, maintainAspectRatio: false
+      maintainAspectRatio: false,
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => {
+              const labels = ['Ninguno', 'Leve', 'Moderado/Alto'];
+              return ` Nivel: ${labels[ctx.raw] ?? ctx.raw}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          min: 0,
+          max: 2,
+          ticks: {
+            stepSize: 1,
+            callback: (v: any) => ['Ninguno', 'Leve', 'Moderado/Alto'][v] ?? v,
+          },
+        },
+      },
     };
   }
 
   initShapChart(shapValues: Record<string, number> | null) {
-    const labelMap: Record<string, string> = {
-      horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-      frecuencia_ejercicio: 'Ejercicio', redes_sociales: 'Redes sociales',
-      nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
-      soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
-      autoestima: 'Autoestima', estado_civil: 'Estado civil', genero: 'Género'
-    };
-
-    // Filtrar solo features con nombre legible (excluye estado_civil_1, genero_2, etc.)
     const entradas = shapValues
-      ? Object.entries(shapValues).filter(([k]) => labelMap[k] !== undefined)
+      ? Object.entries(shapValues).filter(
+          ([k]) => this.LABEL_MAP[k] !== undefined,
+        )
       : [];
 
-    // Top 6 por valor absoluto
     const top6 = entradas
       .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
       .slice(0, 6);
 
-    // Escalar a porcentaje relativo: mayor valor absoluto = 100%
-    const maxAbsoluto = top6.length > 0
-      ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
+    const maxAbsoluto =
+      top6.length > 0 ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
 
-    const labels  = top6.map(([k]) => labelMap[k]);
+    const labels = top6.map(([k]) => this.LABEL_MAP[k]);
     const valores = top6.map(([, v]) => Math.round((v / maxAbsoluto) * 100));
-    const colores = valores.map(v => v >= 0 ? '#ef4444' : '#10b981');
+    const colores = valores.map((v) => (v >= 0 ? '#ef4444' : '#10b981'));
 
     this.shapData = {
       labels,
-      datasets: [{
-        label: 'Impacto en el riesgo (%)',
-        data: valores,
-        backgroundColor: colores,
-        borderRadius: 5
-      }]
+      datasets: [
+        {
+          label: 'Impacto en el riesgo (%)',
+          data: valores,
+          backgroundColor: colores,
+          borderRadius: 5,
+        },
+      ],
     };
-
     this.shapOptions = {
       indexAxis: 'y',
       responsive: true,
@@ -278,58 +341,45 @@ export class PatientDetailComponent implements OnInit {
           callbacks: {
             label: (ctx: any) => {
               const val = ctx.raw;
-              const signo = val >= 0 ? '+' : '';
-              const efecto = val >= 0 ? 'Aumenta el riesgo' : 'Disminuye el riesgo';
-              return ` ${efecto}: ${signo}${val}%`;
-            }
-          }
-        }
+              const efecto =
+                val >= 0 ? 'Aumenta el riesgo' : 'Disminuye el riesgo';
+              return ` ${efecto}: ${val >= 0 ? '+' : ''}${val}%`;
+            },
+          },
+        },
       },
       scales: {
         x: {
-          min: -100, max: 100,
+          min: -100,
+          max: 100,
           ticks: { callback: (v: any) => `${v}%` },
-          grid: { color: '#f1f5f9' }
+          grid: { color: '#f1f5f9' },
         },
-        y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } }
-      }
+        y: { grid: { display: false }, ticks: { font: { weight: 'bold' } } },
+      },
     };
   }
 
   private buildShapData(shapValues: Record<string, number>) {
-    const labelMap: Record<string, string> = {
-      horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-      frecuencia_ejercicio: 'Ejercicio', redes_sociales: 'Redes sociales',
-      nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
-      soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
-      autoestima: 'Autoestima', estado_civil: 'Estado civil'
-    };
     const entries = Object.entries(shapValues)
-      .filter(([k]) => labelMap[k] !== undefined)
-      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6);
+      .filter(([k]) => this.LABEL_MAP[k] !== undefined)
+      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .slice(0, 6);
     return {
-      labels: entries.map(([k]) => labelMap[k] ?? k),
-      datasets: [{ data: entries.map(([, v]) => v) }]
+      labels: entries.map(([k]) => this.LABEL_MAP[k] ?? k),
+      datasets: [{ data: entries.map(([, v]) => v) }],
     };
   }
 
-  // Convierte el nombre técnico de la variable a etiqueta legible
   getLabelFeature(key: string): string {
-    const labelMap: Record<string, string> = {
-      horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
-      frecuencia_ejercicio: 'Frecuencia de ejercicio',
-      redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés',
-      calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida',
-      apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima'
-    };
-    return labelMap[key] ?? key;
+    return this.LABEL_MAP[key] ?? key;
   }
 
   getClassRiesgo(riesgo: string | null | undefined): string {
     if (!riesgo) return 'badge-low';
     const r = riesgo.toLowerCase();
-    if (r === 'severo' || r.includes('alto')) return 'badge-high';
-    if (r.includes('moderado')) return 'badge-mod';
+    if (r.includes('alto') || r.includes('severo')) return 'badge-high';
+    if (r.includes('moderado') || r.includes('leve')) return 'badge-mod';
     return 'badge-low';
   }
 
@@ -337,11 +387,11 @@ export class PatientDetailComponent implements OnInit {
     const p = this.patient();
     if (p) {
       this.editForm.patchValue({
-        nombre_completo:  p.nombre_completo,
-        dni:              p.dni,
+        nombre_completo: p.nombre_completo,
+        dni: p.dni,
         fecha_nacimiento: p.fecha_nacimiento,
-        sexo:             p.sexo,
-        telefono:         p.telefono ?? ''
+        sexo: p.sexo,
+        telefono: p.telefono ?? '',
       });
       this.displayEditModal.set(true);
     }
@@ -352,19 +402,26 @@ export class PatientDetailComponent implements OnInit {
     this.alertService.loading('Actualizando paciente...');
     const id = this.patient()?.id;
     if (!id) return;
-    this.patientService.updatePatient(id, this.editForm.getRawValue()).subscribe({
-      next: () => {
-        this.alertService.success('Actualizado', 'Datos del paciente modificados con éxito.', true);
-        this.displayEditModal.set(false);
-        this.cargarDatosReales(id);
-      },
-      error: (err) => {
-        const msg = err.error?.detail === 'El DNI ya está registrado.'
-          ? 'Este DNI ya pertenece a otro paciente.'
-          : 'No se pudo actualizar el paciente.';
-        this.alertService.error('Error', msg);
-      }
-    });
+    this.patientService
+      .updatePatient(id, this.editForm.getRawValue())
+      .subscribe({
+        next: () => {
+          this.alertService.success(
+            'Actualizado',
+            'Datos del paciente modificados con éxito.',
+            true,
+          );
+          this.displayEditModal.set(false);
+          this.cargarDatosReales(id);
+        },
+        error: (err) => {
+          const msg =
+            err.error?.detail === 'El DNI ya está registrado.'
+              ? 'Este DNI ya pertenece a otro paciente.'
+              : 'No se pudo actualizar el paciente.';
+          this.alertService.error('Error', msg);
+        },
+      });
   }
 
   paginaActual = signal(1);
@@ -375,15 +432,29 @@ export class PatientDetailComponent implements OnInit {
     return this.historial().slice(inicio, inicio + this.itemsPorPagina);
   });
 
-  totalPaginas = computed(() =>
-    Math.ceil(this.historial().length / this.itemsPorPagina) || 1
+  totalPaginas = computed(
+    () => Math.ceil(this.historial().length / this.itemsPorPagina) || 1,
   );
 
   paginaSiguiente() {
-    if (this.paginaActual() < this.totalPaginas()) this.paginaActual.update(p => p + 1);
+    if (this.paginaActual() < this.totalPaginas())
+      this.paginaActual.update((p) => p + 1);
   }
 
   paginaAnterior() {
-    if (this.paginaActual() > 1) this.paginaActual.update(p => p - 1);
+    if (this.paginaActual() > 1) this.paginaActual.update((p) => p - 1);
+  }
+
+  formatearFecha(fechaStr: string): string {
+    const fecha = new Date(fechaStr.endsWith('Z') ? fechaStr : fechaStr + 'Z');
+    return fecha.toLocaleString('es-PE', {
+      timeZone: 'America/Lima',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
   }
 }

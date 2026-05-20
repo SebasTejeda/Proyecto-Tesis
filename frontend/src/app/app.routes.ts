@@ -12,27 +12,44 @@ import { MainLayoutComponent } from './layout/main-layout/main-layout';
 import { ResumenComponent } from './pages/resumen/resumen';
 import { RegisterComponent } from './pages/register/register';
 import { EvaluationComponent } from './pages/evaluation/evaluation';
+import { AuditoriaComponent } from './pages/auditoria/auditoria';
 
 export const routes: Routes = [
-    {path: 'login', component: LoginComponent, canActivate: [publicGuard]},
-    {path: 'recovery', component: RecoveryComponent, canActivate: [publicGuard]},
-    {path: 'register', component: RegisterAccountComponent, canActivate: [publicGuard]},
+  { path: 'login', component: LoginComponent, canActivate: [publicGuard] },
+  {
+    path: 'recovery',
+    component: RecoveryComponent,
+    canActivate: [publicGuard],
+  },
+  {
+    path: 'register',
+    component: RegisterAccountComponent,
+    canActivate: [publicGuard],
+  },
 
-    {path: 'change-password', component: ChangePasswordComponent, canActivate: [authGuard]},
+  {
+    path: 'change-password',
+    component: ChangePasswordComponent,
+    canActivate: [authGuard],
+  },
 
-    {
-        path: 'dashboard',
-        component: MainLayoutComponent,
-        canActivate: [authGuard],
-        children: [
-            {path: '', component: ResumenComponent},
-            {path: 'registro', component: RegisterComponent},
-            {path: 'evaluacion', component: EvaluationComponent},
-            {path: 'settings', component: SettingsComponent},
-            {path: 'patient/:id', component: PatientDetailComponent},
-        ]
-    },
-    
-    {path: '', redirectTo: 'login', pathMatch: 'full'},
-    {path: '**', component: NotFoundComponent},
+  {
+    path: 'dashboard',
+    component: MainLayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', component: ResumenComponent },
+      { path: 'registro', component: RegisterComponent },
+      { path: 'evaluacion', component: EvaluationComponent },
+      { path: 'settings', component: SettingsComponent },
+      { path: 'patient/:id', component: PatientDetailComponent },
+      {
+        path: 'auditoria',
+        component: AuditoriaComponent,
+      },
+    ],
+  },
+
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', component: NotFoundComponent },
 ];
