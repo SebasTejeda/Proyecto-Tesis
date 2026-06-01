@@ -5,26 +5,78 @@
   </div>
 
   <div class="eval-card">
-    <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
 
-      <div class="form-section-top">
-        <div class="form-group">
-          <label class="section-label">
-            <i class="pi pi-user section-icon icon-blue"></i> Seleccionar Paciente
-          </label>
-          <div class="custom-select-wrapper">
-            <select formControlName="patient_id" class="native-select"
-              [class.error-border]="evalForm.get('patient_id')?.invalid && evalForm.get('patient_id')?.touched">
-              <option [ngValue]="0" disabled>-- Selecciona un paciente --</option>
-              @for (p of pacientes(); track p.id) {
-                <option [value]="p.id">{{ p.nombre_completo }} — DNI: {{ p.dni }}</option>
-              }
-            </select>
-            <span class="select-arrow">▼</span>
+    <!-- ── Buscador de paciente — FUERA del formGroup ── -->
+    <div class="form-section-top">
+      <div class="form-group">
+        <label class="section-label">
+          <i class="pi pi-user section-icon icon-blue"></i> Seleccionar Paciente
+        </label>
+
+        @if (pacienteSeleccionado()) {
+          <div class="paciente-seleccionado">
+            <div class="paciente-info">
+              <div class="paciente-avatar">{{ pacienteSeleccionado()!.nombre_completo.charAt(0) }}</div>
+              <div>
+                <span class="paciente-nombre">{{ pacienteSeleccionado()!.nombre_completo }}</span>
+                <span class="paciente-dni">DNI: {{ pacienteSeleccionado()!.dni }}</span>
+              </div>
+            </div>
+            <button type="button" class="btn-cambiar-paciente" (click)="limpiarPaciente()">
+              <i class="pi pi-times"></i> Cambiar
+            </button>
           </div>
-        </div>
-      </div>
+        } @else {
+          <div class="paciente-search-wrapper">
+            <div class="paciente-search-input-box">
+              <i class="pi pi-search paciente-search-icon"></i>
+              <input
+                type="text"
+                class="paciente-search-input"
+                placeholder="Buscar por nombre o DNI..."
+                [value]="busquedaPaciente()"
+                (input)="busquedaPaciente.set($any($event.target).value)"
+                (focus)="onBusquedaFocus()"
+                (blur)="onBusquedaBlur()"
+                autocomplete="off">
+            </div>
 
+            @if (mostrarDropdown()) {
+              <div class="paciente-dropdown">
+                @if (pacientesFiltrados().length === 0) {
+                  <div class="dropdown-empty">
+                    <i class="pi pi-inbox"></i> No se encontraron pacientes
+                  </div>
+                } @else {
+                  @for (p of pacientesFiltrados(); track p.id) {
+                    <div class="dropdown-item" (mousedown)="seleccionarPaciente(p)">
+                      <div class="dropdown-avatar">{{ p.nombre_completo.charAt(0) }}</div>
+                      <div class="dropdown-info">
+                        <span class="dropdown-nombre">{{ p.nombre_completo }}</span>
+                        <span class="dropdown-dni">DNI: {{ p.dni }}</span>
+                      </div>
+                      <i class="pi pi-chevron-right dropdown-arrow"></i>
+                    </div>
+                  }
+                  @if (pacientes().length > 8) {
+                    <div class="dropdown-hint">
+                      <i class="pi pi-info-circle"></i>
+                      Escribe para filtrar entre {{ pacientes().length }} pacientes
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+          @if (sinPacienteError()) {
+            <span class="error-text">Debes seleccionar un paciente de la lista</span>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- ── Formulario de factores ── -->
+    <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
       <hr class="divider-compact">
       <h3 class="col-title" style="margin-bottom: 16px;">📊 Factores Psicosociales y de Estilo de Vida</h3>
 
@@ -35,7 +87,7 @@
               <label><i class="pi pi-moon section-icon icon-indigo"></i> Horas de sueño diarias</label>
               <span class="badge-value">{{ evalForm.get('model_features.horas_sueno')?.value }} h</span>
             </div>
-            <input type="number" formControlName="horas_sueno" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 7.5">
+            <input type="number" formControlName="horas_sueno" class="form-input-num" min="0" max="24" step="0.5">
           </div>
           <div class="slider-group compact">
             <div class="slider-header">
@@ -58,7 +110,7 @@
               <label><i class="pi pi-mobile section-icon icon-slate"></i> Horas en redes sociales</label>
               <span class="badge-value">{{ evalForm.get('model_features.redes_sociales')?.value }} h</span>
             </div>
-            <input type="number" formControlName="redes_sociales" class="form-input-num" min="0" max="24" step="0.5" placeholder="Ej: 3">
+            <input type="number" formControlName="redes_sociales" class="form-input-num" min="0" max="24" step="0.5">
           </div>
           <div class="slider-group compact">
             <div class="slider-header">
@@ -126,13 +178,13 @@
       <h3 class="col-title" style="margin-bottom: 12px;">👨‍⚕️ Observaciones de la Entrevista</h3>
       <div class="form-group full-width" style="margin-bottom: 25px;">
         <textarea formControlName="doctor_notes" class="form-input" rows="4"
-          style="width: 100%; border-radius: 10px; padding: 15px; resize: vertical;"
-          placeholder="Notas de la entrevista, comportamiento del paciente u otros detalles relevantes..."></textarea>
+          style="width:100%;border-radius:10px;padding:15px;resize:vertical;"
+          placeholder="Notas de la entrevista..."></textarea>
       </div>
 
-      <div class="button-wrapper" style="text-align: center;">
+      <div class="button-wrapper" style="text-align:center;">
         <button type="submit" class="btn-analyze" [disabled]="isLoading()">
-          <i class="pi pi-microchip-ai" style="margin-right: 10px;"></i>
+          <i class="pi pi-microchip-ai" style="margin-right:10px;"></i>
           {{ isLoading() ? 'Ejecutando análisis...' : 'Ejecutar Análisis Predictivo' }}
         </button>
       </div>
@@ -140,38 +192,29 @@
   </div>
 </div>
 
-<!-- ── Modal de resultados ── -->
-<p-dialog
-  header="Resultado del Análisis Predictivo"
-  [visible]="displayModal()"
-  (visibleChange)="displayModal.set($event)"
-  [modal]="true"
-  [style]="{ width: '50vw', maxWidth: '620px' }"
+<!-- ── Modal resultados ── -->
+<p-dialog header="Resultado del Análisis Predictivo"
+  [visible]="displayModal()" (visibleChange)="displayModal.set($event)"
+  [modal]="true" [style]="{ width: '95vw', maxWidth: '620px' }"
   [draggable]="false" [resizable]="false" [closable]="false">
 
   <div class="result-content">
-
-    <!-- SEMÁFORO + BADGE DE NIVEL -->
     <div class="verdict-section">
       <h3 class="result-title">Resultado del Análisis</h3>
       <div class="semaforo-wrapper">
-        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 1" style="background: #ef4444;">
-          <i class="pi pi-exclamation-triangle" style="color: white; font-size: 1.6rem;"></i>
+        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 1" style="background:#ef4444;">
+          <i class="pi pi-exclamation-triangle" style="color:white;font-size:1.6rem;"></i>
         </div>
-        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 0" style="background: #10b981;">
-          <i class="pi pi-check-circle" style="color: white; font-size: 1.6rem;"></i>
+        <div class="semaforo-luz" [class.activa]="riesgoBinario() === 0" style="background:#10b981;">
+          <i class="pi pi-check-circle" style="color:white;font-size:1.6rem;"></i>
         </div>
       </div>
-
-      <div class="semaforo-texto"
-        [class.texto-riesgo]="riesgoBinario() === 1"
-        [class.texto-ok]="riesgoBinario() === 0">
+      <div class="semaforo-texto" [class.texto-riesgo]="riesgoBinario()===1" [class.texto-ok]="riesgoBinario()===0">
         @if (riesgoBinario() === 1) {
           <strong>Riesgo Depresivo Detectado</strong>
-          <!-- Badge llamativo del nivel -->
           <span class="nivel-badge"
-            [class.nivel-alto]="riesgoEtiqueta() === 'Moderado/Alto'"
-            [class.nivel-leve]="riesgoEtiqueta() === 'Leve'">
+            [class.nivel-alto]="riesgoEtiqueta()==='Moderado/Alto'"
+            [class.nivel-leve]="riesgoEtiqueta()==='Leve'">
             @if (riesgoEtiqueta() === 'Moderado/Alto') {
               <i class="pi pi-exclamation-circle"></i> Nivel Moderado / Alto
             } @else {
@@ -189,7 +232,6 @@
 
     <hr class="divider">
 
-    <!-- SHAP -->
     <div class="xai-section">
       <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Determinantes (SHAP)</h3>
       <p class="xai-subtitle">Variables con mayor impacto en la predicción</p>
@@ -202,14 +244,13 @@
       </div>
     </div>
 
-    <!-- Recomendaciones -->
     @if (ultimaEvaluacion()?.recommendations?.length) {
       <hr class="divider">
       <div class="recommendations-section">
-        <h3 class="xai-title" style="margin-bottom: 12px;">
+        <h3 class="xai-title" style="margin-bottom:12px;">
           <i class="pi pi-list-check"></i> Recomendaciones Clínicas
         </h3>
-        <p class="xai-subtitle">Basadas en los factores con mayor impacto en la predicción</p>
+        <p class="xai-subtitle">Basadas en los factores con mayor impacto</p>
         @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
           <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
             <div class="rec-header">
@@ -223,19 +264,17 @@
       </div>
     }
 
-    <!-- US007 — Conformidad del doctor -->
     <hr class="divider">
     <div class="agreement-section">
-      <h3 class="xai-title" style="margin-bottom: 6px;">
+      <h3 class="xai-title" style="margin-bottom:6px;">
         <i class="pi pi-user-edit"></i> Conformidad del Especialista
       </h3>
       <p class="xai-subtitle">¿Concuerda con el diagnóstico generado por el modelo?</p>
 
       @if (doctorAgreement()) {
-        <!-- Estado ya registrado -->
         <div class="agreement-registered"
-          [class.agreement-confirmed]="doctorAgreement() === 'confirmed'"
-          [class.agreement-rejected]="doctorAgreement() === 'rejected'">
+          [class.agreement-confirmed]="doctorAgreement()==='confirmed'"
+          [class.agreement-rejected]="doctorAgreement()==='rejected'">
           @if (doctorAgreement() === 'confirmed') {
             <i class="pi pi-check-circle"></i>
             <div>
@@ -246,26 +285,19 @@
             <i class="pi pi-times-circle"></i>
             <div>
               <strong>El especialista no concuerda con el diagnóstico</strong>
-              <p>El médico ha registrado su desacuerdo con la predicción del modelo</p>
+              <p>Razón: {{ ultimaEvaluacion()?.disagreement_reason ?? 'No especificada' }}</p>
             </div>
           }
         </div>
       } @else {
-        <!-- Botones de conformidad -->
         <div class="agreement-buttons">
-          <button class="btn-agree" (click)="registrarConformidad('confirmed')" [disabled]="isSavingAgreement()">
+          <button class="btn-agree" (click)="confirmarDiagnostico()" [disabled]="isSavingAgreement()">
             <i class="pi pi-check-circle"></i>
-            <span>
-              <strong>Confirmo el diagnóstico</strong>
-              <small>Concuerdo con la predicción del modelo</small>
-            </span>
+            <span><strong>Confirmo el diagnóstico</strong><small>Concuerdo con la predicción</small></span>
           </button>
-          <button class="btn-disagree" (click)="registrarConformidad('rejected')" [disabled]="isSavingAgreement()">
+          <button class="btn-disagree" (click)="abrirModalDesacuerdo()" [disabled]="isSavingAgreement()">
             <i class="pi pi-times-circle"></i>
-            <span>
-              <strong>No concuerdo</strong>
-              <small>El diagnóstico no refleja mi evaluación clínica</small>
-            </span>
+            <span><strong>No concuerdo</strong><small>Indicar razón de desacuerdo</small></span>
           </button>
         </div>
       }
@@ -277,6 +309,41 @@
       </button>
       <button class="btn-primary" (click)="cerrarYVolver()">
         <i class="pi pi-check-circle"></i> Finalizar y ver expediente
+      </button>
+    </div>
+  </div>
+</p-dialog>
+
+<!-- ── Modal razón de desacuerdo ── -->
+<p-dialog header="Razón de Desacuerdo"
+  [visible]="displayDisagreementModal()" (visibleChange)="displayDisagreementModal.set($event)"
+  [modal]="true" [style]="{ width: '95vw', maxWidth: '480px' }"
+  [draggable]="false" [resizable]="false">
+
+  <div class="disagreement-modal">
+    <p class="disagreement-intro">
+      <i class="pi pi-info-circle"></i>
+      Selecciona la razón por la que no concuerdas con el diagnóstico del modelo. Esta información se usará para mejorar futuras versiones.
+    </p>
+    <div class="reason-options">
+      @for (option of DISAGREEMENT_OPTIONS; track option) {
+        <label class="reason-option" [class.selected]="selectedDisagreementReason() === option">
+          <input type="radio" [value]="option" [checked]="selectedDisagreementReason() === option"
+            (change)="selectedDisagreementReason.set(option)">
+          <span>{{ option }}</span>
+        </label>
+      }
+    </div>
+    @if (selectedDisagreementReason() === 'Otro') {
+      <textarea class="other-reason-input" rows="3"
+        [value]="otherReason()"
+        (input)="otherReason.set($any($event.target).value)"
+        placeholder="Describe la razón de tu desacuerdo..."></textarea>
+    }
+    <div class="disagreement-footer">
+      <button class="btn-secondary" (click)="displayDisagreementModal.set(false)">Cancelar</button>
+      <button class="btn-disagree-confirm" (click)="confirmarDesacuerdo()" [disabled]="!selectedDisagreementReason()">
+        <i class="pi pi-check"></i> Registrar desacuerdo
       </button>
     </div>
   </div>

@@ -467,160 +467,340 @@
   color: #64748B;
   font-weight: 500;
 }
+/* =========================================
+   📱 RESPONSIVE DESIGN (Ajustado para menú lateral)
+   ========================================= */
 
-/* ========================================= */
-/* 📱 RESPONSIVE DESIGN (MÓVILES Y TABLETS)  */
-/* ========================================= */
+/* 1. REGLA DE ORO PARA LA TABLA: Evita que el texto se apriete o se corte */
+:host ::ng-deep .p-datatable-wrapper {
+  overflow-x: auto;
+}
+:host ::ng-deep .modern-table .p-datatable-thead > tr > th,
+:host ::ng-deep .modern-table .p-datatable-tbody > tr > td {
+  white-space: nowrap; /* Evita que el texto salte a 2 líneas y se corte feo */
+}
 
-@media (max-width: 1400px) {
-    /* 1. Reducir los márgenes gigantes del contenedor principal */
-    .detail-container {
-        padding: 1rem; /* Pasamos de 3rem a 1rem para aprovechar la pantalla */
-        height: auto;  /* Quitamos la altura fija de escritorio */
-        display: block; /* Quitamos el flex estricto */
-    }
+/* --- CONTENEDOR DE ACCIONES --- */
+.row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Alinea los botones a la derecha */
+    gap: 8px; /* Espaciado perfecto entre los botones */
+}
 
-    /* 2. Colapsar las columnas (Perfil arriba, Gráficos y Tabla abajo) */
-    .content-grid {
-        grid-template-columns: 1fr; /* Todo en 1 sola columna */
-        gap: 1.5rem;
-    }
+/* --- BOTÓN VER --- */
+.btn-action {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    padding: 6px 14px;
+    border-radius: 8px;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    /* Eliminamos el margin-left: auto que tenías antes, ya que el contenedor lo maneja */
+}
 
-    /* 3. Descongelar la tarjeta de perfil (ya no se queda pegada al hacer scroll) */
-    .profile-card {
-        position: relative;
-        top: 0;
-        margin-bottom: 1rem;
-    }
+.btn-action:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
 
-    /* 4. Liberar la columna derecha para que fluya naturalmente */
-    .analysis-column {
-        height: auto;
-        overflow-y: visible;
-        padding-right: 0;
-    }
+/* --- BOTÓN PDF (Nuevo estilo) --- */
+.btn-action-pdf {
+    background: transparent;
+    border: 1px solid #e2e8f0;
+    width: 32px; /* Ancho y alto fijos para que sea un cuadrado perfecto */
+    height: 32px;
+    border-radius: 8px;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+/* Le damos un toque rojo suave al hover para que se asocie con PDF */
+.btn-action-pdf:hover {
+    border-color: #ef4444; 
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.btn-action-pdf i {
+    font-size: 1.1rem;
+}
+
+/* 2. Pantallas de Laptops (hasta 1450px) - Pasamos a 1 columna temprano */
+@media (max-width: 1450px) {
+  .detail-container {
+    padding: 1.5rem; /* Reducimos padding para ganar espacio */
+    height: auto; /* Quitamos la altura fija de 100vh para que pueda hacer scroll hacia abajo */
+  }
+
+  .content-grid { 
+    grid-template-columns: 1fr; /* Todo pasa a 1 sola columna */
+  }
+
+  .analysis-column { 
+    height: auto; 
+    padding-right: 0; 
+  }
+
+  .profile-card { 
+    position: relative; 
+    top: 0; 
+    margin-bottom: 1rem; 
+  }
+  
+  /* Los botones superiores se apilan mejor */
+  .nav-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 1rem; 
+  }
+
+  .header-actions { 
+    width: 100%; 
+    flex-wrap: wrap; 
+  }
+
+  .header-actions .btn-primary,
+  .header-actions .btn-secondary { 
+    flex: 1; 
+    justify-content: center; 
+  }
+}
+
+/* 3. Celulares (hasta 600px) */
+@media (max-width: 600px) {
+  .detail-container { padding: 1rem; }
+  .card { padding: 1rem; }
+  .card-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  
+  /* Achicar el perfil para que no ocupe toda la pantalla */
+  .profile-cover { height: 70px; }
+  .avatar-wrapper { width: 80px; height: 80px; margin-top: -35px;}
+  .avatar-text { font-size: 2rem; }
+  .patient-name { font-size: 1.2rem; }
+
+  /* Info a 1 columna */
+  .info-grid { grid-template-columns: 1fr; }
+  .info-group.full { grid-column: span 1; }
+
+  /* Ocultar la columna de 'Factores de riesgo' en móviles pequeños para ganar espacio */
+  :host ::ng-deep .modern-table .p-datatable-thead > tr > th:nth-child(3),
+  :host ::ng-deep .modern-table .p-datatable-tbody > tr > td:nth-child(3) { 
+    display: none; 
+  }
+.row-actions { 
+    flex-direction: row; /* Mantenlos en una sola línea si hay espacio */
+    justify-content: flex-start;
+  }
+  .btn-action { flex: 1; justify-content: center; }
+  .btn-action-pdf { width: auto; flex: 0 0 40px; }
 }
 
 /* ========================================= */
-/* 📱 CELULARES PEQUEÑOS (PANTALLAS < 600px) */
+/* ESTILOS DEL MODAL DE RESULTADOS           */
 /* ========================================= */
 
-/* ── Modal de detalle ── */
-.result-content { padding: 10px 5px; }
-.result-title { color: #475569; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; text-align: center; margin: 10px 0 20px 0; }
-.verdict-section { text-align: center; margin-bottom: 10px; }
-.gauge-wrapper { position: relative; width: 250px; margin: 0 auto; }
-.gauge-center-text { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
-.percentage { font-size: 3rem; font-weight: 800; color: #1e293b; line-height: 1; }
-.label { font-size: 1rem; font-weight: 700; margin-top: 5px; }
-.modal-divider { border: 0; height: 1px; background: #f1f5f9; margin: 20px 0; }
+.result-content {
+    text-align: center;
+    padding: 10px 20px;
+}
 
-/* SHAP */
-.xai-section { text-align: left; background: #f8fafc; padding: 16px; border-radius: 12px; }
-.xai-title { margin: 0; font-size: 1rem; color: #1e293b; display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.xai-subtitle { margin: 5px 0 12px 0; color: #94a3b8; font-size: 0.85rem; }
-.shap-chart-container { margin-bottom: 8px; }
-.legend { display: flex; justify-content: center; gap: 20px; margin-top: 10px; font-size: 0.8rem; color: #64748b; }
+.result-title {
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 10px;
+    margin-bottom: 25px;
+}
+
+/* --- LÍNEA DIVISORA --- */
+.modal-divider {
+    border: 0;
+    height: 1px;
+    background: #f1f5f9;
+    margin: 20px 0;
+}
+
+/* --- SEMÁFORO --- */
+.verdict-section {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.semaforo-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px auto;
+}
+
+.semaforo-luz {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.2;
+    transition: opacity 0.3s, box-shadow 0.3s;
+}
+
+.semaforo-luz.activa {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(0,0,0,0.25);
+}
+
+.semaforo-texto {
+    text-align: center;
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.semaforo-texto strong { font-size: 1.2rem; }
+.texto-riesgo strong { color: #ef4444; }
+.texto-ok strong { color: #10b981; }
+
+/* --- BADGES DE NIVEL --- */
+.nivel-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 99px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+}
+
+.nivel-alto { background: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5; }
+.nivel-leve { background: #fef3c7; color: #92400e; border: 1.5px solid #fde68a; }
+.nivel-ninguno { background: #dcfce7; color: #166534; border: 1.5px solid #86efac; }
+
+/* --- GRÁFICO XAI (SHAP) --- */
+.xai-section {
+    text-align: left;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.xai-title {
+    margin: 0;
+    font-size: 1rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.xai-subtitle {
+    margin: 5px 0 15px 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
 .legend-item { display: flex; align-items: center; gap: 6px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot.red { background: #ef4444; }
 .dot.green { background: #10b981; }
 
-/* Recomendaciones */
-.recommendations-section { text-align: left; margin-top: 4px; }
-.rec-item { padding: 14px 16px; border-radius: 10px; margin-bottom: 10px; border-left: 4px solid transparent; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+/* --- RECOMENDACIONES CLÍNICAS --- */
+.recommendations-section {
+    text-align: left;
+    margin-top: 10px;
+}
+
+.rec-item {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
 .rec-alto  { background: #fef2f2; border-left-color: #ef4444; }
 .rec-medio { background: #fffbeb; border-left-color: #f59e0b; }
 .rec-bajo  { background: #f0fdf4; border-left-color: #10b981; }
-.rec-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.rec-badge { background: #1e293b; color: white; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
-.rec-level { font-size: 11px; font-weight: 600; color: #64748b; margin-left: auto; text-transform: uppercase; letter-spacing: 0.05em; }
-.rec-text { margin: 0; font-size: 13px; color: #334155; line-height: 1.6; }
 
-/* Notas */
-.notes-section { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 10px; }
-.notes-title { margin: 0 0 10px 0; color: #334155; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
-
-/* Footer modal */
-.modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
-
-@media (max-width: 600px) {
-    /* 1. Apilar los botones del header si no hay espacio */
-    .nav-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .header-actions {
-        width: 100%;
-        display: flex;
-        flex-wrap: wrap; /* Si los botones no caben, bajan de línea */
-        gap: 0.5rem;
-    }
-
-    /* Reducimos el tamaño de los botones para que entren mejor */
-    .btn-primary, .btn-secondary {
-        font-size: 0.85rem;
-        padding: 0.5rem 0.8rem;
-        flex: 1; /* Hacemos que ocupen el ancho disponible */
-        justify-content: center;
-    }
-
-    /* 2. Reducir el padding de las tarjetas blancas */
-    .card {
-        padding: 1rem;
-    }
-
-    /* 3. ¡EL TRUCO VITAL PARA LA TABLA! */
-    /* Como la tabla de historial tiene 4 columnas, en celular no cabe. 
-       Esto crea un "mini-scroll" horizontal solo para la tabla. */
-    :host ::ng-deep .p-datatable-wrapper {
-        overflow-x: auto;
-        border-radius: 8px;
-    }
-    
-    /* Achicamos la letra de la tabla */
-    :host ::ng-deep .modern-table .p-datatable-thead > tr > th,
-    :host ::ng-deep .modern-table .p-datatable-tbody > tr > td {
-        padding: 0.8rem;
-        font-size: 0.85rem;
-    }
+.rec-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
 }
 
-.semaforo-wrapper {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin: 20px auto;
+.rec-badge {
+    background: #1e293b;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 99px;
 }
 
-.semaforo-luz {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.2;
-  transition: opacity 0.3s, box-shadow 0.3s;
+.rec-level {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    margin-left: auto;
+    text-transform: uppercase;
 }
 
-.semaforo-luz.activa {
-  opacity: 1;
-  box-shadow: 0 0 20px rgba(0,0,0,0.25);
+.rec-text {
+    margin: 0;
+    font-size: 13px;
+    color: #334155;
+    line-height: 1.6;
 }
 
-.semaforo-texto {
-  text-align: center;
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* --- NOTAS DEL MÉDICO --- */
+.notes-section {
+    text-align: left;
+    margin-top: 10px;
 }
 
-.semaforo-texto strong { font-size: 1.1rem; }
-.semaforo-texto span   { font-size: 0.9rem; color: #64748b; }
+.notes-title {
+    margin: 0 0 10px 0;
+    font-size: 1rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-.texto-riesgo strong { color: #ef4444; }
-.texto-ok strong     { color: #10b981; }
+/* --- FOOTER DEL MODAL --- */
+.modal-footer {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    width: 100%;
+}

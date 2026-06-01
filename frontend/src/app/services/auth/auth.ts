@@ -7,23 +7,29 @@ import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, RegisterData, UserResponse } from '../../models/auth';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private readonly apiUrl = environment.apiUrl;
-
   public fotoActualizada = new BehaviorSubject<string | null>(null);
-
-
-  constructor() { }
 
   getToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('token') || sessionStorage.getItem('token');
     }
     return null;
+  }
+
+  getRole(): string | null {
+    return localStorage.getItem('role') || sessionStorage.getItem('role');
+  }
+
+  isAdmin(): boolean {
+    return this.getRole() === 'Admin';
+  }
+
+  isDoctor(): boolean {
+    return this.getRole() === 'Doctor';
   }
 
   register(data: RegisterData): Observable<UserResponse> {
@@ -34,10 +40,7 @@ export class AuthService {
     const body = new HttpParams()
       .set('username', email)
       .set('password', password);
-
-    const headers = new HttpHeaders({
-      'Content-Type': 'application/x-www-form-urlencoded'
-    });
+    const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
 
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/token`, body, { headers }).pipe(
       tap(res => {
@@ -53,32 +56,28 @@ export class AuthService {
 
   loginWithGoogle(token: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/google`, { credential: token }).pipe(
-      tap(res =>{
-        sessionStorage.setItem('token', res.access_token)
-        sessionStorage.setItem('user_id', res.user_id.toString())
-        sessionStorage.setItem('role', res.role)
-      }
-      )
-    )
+      tap(res => {
+        sessionStorage.setItem('token', res.access_token);
+        sessionStorage.setItem('user_id', res.user_id.toString());
+        sessionStorage.setItem('role', res.role);
+      })
+    );
   }
 
   logout() {
-    ['token', 'user_id', 'role'].forEach(k =>{
+    ['token', 'user_id', 'role'].forEach(k => {
       localStorage.removeItem(k);
       sessionStorage.removeItem(k);
-    })
+    });
   }
 
   isLoggedIn(): boolean {
     const token = this.getToken();
     if (!token) return false;
-    try{
+    try {
       const decoded: any = jwtDecode(token);
       return decoded.exp * 1000 > Date.now();
-    }
-    catch{
-      return false;
-    }
+    } catch { return false; }
   }
 
   getUserData() {
@@ -86,14 +85,8 @@ export class AuthService {
     if (!token) return null;
     try {
       const decoded: any = jwtDecode(token);
-      return {
-        nombre: decoded.name,
-        foto: decoded.picture,
-        email: decoded.sub
-      };
-    } catch{
-      return null;
-    }
+      return { nombre: decoded.name, foto: decoded.picture, email: decoded.sub };
+    } catch { return null; }
   }
 
   getProfile(): Observable<UserResponse> {
@@ -108,7 +101,7 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { email });
   }
 
-verifyCode(email: string, codigo: string) {
+  verifyCode(email: string, codigo: string) {
     return this.http.post(`${this.apiUrl}/auth/verify-code`, { email, codigo });
   }
 
@@ -117,8 +110,6 @@ verifyCode(email: string, codigo: string) {
   }
 
   verifyAccount(email: string, codigo: string) {
-    // ¡La que usará Axel ahora mismo!
     return this.http.post(`${this.apiUrl}/auth/verify-account`, { email, codigo });
   }
-
 }

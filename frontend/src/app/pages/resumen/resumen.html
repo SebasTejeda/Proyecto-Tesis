@@ -4,19 +4,19 @@
     <p class="page-subtitle">Resumen de actividad clínica</p>
   </div>
 
-  <!-- US005 — Selector de mes -->
-  <div class="mes-selector">
-    <span class="mes-label"><i class="pi pi-calendar"></i> Estadísticas de:</span>
-    <select [(ngModel)]="mesSeleccionado" class="mes-select"
-      (change)="mesSeleccionado.set(+$any($event.target).value)">
-      @for (mes of meses; track $index) {
-        <option [value]="$index">{{ mes }}</option>
-      }
-    </select>
-  </div>
+        <div class="mes-filter">
+        <select [(ngModel)]="mesSeleccionado" class="mes-select-inline"
+          (change)="mesSeleccionado.set(+$any($event.target).value)">
+          @for (mes of meses; track $index) {
+            <option [value]="$index">{{ mes }}</option>
+          }
+        </select>
+      </div>
 
   <!-- Tarjetas de estadísticas -->
   <div class="stats-grid">
+
+    <!-- Tarjeta 1: Pacientes totales — sin filtro de mes -->
     <div class="stat-card">
       <div class="stat-header">
         <div class="stat-label">Pacientes Totales</div>
@@ -26,32 +26,37 @@
       <div class="stat-change">Pacientes registrados</div>
     </div>
 
-    <div class="stat-card">
+    <!-- Tarjeta 2: Evaluaciones del mes — CON selector de mes -->
+    <div class="stat-card stat-card-with-filter">
       <div class="stat-header">
-        <div class="stat-label">Evaluaciones en {{ meses[mesSeleccionado()] }}</div>
+        <div class="stat-label">Evaluaciones del Mes</div>
         <div class="stat-icon-box teal"><i class="pi pi-clipboard"></i></div>
       </div>
+      <!-- Selector de mes integrado en la tarjeta -->
+
       <div class="stat-value">{{ evaluacionesDelMes() }}</div>
-      <div class="stat-change">Actividad del mes</div>
+      <div class="stat-change">Total de evaluaciones en {{ meses[mesSeleccionado()] }}</div>
     </div>
 
+    <!-- Tarjeta 3: Casos alto riesgo — también filtrado por mes -->
     <div class="stat-card">
       <div class="stat-header">
-        <div class="stat-label">Casos Alto Riesgo</div>
+        <div class="stat-label">Alto Riesgo en {{ meses[mesSeleccionado()] }}</div>
         <div class="stat-icon-box coral"><i class="pi pi-exclamation-triangle"></i></div>
       </div>
       <div class="stat-value">{{ casosAltoRiesgo() }}</div>
-      <div class="stat-change warn-text">Requieren atención</div>
+      <div class="stat-change warn-text">Casos Moderado/Alto del mes</div>
     </div>
+
   </div>
 
-  <!-- Tabla de pacientes -->
+  <!-- Tabla de pacientes evaluados -->
   <div class="section-card">
     <div class="section-header">
       <h2 class="section-title">Últimos Pacientes Evaluados</h2>
 
       <div class="header-controls">
-        <!-- US006 — Filtro por nivel de riesgo -->
+        <!-- Filtro por nivel de riesgo -->
         <div class="filtro-riesgo">
           <i class="pi pi-filter" style="color: #94a3b8;"></i>
           <select [(ngModel)]="filtroRiesgo" class="filtro-select"
@@ -60,15 +65,12 @@
             <option value="Ninguno">Sin riesgo</option>
             <option value="Leve">Leve</option>
             <option value="Moderado/Alto">Moderado/Alto</option>
-            <option value="Sin evaluar">Sin evaluar</option>
           </select>
         </div>
 
-        <!-- Búsqueda -->
         <div class="search-box">
           <i class="pi pi-search search-icon-i"></i>
-          <input
-            type="text"
+          <input type="text"
             (input)="dt.filterGlobal($any($event.target).value, 'contains')"
             placeholder="Buscar paciente..."
             class="search-input"/>
@@ -76,15 +78,12 @@
       </div>
     </div>
 
-    <p-table
-      #dt
+    <p-table #dt
       [value]="pacientesFiltrados()"
-      [paginator]="true"
-      [rows]="10"
-      [resizableColumns]="true"
-      columnResizeMode="expand"
+      [paginator]="true" [rows]="10"
+      [resizableColumns]="true" columnResizeMode="expand"
       [globalFilterFields]="['nombre_completo', 'riesgo', 'dni']"
-      [tableStyle]="{ 'min-width': '100%' }"
+      [tableStyle]="{ 'min-width': '60rem' }"
       [loading]="isLoading()">
 
       <ng-template pTemplate="header">
@@ -116,9 +115,7 @@
             {{ getTopFactores(p.shap_values) }}
           </td>
           <td>
-            <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)"
-              [style.background]="p.riesgo === 'Sin evaluar' ? '#f1f5f9' : ''"
-              [style.color]="p.riesgo === 'Sin evaluar' ? '#64748b' : ''">
+            <span class="badge" [ngClass]="getClassRiesgo(p.riesgo)">
               {{ p.riesgo }}
             </span>
           </td>
@@ -128,7 +125,7 @@
       <ng-template pTemplate="emptymessage">
         <tr>
           <td colspan="5" class="empty-state">
-            No se encontraron pacientes con el filtro seleccionado.
+            No se encontraron pacientes evaluados con el filtro seleccionado.
           </td>
         </tr>
       </ng-template>

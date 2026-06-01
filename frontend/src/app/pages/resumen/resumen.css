@@ -237,3 +237,50 @@
 .agreement-confirmed { background: #dcfce7; color: #166534; }
 .agreement-rejected  { background: #fee2e2; color: #b91c1c; }
 .agreement-registered i { font-size: 1.2rem; }
+/* ── Tarjeta con filtro de mes integrado ── */
+.stat-card-with-filter { position: relative; }
+
+.mes-filter { margin: 4px 0 8px 0; }
+
+.mes-select-inline {
+  padding: 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+.mes-select-inline:focus { border-color: #10b981; background: white; }
+
+/* ── Responsive dashboard ── */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .header-controls { width: 100%; flex-direction: column; gap: 8px; }
+  .search-input { width: 100%; }
+  .filtro-select { width: 100%; }
+
+  /* Scroll horizontal en tabla de pacientes */
+  :host ::ng-deep .p-datatable-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+
+  :host ::ng-deep .p-datatable .p-datatable-thead > tr > th,
+  :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.75rem 1rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .welcome-text { font-size: 22px; }
+}

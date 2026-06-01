@@ -3,8 +3,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 
 
-# ── Auth ─────────────────────────────────────────────────────────────────────
-
+# ── Auth ──────────────────────────────────────────────────────────────────────
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -31,7 +30,6 @@ class NewPasswordRequest(BaseModel):
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────
-
 class UserBase(BaseModel):
     email: EmailStr
 
@@ -58,7 +56,6 @@ class UserResponse(UserBase):
 
 
 # ── Patients ──────────────────────────────────────────────────────────────────
-
 class PatientBase(BaseModel):
     nombre_completo: str
     dni: str
@@ -79,7 +76,6 @@ class PatientResponse(PatientBase):
 
 
 # ── Model Features ────────────────────────────────────────────────────────────
-
 class ModelFeaturesBase(BaseModel):
     horas_sueno: Optional[float] = None
     vida_social: Optional[int] = None
@@ -91,7 +87,7 @@ class ModelFeaturesBase(BaseModel):
     apoyo_familiar: Optional[int] = None
     autoestima: Optional[int] = None
     estado_civil: Optional[int] = None
-    genero: Optional[int] = None       # 1=Masculino, 2=Femenino — jalado de Patient.sexo
+    genero: Optional[int] = None
 
 class ModelFeaturesCreate(ModelFeaturesBase):
     pass
@@ -106,7 +102,6 @@ class ModelFeaturesResponse(ModelFeaturesBase):
 
 
 # ── Model Prediction ──────────────────────────────────────────────────────────
-
 class ModelPredictionResponse(BaseModel):
     id: int
     evaluation_id: int
@@ -122,7 +117,6 @@ class ModelPredictionResponse(BaseModel):
 
 
 # ── Recommendations ───────────────────────────────────────────────────────────
-
 class RecommendationResponse(BaseModel):
     id: int
     evaluation_id: int
@@ -137,24 +131,25 @@ class RecommendationResponse(BaseModel):
 
 
 # ── Evaluations ───────────────────────────────────────────────────────────────
-
 class EvaluationCreate(BaseModel):
     patient_id: int
     doctor_notes: Optional[str] = None
     model_features: ModelFeaturesCreate
 
-
 class DoctorAgreementUpdate(BaseModel):
-    doctor_agreement: str  # "confirmed" | "rejected"
-
+    doctor_agreement: str                        # "confirmed" | "rejected"
+    disagreement_reason: Optional[str] = None    # motivo si rejected
 
 class EvaluationResponse(BaseModel):
     id: int
     patient_id: int
+    doctor_id: Optional[int] = None
     date: datetime
     status: str
     doctor_notes: Optional[str] = None
     doctor_agreement: Optional[str] = None
+    disagreement_reason: Optional[str] = None
+    model_version: Optional[str] = "v1.0"
     created_at: datetime
 
     model_features: Optional[ModelFeaturesResponse] = None

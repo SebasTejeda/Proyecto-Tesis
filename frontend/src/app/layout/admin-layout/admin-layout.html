@@ -1,0 +1,66 @@
+<div class="app-container">
+  
+  @if (isMobileMenuOpen()) {
+    <div class="sidebar-backdrop fade-in" (click)="toggleMenu()"></div>
+  }
+
+  <aside class="sidebar" [class.open]="isMobileMenuOpen()">
+    <div class="sidebar-header-group">
+      <div class="logo">
+        <div class="logo-icon">N</div>
+        <div class="logo-text">NeuroMind AI</div>
+      </div>
+      <div class="user-profile">
+        <div class="avatar-circle admin-avatar">{{ userInitial() }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ userName() | titlecase }}</span>
+          <span class="user-role admin-role">
+            <i class="pi pi-shield"></i> Administrador
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav-content">
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/admin" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+            <i class="pi pi-chart-bar nav-icon-i"></i>
+            <span>Panel General</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/admin/historial" routerLinkActive="active">
+            <i class="pi pi-history nav-icon-i"></i>
+            <span>Historial del Modelo</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="nav-divider"></div>
+      <a class="nav-link logout" (click)="logout()">
+        <i class="pi pi-sign-out nav-icon-i"></i>
+        <span>Cerrar Sesión</span>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    <header class="mobile-header">
+      <div class="logo">
+        <div class="logo-icon" style="width: 30px; height: 30px; font-size: 0.9rem;">N</div>
+        <div class="logo-text">NeuroMind AI</div>
+      </div>
+      <button class="btn-menu" (click)="toggleMenu()">
+        <i class="pi pi-bars"></i>
+      </button>
+    </header>
+
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+
+</div>

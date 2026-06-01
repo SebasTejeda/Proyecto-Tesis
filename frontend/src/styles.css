@@ -206,3 +206,8 @@ app-register {
 .btn-primary {
     width: 100%; /* Botón ancho se ve mejor en tarjeta centrada */
 }
+
+/* --- FORZAR ALERTAS SIEMPRE AL FRENTE --- */
+.swal2-container {
+  z-index: 99999 !important;
+}
