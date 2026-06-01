@@ -53,8 +53,9 @@ export interface EvaluationResponse {
   status: string;
   doctor_notes?: string;
   doctor_agreement?: string | null;
+  model_version?: string | null;
   created_at: string;
-
+  disagreement_reason?: string | null;
   model_features?: ModelFeaturesResponse;
   model_prediction?: ModelPredictionResponse;
   recommendations?: RecommendationResponse[];

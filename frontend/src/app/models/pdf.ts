@@ -5,6 +5,7 @@ export interface PatientPdfInfo {
   nombre_completo?: string;
   nombre?: string;
   edad?: number | string;
+  fecha_nacimiento?: string | Date;
   sexo?: string;
   telefono?: string;
 }
@@ -25,7 +26,8 @@ export interface ShapData {
 export interface HistoryItem {
   fecha: string;
   doctor: string;
-  severity: string;
+  severity?: string;
+  riesgo?: string;
   riskProbability: number;
   status: string;
 }

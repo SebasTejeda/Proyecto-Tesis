@@ -17,6 +17,7 @@ interface PatientRow extends Patient {
   fecha_raw: Date;
   riesgo: string;
   shap_values: Record<string, number> | null;
+  total_evaluaciones: number; // para conteo correcto por mes
 }
 
 @Component({
@@ -32,79 +33,58 @@ export class ResumenComponent implements OnInit {
   private alertService = inject(AlertService);
 
   pacientes = signal<PatientRow[]>([]);
+  todasEvaluaciones = signal<EvaluationResponse[]>([]); // todas las evals para conteo real
   isLoading = signal<boolean>(true);
 
-  // US005 — Filtro mensual
   mesSeleccionado = signal<number>(new Date().getMonth());
-  readonly meses = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
+  readonly meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
-  // US006 — Filtro por nivel de riesgo
   filtroRiesgo = signal<string>('todos');
-  readonly nivelesRiesgo = [
-    'todos',
-    'Ninguno',
-    'Leve',
-    'Moderado/Alto',
-    'Sin evaluar',
-  ];
 
   private readonly LABEL_MAP: Record<string, string> = {
-    horas_sueno: 'Horas de sueño',
-    vida_social: 'Vida social',
-    frecuencia_ejercicio: 'Ejercicio',
-    redes_sociales: 'Redes sociales',
-    nivel_estres: 'Nivel de estrés',
-    calidad_sueno: 'Calidad de sueño',
-    soledad_percibida: 'Soledad',
-    apoyo_familiar: 'Apoyo familiar',
+    horas_sueno: 'Horas de sueño', vida_social: 'Vida social',
+    frecuencia_ejercicio: 'Ejercicio', redes_sociales: 'Redes sociales',
+    nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño',
+    soledad_percibida: 'Soledad', apoyo_familiar: 'Apoyo familiar',
     autoestima: 'Autoestima',
   };
 
-  // Estadísticas filtradas por mes (US005)
   totalPacientes = computed(() => this.pacientes().length);
 
+  // Cuenta TODAS las evaluaciones del mes — no solo una por paciente
   evaluacionesDelMes = computed(() => {
     const mes = this.mesSeleccionado();
-    return this.pacientes().filter((p) => {
-      if (p.fecha_raw.getTime() === 0) return false;
-      return (
-        p.fecha_raw.getMonth() === mes &&
-        p.fecha_raw.getFullYear() === new Date().getFullYear()
-      );
+    const anio = new Date().getFullYear();
+    return this.todasEvaluaciones().filter(e => {
+      const fecha = this.parsearFecha(e.date);
+      if (!fecha) return false;
+      return fecha.getMonth() === mes && fecha.getFullYear() === anio;
     }).length;
   });
 
-  casosAltoRiesgo = computed(
-    () =>
-      this.pacientes().filter(
-        (p) =>
-          p.riesgo === 'Moderado/Alto' || p.riesgo.toLowerCase() === 'severo',
-      ).length,
-  );
-
-  // Tabla filtrada por riesgo (US006)
-  pacientesFiltrados = computed(() => {
-    const filtro = this.filtroRiesgo();
-    if (filtro === 'todos') return this.pacientes();
-    return this.pacientes().filter((p) => p.riesgo === filtro);
+  // Casos alto riesgo filtrados por mes
+  casosAltoRiesgo = computed(() => {
+    const mes = this.mesSeleccionado();
+    const anio = new Date().getFullYear();
+    return this.todasEvaluaciones().filter(e => {
+      const fecha = this.parsearFecha(e.date);
+      if (!fecha) return false;
+      const esMes = fecha.getMonth() === mes && fecha.getFullYear() === anio;
+      const esAlto = e.model_prediction?.severity === 'Moderado/Alto';
+      return esMes && esAlto;
+    }).length;
   });
 
-  ngOnInit() {
-    this.cargarPacientes();
-  }
+  // Solo pacientes CON evaluaciones, filtrados por riesgo
+  pacientesFiltrados = computed(() => {
+    const filtro = this.filtroRiesgo();
+    const conEval = this.pacientes().filter(p => p.riesgo !== 'Sin evaluar');
+    if (filtro === 'todos') return conEval;
+    return conEval.filter(p => p.riesgo === filtro);
+  });
+
+  ngOnInit() { this.cargarPacientes(); }
 
   calcularEdad(fecha_nacimiento: string | Date | undefined): number | string {
     if (!fecha_nacimiento) return '--';
@@ -116,7 +96,7 @@ export class ResumenComponent implements OnInit {
     return edad;
   }
 
-  private parsearFecha(fechaStr: string | null): Date | null {
+  private parsearFecha(fechaStr: string | null | undefined): Date | null {
     if (!fechaStr) return null;
     const corregida = fechaStr.endsWith('Z') ? fechaStr : fechaStr + 'Z';
     return new Date(corregida);
@@ -126,68 +106,60 @@ export class ResumenComponent implements OnInit {
     if (!shap) return '--';
     const top3 = Object.entries(shap)
       .filter(([k, v]) => this.LABEL_MAP[k] !== undefined && v > 0)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
+      .sort((a, b) => b[1] - a[1]).slice(0, 3)
       .map(([k]) => this.LABEL_MAP[k]);
     return top3.length > 0 ? top3.join(', ') : 'Sin factores de riesgo';
   }
 
   cargarPacientes() {
     this.isLoading.set(true);
-    this.patientService
-      .getPatients()
-      .pipe(
-        switchMap((pacientes: Patient[]) => {
-          if (!pacientes || pacientes.length === 0) return of([]);
-          const peticiones = pacientes.map((p: Patient) =>
-            this.evalService.getPatientEvaluations(p.id).pipe(
-              catchError(() => of([] as EvaluationResponse[])),
-              map((evaluaciones: EvaluationResponse[]) => {
-                const ultimaEval =
-                  evaluaciones.length > 0 ? evaluaciones[0] : null;
-                const prediction = ultimaEval?.model_prediction ?? null;
-                const riesgoReal = prediction?.severity ?? 'Sin evaluar';
-                const fechaDate = this.parsearFecha(ultimaEval?.date ?? null);
-                const row: PatientRow = {
-                  ...p,
-                  edad: this.calcularEdad(p.fecha_nacimiento),
-                  fecha_ultima_eval: fechaDate
-                    ? fechaDate.toLocaleDateString('es-PE', {
-                        timeZone: 'America/Lima',
-                        month: 'short',
-                        day: 'numeric',
-                      })
-                    : 'No registrada',
-                  fecha_raw: fechaDate ?? new Date(0),
-                  riesgo: riesgoReal,
-                  shap_values: prediction?.shap_values ?? null,
-                };
-                return row;
-              }),
-            ),
-          );
-          return forkJoin(peticiones);
-        }),
-      )
-      .subscribe({
-        next: (pacientesCompletos: PatientRow[]) => {
-          pacientesCompletos.sort(
-            (a, b) => b.fecha_raw.getTime() - a.fecha_raw.getTime(),
-          );
-          this.pacientes.set(pacientesCompletos);
-          this.isLoading.set(false);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.alertService.error(
-            'Error',
-            'No se pudieron cargar los datos del panel.',
-          );
-        },
-      });
+    this.patientService.getPatients().pipe(
+      switchMap((pacientes: Patient[]) => {
+        if (!pacientes || pacientes.length === 0) return of([]);
+        const peticiones = pacientes.map((p: Patient) =>
+          this.evalService.getPatientEvaluations(p.id).pipe(
+            catchError(() => of([] as EvaluationResponse[])),
+            map((evaluaciones: EvaluationResponse[]) => {
+              const ultimaEval = evaluaciones.length > 0 ? evaluaciones[0] : null;
+              const prediction = ultimaEval?.model_prediction ?? null;
+              const riesgoReal = prediction?.severity ?? 'Sin evaluar';
+              const fechaDate = this.parsearFecha(ultimaEval?.date ?? null);
+
+              // Guardar todas las evaluaciones para el conteo correcto
+              const todasActuales = this.todasEvaluaciones();
+              this.todasEvaluaciones.set([...todasActuales, ...evaluaciones]);
+
+              const row: PatientRow = {
+                ...p,
+                edad: this.calcularEdad(p.fecha_nacimiento),
+                fecha_ultima_eval: fechaDate
+                  ? fechaDate.toLocaleDateString('es-PE', {
+                      timeZone: 'America/Lima', month: 'short', day: 'numeric'
+                    }) : 'No registrada',
+                fecha_raw: fechaDate ?? new Date(0),
+                riesgo: riesgoReal,
+                shap_values: prediction?.shap_values ?? null,
+                total_evaluaciones: evaluaciones.length,
+              };
+              return row;
+            })
+          )
+        );
+        return forkJoin(peticiones);
+      })
+    ).subscribe({
+      next: (pacientesCompletos: PatientRow[]) => {
+        pacientesCompletos.sort((a, b) => b.fecha_raw.getTime() - a.fecha_raw.getTime());
+        this.pacientes.set(pacientesCompletos);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.alertService.error('Error', 'No se pudieron cargar los datos del panel.');
+      },
+    });
   }
 
-  // Colores corregidos — Moderado/Alto = rojo, Leve = amarillo, Ninguno = verde
   getClassRiesgo(riesgo: string): string {
     if (!riesgo) return 'badge-none';
     const r = riesgo.toLowerCase();

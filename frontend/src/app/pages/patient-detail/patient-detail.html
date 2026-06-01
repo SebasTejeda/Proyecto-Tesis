@@ -2,15 +2,10 @@
 <div class="detail-container fade-in">
   <div class="nav-header">
     <a routerLink="/dashboard" class="back-link">
-      <i class="pi pi-arrow-left"></i>
-      <span>Volver al Dashboard</span>
+      <i class="pi pi-arrow-left"></i><span>Volver al Dashboard</span>
     </a>
     <div class="header-actions">
-      <button
-        class="btn-secondary"
-        (click)="exportarInformeGeneral()"
-        [disabled]="!historial().length"
-      >
+      <button class="btn-secondary" (click)="exportarInformeGeneral()" [disabled]="!historial().length">
         <i class="pi pi-file-pdf"></i> Informe General
       </button>
       <button class="btn-primary" (click)="irANuevaEvaluacion()">
@@ -26,26 +21,19 @@
         <div class="profile-cover"></div>
         <div class="profile-content">
           <div class="avatar-wrapper">
-            <span class="avatar-text"
-              >{{ patient()?.nombre_completo?.charAt(0) || 'P' }}</span
-            >
+            <span class="avatar-text">{{ patient()?.nombre_completo?.charAt(0) || 'P' }}</span>
           </div>
           <h2 class="patient-name">{{ patient()?.nombre_completo }}</h2>
           <p class="patient-role">
             Paciente Registrado
-            <button
-              class="btn-text"
-              (click)="abrirModalEditar()"
-              style="font-size: 0.8rem; margin-left: 10px; color: #3b82f6"
-            >
+            <button class="btn-text" (click)="abrirModalEditar()" style="font-size:0.8rem;margin-left:10px;color:#3b82f6">
               <i class="pi pi-pencil"></i> Editar
             </button>
           </p>
           @if (historial().length > 0) {
-          <div class="status-badge" [ngClass]="getClassRiesgo(ultimaSeverity)">
-            <i class="pi pi-circle-fill"></i>
-            {{ ultimaSeverity }}
-          </div>
+            <div class="status-badge" [ngClass]="getClassRiesgo(ultimaSeverity)">
+              <i class="pi pi-circle-fill"></i> {{ ultimaSeverity }}
+            </div>
           }
           <div class="divider"></div>
           <div class="info-grid">
@@ -57,71 +45,44 @@
               <label>Sexo</label>
               <span>{{ patient()?.sexo }}</span>
             </div>
-            <div class="info-group full">
-              <label>DNI</label>
-              <span>{{ patient()?.dni }}</span>
-            </div>
-            <div class="info-group full">
-              <label>Teléfono</label>
-              <span>{{ patient()?.telefono || 'No registrado' }}</span>
-            </div>
-            <div class="info-group full">
-              <label>Fecha Registro</label>
-              <span>{{ patient()?.created_at | date:'dd/MM/yyyy' }}</span>
-            </div>
+            <div class="info-group full"><label>DNI</label><span>{{ patient()?.dni }}</span></div>
+            <div class="info-group full"><label>Teléfono</label><span>{{ patient()?.telefono || 'No registrado' }}</span></div>
+            <div class="info-group full"><label>Fecha Registro</label><span>{{ patient()?.created_at | date:'dd/MM/yyyy' }}</span></div>
           </div>
         </div>
       </div>
     </aside>
 
     <main class="analysis-column">
-      <!-- Gráfico de evolución por nivel -->
       <div class="card graph-card">
         <div class="card-header">
-          <h3>
-            <i class="pi pi-chart-line"></i> Evolución del Nivel de Riesgo
-          </h3>
+          <h3><i class="pi pi-chart-line"></i> Evolución del Nivel de Riesgo</h3>
           <span class="card-subtitle">Últimas 5 evaluaciones</span>
         </div>
         <div class="chart-wrapper">
-          <p-chart
-            type="line"
-            [data]="chartData"
-            [options]="chartOptions"
-            style="height: 100%; width: 100%"
-          ></p-chart>
+          <p-chart type="line" [data]="chartData" [options]="chartOptions" style="height:100%;width:100%"></p-chart>
         </div>
       </div>
 
-      <!-- Historial clínico -->
       <div class="card history-card">
         <div class="card-header">
           <h3><i class="pi pi-history"></i> Historial Clínico</h3>
-          <button
-            class="btn-text"
-            (click)="exportarHistorialCompleto()"
-            [disabled]="!historial().length"
-          >
-            <i class="pi pi-print" style="margin-right: 5px"></i> Imprimir
-            Historial
+          <button class="btn-text" (click)="exportarHistorialCompleto()" [disabled]="!historial().length">
+            <i class="pi pi-print" style="margin-right:5px"></i> Imprimir Historial
           </button>
         </div>
 
-        <p-table
-          [value]="historial()"
-          styleClass="p-datatable-gridlines-none modern-table"
-          [rowHover]="true"
-          [paginator]="true"
-          [rows]="3"
+        <p-table [value]="historial()" styleClass="p-datatable-gridlines-none modern-table"
+          [rowHover]="true" [paginator]="true" [rows]="3"
           [showCurrentPageReport]="true"
-          currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords} evaluaciones"
-        >
+          currentPageReportTemplate="Mostrando {first} - {last} de {totalRecords} evaluaciones">
+
           <ng-template pTemplate="header">
             <tr>
-              <th style="width: 20%">Fecha</th>
-              <th style="width: 20%">Nivel</th>
-              <th style="width: 45%">Principales Factores de Riesgo</th>
-              <th style="width: 15%"></th>
+              <th style="width:22%">Fecha</th>
+              <th style="width:18%">Nivel</th>
+              <th style="width:38%">Principales Factores de Riesgo</th>
+              <th style="width:22%"></th>
             </tr>
           </ng-template>
 
@@ -132,30 +93,28 @@
                 {{ formatearFecha(eval.date) }}
               </td>
               <td>
-                <div
-                  class="score-pill"
-                  [ngClass]="getClassRiesgo(eval.model_prediction?.severity)"
-                >
+                <div class="score-pill" [ngClass]="getClassRiesgo(eval.model_prediction?.severity)">
                   {{ eval.model_prediction?.severity ?? 'Pendiente' }}
                 </div>
               </td>
-              <td style="font-size: 0.85rem; color: #475569">
-                {{ getTopFactores(eval) }}
-              </td>
-              <td style="text-align: right">
-                <button class="btn-action" (click)="verDetalle(eval)">
-                  Ver <i class="pi pi-chevron-right"></i>
-                </button>
+              <td style="font-size:0.85rem;color:#475569;">{{ getTopFactores(eval) }}</td>
+              <td style="text-align:right;">
+                <div class="row-actions">
+                  <button class="btn-action" (click)="verDetalle(eval)">
+                    Ver <i class="pi pi-chevron-right"></i>
+                  </button>
+                  <button class="btn-action-pdf" (click)="exportarEvaluacionIndividual(eval)"
+                    title="Descargar PDF de esta evaluación">
+                    <i class="pi pi-file-pdf"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </ng-template>
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td
-                colspan="4"
-                style="text-align: center; padding: 2rem; color: #64748b"
-              >
+              <td colspan="4" style="text-align:center;padding:2rem;color:#64748b">
                 Este paciente aún no tiene evaluaciones registradas.
               </td>
             </tr>
@@ -168,232 +127,135 @@
 </div>
 }
 
-<!-- ── Modal: Detalle de evaluación ── -->
+<!-- Modal: Detalle de evaluación -->
 <p-dialog
   [header]="'Detalle de Evaluación — ' + (selectedEval()?.date | date:'dd/MM/yyyy')"
-  [visible]="displayModal()"
-  (visibleChange)="displayModal.set($event)"
-  [modal]="true"
-  [style]="{ width: '50vw', maxWidth: '620px' }"
-  [draggable]="false"
-  [resizable]="false"
-  [closable]="true"
->
+  [visible]="displayModal()" (visibleChange)="displayModal.set($event)"
+  [modal]="true" [style]="{ width: '50vw', maxWidth: '620px' }"
+  [draggable]="false" [resizable]="false" [closable]="true">
+
   @if (selectedEval()) {
   <div class="result-content">
-    <!-- SEMÁFORO -->
     <div class="verdict-section">
       <h3 class="result-title">Resultado del Análisis</h3>
       <div class="semaforo-wrapper">
-        <div
-          class="semaforo-luz"
-          [class.activa]="selectedEval()!.model_prediction?.risk_binary === 1"
-          style="background: #ef4444"
-        >
-          <i
-            class="pi pi-exclamation-triangle"
-            style="color: white; font-size: 1.6rem"
-          ></i>
+        <div class="semaforo-luz" [class.activa]="selectedEval()!.model_prediction?.risk_binary === 1" style="background:#ef4444">
+          <i class="pi pi-exclamation-triangle" style="color:white;font-size:1.6rem"></i>
         </div>
-        <div
-          class="semaforo-luz"
-          [class.activa]="selectedEval()!.model_prediction?.risk_binary === 0"
-          style="background: #10b981"
-        >
-          <i
-            class="pi pi-check-circle"
-            style="color: white; font-size: 1.6rem"
-          ></i>
+        <div class="semaforo-luz" [class.activa]="selectedEval()!.model_prediction?.risk_binary === 0" style="background:#10b981">
+          <i class="pi pi-check-circle" style="color:white;font-size:1.6rem"></i>
         </div>
       </div>
-      <div
-        class="semaforo-texto"
+      <div class="semaforo-texto"
         [class.texto-riesgo]="selectedEval()!.model_prediction?.risk_binary === 1"
-        [class.texto-ok]="selectedEval()!.model_prediction?.risk_binary === 0"
-      >
+        [class.texto-ok]="selectedEval()!.model_prediction?.risk_binary === 0">
         @if (selectedEval()!.model_prediction?.risk_binary === 1) {
-        <strong>Riesgo Depresivo Detectado</strong>
-        <span>Nivel: {{ selectedEval()!.model_prediction?.severity }}</span>
+          <strong>Riesgo Depresivo Detectado</strong>
+          <span class="nivel-badge"
+            [class.nivel-alto]="selectedEval()!.model_prediction?.severity === 'Moderado/Alto'"
+            [class.nivel-leve]="selectedEval()!.model_prediction?.severity === 'Leve'">
+            @if (selectedEval()!.model_prediction?.severity === 'Moderado/Alto') {
+              <i class="pi pi-exclamation-circle"></i> Nivel Moderado / Alto
+            } @else {
+              <i class="pi pi-info-circle"></i> Nivel Leve
+            }
+          </span>
         } @else {
-        <strong>Sin Riesgo Detectado</strong>
-        <span>El paciente no presenta indicadores de riesgo depresivo</span>
+          <strong>Sin Riesgo Detectado</strong>
+          <span class="nivel-badge nivel-ninguno"><i class="pi pi-check-circle"></i> Sin indicadores depresivos</span>
         }
       </div>
     </div>
 
-    <hr class="modal-divider" />
+    <hr class="modal-divider">
 
-    <!-- SHAP -->
     <div class="xai-section">
-      <h3 class="xai-title">
-        <i class="pi pi-bolt"></i> Factores Clave (SHAP)
-      </h3>
-      <p class="xai-subtitle">
-        Impacto relativo de cada factor en la predicción
-      </p>
+      <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Clave (SHAP)</h3>
+      <p class="xai-subtitle">Impacto relativo de cada factor en la predicción</p>
       <div class="shap-chart-container">
-        <p-chart
-          type="bar"
-          [data]="shapData"
-          [options]="shapOptions"
-          height="220px"
-        ></p-chart>
+        <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="220px"></p-chart>
       </div>
       <div class="legend">
-        <span class="legend-item"
-          ><span class="dot red"></span> Aumenta riesgo</span
-        >
-        <span class="legend-item"
-          ><span class="dot green"></span> Disminuye riesgo</span
-        >
+        <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
+        <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
       </div>
     </div>
 
-    <!-- Recomendaciones -->
     @if (selectedEval()?.recommendations?.length) {
-    <hr class="modal-divider" />
-    <div class="recommendations-section">
-      <h3 class="xai-title" style="margin-bottom: 12px">
-        <i class="pi pi-list-check"></i> Recomendaciones Clínicas
-      </h3>
-      <p class="xai-subtitle">
-        Basadas en los factores con mayor impacto en la predicción
-      </p>
-      @for (rec of selectedEval()!.recommendations!; track rec.id) {
-      <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
-        <div class="rec-header">
-          <span class="rec-badge">{{ rec.priority }}°</span>
-          <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
-          <span class="rec-level">{{ rec.alert_level }}</span>
-        </div>
-        <p class="rec-text">{{ rec.recommendation }}</p>
+      <hr class="modal-divider">
+      <div class="recommendations-section">
+        <h3 class="xai-title" style="margin-bottom:12px"><i class="pi pi-list-check"></i> Recomendaciones Clínicas</h3>
+        <p class="xai-subtitle">Basadas en los factores con mayor impacto</p>
+        @for (rec of selectedEval()!.recommendations!; track rec.id) {
+          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
+            <div class="rec-header">
+              <span class="rec-badge">{{ rec.priority }}°</span>
+              <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
+              <span class="rec-level">{{ rec.alert_level }}</span>
+            </div>
+            <p class="rec-text">{{ rec.recommendation }}</p>
+          </div>
+        }
       </div>
-      }
-    </div>
     }
 
-    <!-- Notas del doctor -->
-    <hr class="modal-divider" />
+    <hr class="modal-divider">
     <div class="notes-section">
-      <h4 class="notes-title">
-        <i class="pi pi-user-edit"></i> Notas Clínicas del Médico
-      </h4>
-      <textarea
-        class="form-input"
-        rows="3"
-        style="
-          width: 100%;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          padding: 10px;
-          font-family: inherit;
-          resize: vertical;
-        "
-        [value]="selectedEval()?.doctor_notes || ''"
-        readonly
-      ></textarea>
+      <h4 class="notes-title"><i class="pi pi-user-edit"></i> Notas Clínicas del Médico</h4>
+      <textarea class="form-input" rows="3"
+        style="width:100%;border:1px solid #cbd5e1;border-radius:8px;padding:10px;font-family:inherit;resize:vertical;"
+        [value]="selectedEval()?.doctor_notes || ''" readonly></textarea>
     </div>
 
     <div class="modal-footer">
-      <button class="btn-secondary" (click)="displayModal.set(false)">
-        Cerrar
+      <button class="btn-secondary" (click)="exportarEvaluacionIndividual(selectedEval()!)">
+        <i class="pi pi-file-pdf"></i> Descargar PDF
       </button>
+      <button class="btn-secondary" (click)="displayModal.set(false)">Cerrar</button>
     </div>
   </div>
   }
 </p-dialog>
 
-<!-- ── Modal: Edición del paciente ── -->
-<p-dialog
-  header="Editar Datos del Paciente"
-  [visible]="displayEditModal()"
-  (visibleChange)="displayEditModal.set($event)"
-  [modal]="true"
-  [style]="{ width: '90vw', maxWidth: '500px' }"
->
-  <form
-    [formGroup]="editForm"
-    (ngSubmit)="guardarEdicion()"
-    style="padding: 15px"
-  >
-    <div class="form-group" style="margin-bottom: 15px">
+<!-- Modal: Edición del paciente -->
+<p-dialog header="Editar Datos del Paciente"
+  [visible]="displayEditModal()" (visibleChange)="displayEditModal.set($event)"
+  [modal]="true" [style]="{ width: '90vw', maxWidth: '500px' }">
+  <form [formGroup]="editForm" (ngSubmit)="guardarEdicion()" style="padding:15px">
+    <div class="form-group" style="margin-bottom:15px">
       <label class="form-label">Nombre Completo</label>
-      <input
-        type="text"
-        class="form-input"
-        formControlName="nombre_completo"
-        style="width: 100%"
-        [class.error-border]="editForm.get('nombre_completo')?.invalid && editForm.get('nombre_completo')?.touched"
-      />
+      <input type="text" class="form-input" formControlName="nombre_completo" style="width:100%"
+        [class.error-border]="editForm.get('nombre_completo')?.invalid && editForm.get('nombre_completo')?.touched">
     </div>
-    <div class="form-group" style="margin-bottom: 15px">
+    <div class="form-group" style="margin-bottom:15px">
       <label class="form-label">DNI</label>
-      <input
-        type="text"
-        class="form-input"
-        formControlName="dni"
-        maxlength="8"
-        inputmode="numeric"
-        style="width: 100%"
-        [class.error-border]="editForm.get('dni')?.invalid && editForm.get('dni')?.touched"
-      />
+      <input type="text" class="form-input" formControlName="dni" maxlength="8" inputmode="numeric" style="width:100%"
+        [class.error-border]="editForm.get('dni')?.invalid && editForm.get('dni')?.touched">
       @if (editForm.get('dni')?.invalid && editForm.get('dni')?.touched) {
-      <span style="color: #ef4444; font-size: 12px"
-        >El DNI debe tener exactamente 8 dígitos</span
-      >
+        <span style="color:#ef4444;font-size:12px">El DNI debe tener exactamente 8 dígitos</span>
       }
     </div>
-    <div
-      class="form-row"
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-        margin-bottom: 15px;
-      "
-    >
+    <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">
       <div class="form-group">
         <label class="form-label">Fecha de Nacimiento</label>
-        <input
-          type="date"
-          class="form-input"
-          formControlName="fecha_nacimiento"
-          style="width: 100%"
-        />
+        <input type="date" class="form-input" formControlName="fecha_nacimiento" style="width:100%">
       </div>
       <div class="form-group">
         <label class="form-label">Sexo</label>
-        <select
-          class="form-input native-select"
-          formControlName="sexo"
-          style="width: 100%"
-        >
+        <select class="form-input native-select" formControlName="sexo" style="width:100%">
           <option value="Masculino">Masculino</option>
           <option value="Femenino">Femenino</option>
           <option value="Otro">Otro</option>
         </select>
       </div>
     </div>
-    <div class="form-group" style="margin-bottom: 25px">
+    <div class="form-group" style="margin-bottom:25px">
       <label class="form-label">Teléfono</label>
-      <input
-        type="tel"
-        class="form-input"
-        formControlName="telefono"
-        style="width: 100%"
-      />
+      <input type="tel" class="form-input" formControlName="telefono" style="width:100%">
     </div>
-    <div style="display: flex; justify-content: flex-end; gap: 10px">
-      <button
-        type="button"
-        class="btn-secondary"
-        (click)="displayEditModal.set(false)"
-      >
-        Cancelar
-      </button>
-      <button type="submit" class="btn-primary" [disabled]="editForm.invalid">
-        Guardar Cambios
-      </button>
+    <div style="display:flex;justify-content:flex-end;gap:10px">
+      <button type="button" class="btn-secondary" (click)="displayEditModal.set(false)">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="editForm.invalid">Guardar Cambios</button>
     </div>
   </form>
 </p-dialog>

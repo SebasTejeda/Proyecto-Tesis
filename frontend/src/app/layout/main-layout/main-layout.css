@@ -179,3 +179,54 @@
 .logout { color: #ef4444 !important; }
 .logout:hover { background: #fef2f2 !important; color: #dc2626 !important; }
 .logout .nav-icon-i { color: #ef4444; }
+/* ── Hamburguesa responsive ── */
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  right: 14px;      /* derecha — no tapa el logo del sidebar */
+  z-index: 300;
+  width: 42px; height: 42px;
+  border: none; border-radius: 10px;
+  background: white; color: #334155;
+  font-size: 1.2rem; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  align-items: center; justify-content: center;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 150;
+}
+
+@media (max-width: 1000px) {
+  .hamburger-btn  { display: flex; }
+  .sidebar-overlay { display: block; }
+
+  .sidebar {
+    position: fixed;
+    left: -290px; top: 0;
+    height: 100vh; z-index: 200;
+    transition: left 0.28s ease;
+    box-shadow: none;
+    overflow-y: auto;
+  }
+
+  .sidebar.sidebar-open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+  }
+
+  .main-content {
+    padding: 20px 14px;
+    margin-left: 0 !important;
+  }
+
+  /* Tablas con scroll horizontal en móvil */
+  :host ::ng-deep .p-datatable-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}

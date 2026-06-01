@@ -20,6 +20,7 @@ export class MainLayoutComponent implements OnInit {
   userName = signal<string>('Usuario');
   userPhoto = signal<string | null>(null);
   userInitial = computed(() => this.userName().charAt(0).toUpperCase());
+  sidebarAbierto = signal<boolean>(false); // hamburguesa
 
   ngOnInit(): void {
     this.initUserProfile();
@@ -37,18 +38,15 @@ export class MainLayoutComponent implements OnInit {
 
   private listenToPhotoUpdates() {
     this.authService.fotoActualizada.subscribe(nuevaFoto => {
-      if (nuevaFoto) {
-        this.userPhoto.set(nuevaFoto);
-        this.cdr.detectChanges();
-      }
-    })
+      if (nuevaFoto) { this.userPhoto.set(nuevaFoto); this.cdr.detectChanges(); }
+    });
   }
+
+  toggleSidebar() { this.sidebarAbierto.update(v => !v); }
+  cerrarSidebar() { this.sidebarAbierto.set(false); }
 
   async logout() {
     const confirmado = await this.alertService.confirm('¿Cerrar sesión?', '¿Estás seguro de que deseas cerrar sesión?');
-    if (confirmado) {
-      this.authService.logout();
-      this.router.navigate(['/login']);
-    }
+    if (confirmado) { this.authService.logout(); this.router.navigate(['/login']); }
   }
 }
