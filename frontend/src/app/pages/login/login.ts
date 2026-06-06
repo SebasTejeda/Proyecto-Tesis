@@ -67,22 +67,24 @@ export class LoginComponent implements OnInit {
     );
   }
 
-  handleGoogleLogin(response: any) {
-    this.alertService.loading('Iniciando sesión con Google...');
-    this.isLoading.set(true);
+handleGoogleLogin(response: any) {
+  this.alertService.loading('Iniciando sesión con Google...');
+  this.isLoading.set(true);
 
+  this.ngZone.run(() => {
     this.authService.loginWithGoogle(response.credential).subscribe({
       next: () => {
         this.alertService.close();
-        this.ngZone.run(() => this.router.navigate(['/dashboard']));
+        this.router.navigate(['/dashboard']);
       },
       error: () => {
         this.isLoading.set(false);
         this.alertService.close();
         this.alertService.error('Error de Acceso', 'No se pudo iniciar sesión con Google.');
       }
-    })
-  }
+    });
+  });
+}
 
   onSubmit() {
     if (this.loginForm.invalid) {

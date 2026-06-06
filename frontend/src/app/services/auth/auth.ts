@@ -57,9 +57,9 @@ export class AuthService {
   loginWithGoogle(token: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/google`, { credential: token }).pipe(
       tap(res => {
-        sessionStorage.setItem('token', res.access_token);
-        sessionStorage.setItem('user_id', res.user_id.toString());
-        sessionStorage.setItem('role', res.role);
+        localStorage.setItem('token', res.access_token);
+        localStorage.setItem('user_id', res.user_id.toString());
+        localStorage.setItem('role', res.role);
       })
     );
   }
