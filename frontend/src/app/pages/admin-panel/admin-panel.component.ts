@@ -129,4 +129,37 @@ export class AdminPanelComponent implements OnInit {
     if (status === 'rejected') return 'status-rejected';
     return 'status-pending';
   }
+
+  descargarDesacuerdos() {
+  this.http.get(`${this.apiUrl}/admin/export/desacuerdos`, {
+    responseType: 'blob'
+  }).subscribe({
+    next: (blob) => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `desacuerdos_${new Date().toLocaleDateString('es-PE').replace(/\//g, '-')}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    },
+    error: () => this.alertService.error('Error', 'No se pudo descargar el archivo.')
+  });
+}
+
+verResumenDesacuerdos() {
+  this.http.get(`${this.apiUrl}/admin/export/resumen-desacuerdos`).subscribe({
+    next: (data: any) => {
+      const total = data.total_desacuerdos;
+      const top = data.motivos_frecuentes.slice(0, 3)
+        .map((m: any) => `• ${m.motivo} (${m.cantidad})`)
+        .join('\n');
+      this.alertService.success(
+        `Total: ${total} desacuerdos`,
+        top || 'Sin desacuerdos registrados',
+        true
+      );
+    },
+    error: () => this.alertService.error('Error', 'No se pudo obtener el resumen.')
+  });
+}
 }

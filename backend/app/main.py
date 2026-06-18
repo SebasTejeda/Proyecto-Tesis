@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from .limiter import limiter
+from .routers import export_desacuerdos
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -37,6 +38,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:4200", "http://127.0.0.1:4200"],
@@ -53,3 +55,4 @@ app.include_router(auth.router, prefix="/auth", tags=["Autenticación"])
 app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(patients.router, prefix="/patients", tags=["Pacientes"])
 app.include_router(evaluations_final.router, prefix="/evaluations", tags=["Evaluaciones"])
+app.include_router(export_desacuerdos.router, prefix="/admin/export", tags=["Admin"])

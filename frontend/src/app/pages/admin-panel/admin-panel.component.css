@@ -114,3 +114,11 @@
   .doctor-actions { width: 100%; }
   .btn-approve, .btn-reject { flex: 1; justify-content: center; }
 }
+
+button.action-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}

@@ -160,6 +160,35 @@ export class PatientDetailComponent implements OnInit {
     return valida?.model_prediction?.severity ?? 'Sin evaluar';
   }
 
+  // Bloque 5 — Seguimiento programado
+  getSeguimientoSugerido(): { dias: number; texto: string; clase: string } | null {
+    const severity = this.ultimaSeverity;
+    const ultimaEval = this.historial().find(e => e.doctor_agreement !== 'rejected');
+    if (!ultimaEval) return null;
+
+    const fechaUltima = this.parsearFecha(ultimaEval.date);
+    const hoy = new Date();
+    const diasDesde = Math.floor((hoy.getTime() - fechaUltima.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (severity === 'Moderado/Alto') {
+      const diasRestantes = 14 - diasDesde;
+      if (diasRestantes > 0) return { dias: diasRestantes, texto: `Próxima evaluación sugerida en ${diasRestantes} días (seguimiento cada 2 semanas para riesgo alto)`, clase: 'seguimiento-urgente' };
+      return { dias: 0, texto: 'Evaluación de seguimiento pendiente — el paciente debería ser reevaluado (riesgo Moderado/Alto requiere seguimiento quincenal)', clase: 'seguimiento-vencido' };
+    }
+    if (severity === 'Leve') {
+      const diasRestantes = 30 - diasDesde;
+      if (diasRestantes > 0) return { dias: diasRestantes, texto: `Próxima evaluación sugerida en ${diasRestantes} días (seguimiento mensual para riesgo leve)`, clase: 'seguimiento-normal' };
+      return { dias: 0, texto: 'Evaluación de seguimiento pendiente — se recomienda reevaluar al paciente (seguimiento mensual)', clase: 'seguimiento-vencido' };
+    }
+    if (severity === 'Ninguno') {
+      const diasRestantes = 90 - diasDesde;
+      if (diasRestantes > 0) return { dias: diasRestantes, texto: `Próxima evaluación sugerida en ${diasRestantes} días (seguimiento trimestral)`, clase: 'seguimiento-ok' };
+      return { dias: 0, texto: 'Evaluación de seguimiento pendiente — control trimestral recomendado', clase: 'seguimiento-vencido' };
+    }
+    return null;
+  }
+
+
   irANuevaEvaluacion() {
     this.router.navigate(['/dashboard/evaluacion'], { queryParams: { patientId: this.patient()?.id } });
   }

@@ -146,6 +146,18 @@
         <span>Ver Historial Completo</span>
         <small>Todas las ejecuciones del modelo</small>
       </a>
+
+      <button class="action-card" (click)="descargarDesacuerdos()">
+        <i class="pi pi-download"></i>
+        <span>Exportar Desacuerdos</span>
+        <small>CSV para reentrenamiento del modelo</small>
+      </button>
+
+      <button class="action-card" (click)="verResumenDesacuerdos()">
+        <i class="pi pi-chart-pie"></i>
+        <span>Resumen de Desacuerdos</span>
+        <small>Motivos más frecuentes por versión</small>
+      </button>
     </div>
   </div>
 </div>

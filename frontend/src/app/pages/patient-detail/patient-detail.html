@@ -48,6 +48,27 @@
     </aside>
 
     <main class="analysis-column">
+
+      <!-- Bloque 5 — Seguimiento programado -->
+      @if (getSeguimientoSugerido()) {
+        <div class="seguimiento-card" [ngClass]="getSeguimientoSugerido()!.clase">
+          <div class="seguimiento-icon">
+            @if (getSeguimientoSugerido()!.dias === 0) {
+              <i class="pi pi-bell"></i>
+            } @else {
+              <i class="pi pi-calendar-clock"></i>
+            }
+          </div>
+          <div class="seguimiento-info">
+            <strong>Seguimiento Clínico</strong>
+            <span>{{ getSeguimientoSugerido()!.texto }}</span>
+          </div>
+          <button class="btn-nueva-eval-seguimiento" (click)="irANuevaEvaluacion()">
+            <i class="pi pi-plus"></i> Nueva evaluación
+          </button>
+        </div>
+      }
+
       <div class="card graph-card">
         <div class="card-header">
           <h3><i class="pi pi-chart-line"></i> Evolución del Nivel de Riesgo</h3>
