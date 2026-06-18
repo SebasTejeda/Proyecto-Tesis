@@ -57,7 +57,7 @@
       <div class="card graph-card">
         <div class="card-header">
           <h3><i class="pi pi-chart-line"></i> Evolución del Nivel de Riesgo</h3>
-          <span class="card-subtitle">Últimas 5 evaluaciones</span>
+          <span class="card-subtitle">Últimas 5 evaluaciones (excluye evaluaciones en desacuerdo)</span>
         </div>
         <div class="chart-wrapper">
           <p-chart type="line" [data]="chartData" [options]="chartOptions" style="height:100%;width:100%"></p-chart>
@@ -79,25 +79,54 @@
 
           <ng-template pTemplate="header">
             <tr>
-              <th style="width:22%">Fecha</th>
-              <th style="width:18%">Nivel</th>
-              <th style="width:38%">Principales Factores de Riesgo</th>
+              <th style="width:20%">Fecha</th>
+              <th style="width:16%">Nivel</th>
+              <th style="width:16%">Conformidad</th>
+              <th style="width:26%">Principales Factores</th>
               <th style="width:22%"></th>
             </tr>
           </ng-template>
 
           <ng-template pTemplate="body" let-eval>
-            <tr class="row-card">
+            <tr class="row-card" [class.row-rejected]="eval.doctor_agreement === 'rejected'">
+
               <td class="date-cell">
                 <i class="pi pi-calendar"></i>
                 {{ formatearFecha(eval.date) }}
               </td>
+
               <td>
                 <div class="score-pill" [ngClass]="getClassRiesgo(eval.model_prediction?.severity)">
                   {{ eval.model_prediction?.severity ?? 'Pendiente' }}
                 </div>
               </td>
-              <td style="font-size:0.85rem;color:#475569;">{{ getTopFactores(eval) }}</td>
+
+              <!-- ── Columna de conformidad ── -->
+              <td>
+                @if (eval.doctor_agreement === 'confirmed') {
+                  <span class="agreement-pill confirmed">
+                    <i class="pi pi-check-circle"></i> Confirmado
+                  </span>
+                } @else if (eval.doctor_agreement === 'rejected') {
+                  <span class="agreement-pill rejected" [title]="eval.disagreement_reason || 'Sin motivo especificado'">
+                    <i class="pi pi-times-circle"></i> En desacuerdo
+                  </span>
+                } @else {
+                  <span class="agreement-pill pending">
+                    <i class="pi pi-clock"></i> Pendiente
+                  </span>
+                }
+              </td>
+
+              <td style="font-size:0.82rem;color:#475569;">
+                {{ getTopFactores(eval) }}
+                @if (eval.doctor_agreement === 'rejected' && eval.disagreement_reason) {
+                  <div class="disagreement-note">
+                    <i class="pi pi-info-circle"></i> {{ eval.disagreement_reason }}
+                  </div>
+                }
+              </td>
+
               <td style="text-align:right;">
                 <div class="row-actions">
                   <button class="btn-action" (click)="verDetalle(eval)">
@@ -114,7 +143,7 @@
 
           <ng-template pTemplate="emptymessage">
             <tr>
-              <td colspan="4" style="text-align:center;padding:2rem;color:#64748b">
+              <td colspan="5" style="text-align:center;padding:2rem;color:#64748b">
                 Este paciente aún no tiene evaluaciones registradas.
               </td>
             </tr>
@@ -136,6 +165,20 @@
 
   @if (selectedEval()) {
   <div class="result-content">
+
+    <!-- Badge de desacuerdo si aplica -->
+    @if (selectedEval()!.doctor_agreement === 'rejected') {
+      <div class="disagreement-banner">
+        <i class="pi pi-exclamation-triangle"></i>
+        <div>
+          <strong>El especialista no concordó con este diagnóstico</strong>
+          @if (selectedEval()!.disagreement_reason) {
+            <span>Razón: {{ selectedEval()!.disagreement_reason }}</span>
+          }
+        </div>
+      </div>
+    }
+
     <div class="verdict-section">
       <h3 class="result-title">Resultado del Análisis</h3>
       <div class="semaforo-wrapper">

@@ -117,10 +117,27 @@ export class PatientDetailComponent implements OnInit {
 
   prepararGraficoEvolucion(evaluaciones: EvaluationResponse[]) {
     if (!evaluaciones || evaluaciones.length === 0) return;
-    const ordenadas = [...evaluaciones].sort((a, b) => this.parsearFecha(a.date).getTime() - this.parsearFecha(b.date).getTime());
+
+    // Excluir evaluaciones donde el doctor NO concordó — no representan la evolución real
+    const evalValidas = evaluaciones.filter(e => e.doctor_agreement !== 'rejected');
+
+    // Si todas fueron rechazadas, usar todas igual para no dejar el gráfico vacío
+    const base = evalValidas.length > 0 ? evalValidas : evaluaciones;
+
+    const ordenadas = [...base].sort((a, b) =>
+      this.parsearFecha(a.date).getTime() - this.parsearFecha(b.date).getTime()
+    );
     const ultimas5 = ordenadas.slice(-5);
-    const labels = ultimas5.map(e => this.parsearFecha(e.date).toLocaleDateString('es-PE', { timeZone: 'America/Lima', month: 'short', day: 'numeric' }));
-    const dataPoints = ultimas5.map(e => this.SEVERITY_SCORE[e.model_prediction?.severity ?? 'Ninguno'] ?? 0);
+
+    const labels = ultimas5.map(e =>
+      this.parsearFecha(e.date).toLocaleDateString('es-PE', {
+        timeZone: 'America/Lima', month: 'short', day: 'numeric'
+      })
+    );
+    const dataPoints = ultimas5.map(e =>
+      this.SEVERITY_SCORE[e.model_prediction?.severity ?? 'Ninguno'] ?? 0
+    );
+
     this.initMainChart(labels, dataPoints);
   }
 
@@ -134,8 +151,10 @@ export class PatientDetailComponent implements OnInit {
     return top3.length > 0 ? top3.join(', ') : 'Sin factores de riesgo';
   }
 
+  // Última severity válida — ignorar las rechazadas
   get ultimaSeverity(): string {
-    return this.historial()[0]?.model_prediction?.severity ?? 'Sin evaluar';
+    const valida = this.historial().find(e => e.doctor_agreement !== 'rejected');
+    return valida?.model_prediction?.severity ?? 'Sin evaluar';
   }
 
   irANuevaEvaluacion() {
@@ -150,14 +169,10 @@ export class PatientDetailComponent implements OnInit {
       return;
     }
     const edad = this.calcularEdad(dataPaciente.fecha_nacimiento);
-    this.pdfService.generateConsolidatedReport(
-      { ...dataPaciente, edad },
-      this.historial()
-    );
+    this.pdfService.generateConsolidatedReport({ ...dataPaciente, edad }, this.historial());
     this.alertService.success('Informe Consolidado', 'Descarga iniciada.', true);
   }
 
-  // PDF de una evaluación individual
   exportarEvaluacionIndividual(evaluacion: EvaluationResponse) {
     const dataPaciente = this.patient();
     if (!dataPaciente) return;
@@ -193,8 +208,6 @@ export class PatientDetailComponent implements OnInit {
     this.initShapChart(evaluacion.model_prediction?.shap_values ?? null);
     this.displayModal.set(true);
   }
-
-  // ── Gráficos ──────────────────────────────────────────────────────────────
 
   initMainChart(labels: string[], dataPoints: number[]) {
     this.chartData = {

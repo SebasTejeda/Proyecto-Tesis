@@ -596,8 +596,8 @@
   .info-group.full { grid-column: span 1; }
 
   /* Ocultar la columna de 'Factores de riesgo' en móviles pequeños para ganar espacio */
-  :host ::ng-deep .modern-table .p-datatable-thead > tr > th:nth-child(3),
-  :host ::ng-deep .modern-table .p-datatable-tbody > tr > td:nth-child(3) { 
+  :host ::ng-deep .modern-table .p-datatable-thead > tr > th:nth-child(4),
+  :host ::ng-deep .modern-table .p-datatable-tbody > tr > td:nth-child(4) { 
     display: none; 
   }
 .row-actions { 
@@ -804,3 +804,41 @@
     gap: 12px;
     width: 100%;
 }
+
+/* ── Bloque 2: Marca visual de desacuerdo ── */
+
+/* Fila con desacuerdo — fondo sutil rojizo */
+:host ::ng-deep .modern-table .p-datatable-tbody > tr.row-rejected {
+  background-color: #fff8f8 !important;
+  border-left: 3px solid #fca5a5;
+}
+
+/* Pills de conformidad en la tabla */
+.agreement-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 50px;
+  font-size: 0.73rem; font-weight: 600; white-space: nowrap;
+}
+.agreement-pill.confirmed { background: #dcfce7; color: #166534; }
+.agreement-pill.rejected  { background: #fee2e2; color: #b91c1c; }
+.agreement-pill.pending   { background: #f1f5f9; color: #64748b; }
+
+/* Nota de razón de desacuerdo bajo los factores */
+.disagreement-note {
+  margin-top: 4px;
+  font-size: 0.75rem; color: #b91c1c;
+  display: flex; align-items: flex-start; gap: 4px;
+  font-style: italic;
+}
+
+/* Banner de desacuerdo en el modal de detalle */
+.disagreement-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #fef2f2; border: 1px solid #fca5a5;
+  border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 16px;
+  color: #b91c1c;
+}
+.disagreement-banner i { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.disagreement-banner strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+.disagreement-banner span { font-size: 0.82rem; opacity: 0.85; }
