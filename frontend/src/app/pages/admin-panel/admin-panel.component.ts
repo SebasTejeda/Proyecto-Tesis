@@ -42,6 +42,8 @@ export class AdminPanelComponent implements OnInit {
   doctorSeleccionado = signal<DoctorPending | null>(null);
   motivoRechazo = signal('');
 
+  procesandoId = signal<number | null>(null); // guarda el id del doctor que se está procesando
+
   get medicosAprobados() { return this.todosMedicos().filter(d => d.account_status === 'approved'); }
   get medicosPendientes() { return this.todosMedicos().filter(d => d.account_status === 'pending'); }
   get medicosRechazados() { return this.todosMedicos().filter(d => d.account_status === 'rejected'); }
@@ -75,12 +77,17 @@ export class AdminPanelComponent implements OnInit {
   }
 
   aprobarMedico(doctor: DoctorPending) {
+    this.procesandoId.set(doctor.id);
     this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, { action: 'approve' }).subscribe({
       next: () => {
+        this.procesandoId.set(null);
         this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'approved' } : d));
         this.alertService.success('Aprobado', `La cuenta de ${doctor.nombres} fue aprobada. Se le notificó por correo.`, true);
       },
-      error: () => this.alertService.error('Error', 'No se pudo aprobar la cuenta.')
+      error: () => {
+        this.procesandoId.set(null);
+        this.alertService.error('Error', 'No se pudo aprobar la cuenta.')
+      }
     });
   }
 
@@ -93,16 +100,21 @@ export class AdminPanelComponent implements OnInit {
   confirmarRechazo() {
     const doctor = this.doctorSeleccionado();
     if (!doctor) return;
+    this.procesandoId.set(doctor.id);
     this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, {
       action: 'reject',
       reason: this.motivoRechazo() || null
     }).subscribe({
       next: () => {
+        this.procesandoId.set(null);
         this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'rejected' } : d));
         this.mostrarModalRechazo.set(false);
         this.alertService.success('Rechazado', `La cuenta de ${doctor.nombres} fue rechazada. Se le notificó por correo.`, true);
       },
-      error: () => this.alertService.error('Error', 'No se pudo rechazar la cuenta.')
+      error: () => {
+        this.procesandoId.set(null);
+        this.alertService.error('Error', 'No se pudo rechazar la cuenta.')
+      }
     });
   }
 
