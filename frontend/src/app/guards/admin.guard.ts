@@ -2,7 +2,7 @@ import { inject } from "@angular/core";
 import { CanActivateFn, Router } from "@angular/router";
 import { AuthService } from "../services/auth/auth";
 
-// Guard para rutas del Doctor — si no está autenticado va a login, si es Admin va a /admin
+// Guard para rutas del Doctor
 export const doctorGuard: CanActivateFn = () => {
     const authService = inject(AuthService);
     const router = inject(Router);
@@ -13,17 +13,26 @@ export const doctorGuard: CanActivateFn = () => {
     }
 
     const role = authService.getRole();
-
     if (role === 'Admin') {
         router.navigate(['/admin']);
         return false;
     }
 
-    // Doctor o cualquier otro rol autenticado puede pasar
+    // Verificar que la cuenta esté aprobada
+    const status = authService.getAccountStatus();
+    if (status === 'pending') {
+        router.navigate(['/pending-approval']);
+        return false;
+    }
+    if (status === 'rejected') {
+        router.navigate(['/account-rejected']);
+        return false;
+    }
+
     return true;
 };
 
-// Guard para rutas del Admin — si no está autenticado va a login, si es Doctor va a /dashboard
+// Guard para rutas del Admin
 export const adminGuard: CanActivateFn = () => {
     const authService = inject(AuthService);
     const router = inject(Router);
@@ -34,8 +43,26 @@ export const adminGuard: CanActivateFn = () => {
     }
 
     const role = authService.getRole();
-
     if (role !== 'Admin') {
+        router.navigate(['/dashboard']);
+        return false;
+    }
+
+    return true;
+};
+
+// Guard para pantallas de estado (pending/rejected) — evita que aprobados accedan
+export const pendingGuard: CanActivateFn = () => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+
+    if (!authService.isLoggedIn()) {
+        router.navigate(['/login']);
+        return false;
+    }
+
+    const status = authService.getAccountStatus();
+    if (status === 'approved') {
         router.navigate(['/dashboard']);
         return false;
     }

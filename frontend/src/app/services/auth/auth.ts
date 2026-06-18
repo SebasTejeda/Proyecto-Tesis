@@ -24,22 +24,20 @@ export class AuthService {
     return localStorage.getItem('role') || sessionStorage.getItem('role');
   }
 
-  isAdmin(): boolean {
-    return this.getRole() === 'Admin';
+  getAccountStatus(): string | null {
+    return localStorage.getItem('account_status') || sessionStorage.getItem('account_status');
   }
 
-  isDoctor(): boolean {
-    return this.getRole() === 'Doctor';
-  }
+  isAdmin(): boolean { return this.getRole() === 'Admin'; }
+  isDoctor(): boolean { return this.getRole() === 'Doctor'; }
+  isApproved(): boolean { return this.getAccountStatus() === 'approved'; }
 
   register(data: RegisterData): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${this.apiUrl}/users/`, data);
   }
 
   login(email: string, password: string, recordarme: boolean): Observable<AuthResponse> {
-    const body = new HttpParams()
-      .set('username', email)
-      .set('password', password);
+    const body = new HttpParams().set('username', email).set('password', password);
     const headers = new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' });
 
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/token`, body, { headers }).pipe(
@@ -49,6 +47,7 @@ export class AuthService {
           storage.setItem('token', res.access_token);
           storage.setItem('user_id', res.user_id.toString());
           storage.setItem('role', res.role);
+          storage.setItem('account_status', (res as any).account_status ?? 'pending');
         }
       })
     );
@@ -60,12 +59,13 @@ export class AuthService {
         localStorage.setItem('token', res.access_token);
         localStorage.setItem('user_id', res.user_id.toString());
         localStorage.setItem('role', res.role);
+        localStorage.setItem('account_status', (res as any).account_status ?? 'pending');
       })
     );
   }
 
   logout() {
-    ['token', 'user_id', 'role'].forEach(k => {
+    ['token', 'user_id', 'role', 'account_status'].forEach(k => {
       localStorage.removeItem(k);
       sessionStorage.removeItem(k);
     });
@@ -90,11 +90,11 @@ export class AuthService {
   }
 
   getProfile(): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.apiUrl}/users/me/`);
+    return this.http.get<UserResponse>(`${this.apiUrl}/users/me`);
   }
 
   updateProfile(data: FormData): Observable<UserResponse> {
-    return this.http.put<UserResponse>(`${this.apiUrl}/users/me/`, data);
+    return this.http.put<UserResponse>(`${this.apiUrl}/users/me`, data);
   }
 
   requestRecovery(email: string) {

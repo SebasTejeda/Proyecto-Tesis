@@ -20,11 +20,11 @@ export class RegisterAccountComponent {
   private router = inject(Router);
   private alertService = inject(AlertService);
 
+  // Paso 1: Formulario, Paso 2: Verificar correo, Paso 3: Cuenta pendiente
   currentStep = signal(1);
   emailRegistrado = signal('');
   isLoading = signal(false);
 
-  // FormControl dedicado para el código de verificación
   verificationCode = new FormControl('', [
     Validators.required,
     Validators.minLength(4),
@@ -58,7 +58,6 @@ export class RegisterAccountComponent {
     this.alertService.loading('Registrando y enviando código...');
 
     const { nombres, apellidos, codigo_colegiatura, email, password } = this.registerForm.getRawValue();
-
     const formData: RegisterData = { nombres, apellidos, codigo_colegiatura, email, password };
 
     this.authService.register(formData)
@@ -73,8 +72,7 @@ export class RegisterAccountComponent {
         error: (err) => {
           const detail = err.error?.detail;
           const msg = detail === 'El correo ya está registrado.'
-            ? detail
-            : 'No se pudo crear la cuenta. Intenta nuevamente.';
+            ? detail : 'No se pudo crear la cuenta. Intenta nuevamente.';
           this.alertService.error('Error de Registro', msg);
         }
       });
@@ -94,18 +92,14 @@ export class RegisterAccountComponent {
       .pipe(finalize(() => this.isLoading.set(false)))
       .subscribe({
         next: () => {
-          this.alertService.success('¡Cuenta Verificada!', 'Bienvenido a NeuroMind AI. Ahora puedes iniciar sesión.');
-          this.router.navigate(['/login']);
+          // Verificación exitosa → mostrar pantalla de pendiente
+          this.alertService.close();
+          this.currentStep.set(3);
         },
         error: (err) => {
           let msg = 'Código incorrecto. Intenta nuevamente.';
           if (err.error?.detail) {
-            if (typeof err.error.detail === 'string') {
-              msg = err.error.detail;
-            } else if (Array.isArray(err.error.detail)) {
-              const campoFallido = err.error.detail[0].loc[err.error.detail[0].loc.length - 1];
-              msg = `Falta el campo o tiene formato incorrecto: ${campoFallido}`;
-            }
+            msg = typeof err.error.detail === 'string' ? err.error.detail : msg;
           }
           this.alertService.error('Error de Verificación', msg);
         }

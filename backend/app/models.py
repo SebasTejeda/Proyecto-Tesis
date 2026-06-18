@@ -13,7 +13,8 @@ class User(Base):
     nombres = Column(String)
     apellidos = Column(String)
     codigo_colegiatura = Column(String, nullable=True)
-    role = Column(String, default="Doctor")  # "Doctor" | "Admin"
+    role = Column(String, default="Doctor")           # "Doctor" | "Admin"
+    account_status = Column(String, default="pending") # "pending" | "approved" | "rejected"
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     google_id = Column(String, nullable=True)
@@ -50,9 +51,9 @@ class Evaluation(Base):
     date = Column(DateTime, default=datetime.utcnow)
     status = Column(String, default="Pendiente")
     doctor_notes = Column(String, nullable=True)
-    doctor_agreement = Column(String, nullable=True)       # "confirmed" | "rejected" | null
-    disagreement_reason = Column(String, nullable=True)    # razón de desacuerdo
-    model_version = Column(String, default="v1.0")         # versión del modelo usado
+    doctor_agreement = Column(String, nullable=True)
+    disagreement_reason = Column(String, nullable=True)
+    model_version = Column(String, default="v1.0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="evaluations")

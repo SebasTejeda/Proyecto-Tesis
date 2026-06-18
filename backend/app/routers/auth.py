@@ -47,7 +47,8 @@ def login_para_access_token(
         "access_token": access_token,
         "token_type": "bearer",
         "user_id": user.id,
-        "role": user.role
+        "role": user.role,
+        "account_status":user.account_status
     }
 
 
@@ -99,7 +100,13 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
         "picture": user.picture
     }
     access_token = utils.HashUtils.create_access_token(data=token_data)
-    return {"access_token": access_token, "token_type": "bearer", "user_id": user.id, "role": user.role}
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer", 
+        "user_id": user.id, 
+        "role": user.role,
+        "account_status":user.account_status
+        }
 
 
 @router.post("/verify-account", summary="Verificación de cuenta nueva")
