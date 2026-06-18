@@ -17,6 +17,17 @@ interface DoctorPending {
   created_at: string;
 }
 
+interface MotivoDesacuerdo {
+  motivo: string;
+  cantidad: number;
+}
+
+interface ResumenDesacuerdos {
+  total_desacuerdos: number;
+  motivos_frecuentes: MotivoDesacuerdo[];
+  por_version_modelo: Record<string, number>;
+}
+
 @Component({
   selector: 'app-admin-panel',
   standalone: true,
@@ -37,20 +48,35 @@ export class AdminPanelComponent implements OnInit {
   todosMedicos = signal<DoctorPending[]>([]);
   isLoadingDoctors = signal(true);
 
+  // Resumen de desacuerdos
+  resumenDesacuerdos = signal<ResumenDesacuerdos | null>(null);
+  isLoadingResumen = signal(true);
+
   // Modal de rechazo
   mostrarModalRechazo = signal(false);
   doctorSeleccionado = signal<DoctorPending | null>(null);
   motivoRechazo = signal('');
-
-  procesandoId = signal<number | null>(null); // guarda el id del doctor que se está procesando
+  procesandoId = signal<number | null>(null);
 
   get medicosAprobados() { return this.todosMedicos().filter(d => d.account_status === 'approved'); }
   get medicosPendientes() { return this.todosMedicos().filter(d => d.account_status === 'pending'); }
   get medicosRechazados() { return this.todosMedicos().filter(d => d.account_status === 'rejected'); }
 
+  // Máximo para calcular el ancho de las barras
+  get maxMotivo(): number {
+    const motivos = this.resumenDesacuerdos()?.motivos_frecuentes ?? [];
+    return motivos.length > 0 ? Math.max(...motivos.map(m => m.cantidad)) : 1;
+  }
+
+  get versionesModelo(): { version: string; cantidad: number }[] {
+    const por_version = this.resumenDesacuerdos()?.por_version_modelo ?? {};
+    return Object.entries(por_version).map(([version, cantidad]) => ({ version, cantidad }));
+  }
+
   ngOnInit() {
     this.cargarEstadisticas();
     this.cargarMedicos();
+    this.cargarResumenDesacuerdos();
   }
 
   cargarEstadisticas() {
@@ -76,6 +102,29 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
+  cargarResumenDesacuerdos() {
+    this.isLoadingResumen.set(true);
+    this.http.get<ResumenDesacuerdos>(`${this.apiUrl}/admin/export/resumen-desacuerdos`).subscribe({
+      next: (data) => { this.resumenDesacuerdos.set(data); this.isLoadingResumen.set(false); },
+      error: () => { this.isLoadingResumen.set(false); }
+    });
+  }
+
+  descargarDesacuerdos() {
+    this.http.get(`${this.apiUrl}/admin/export/desacuerdos`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `desacuerdos_${new Date().toLocaleDateString('es-PE').replace(/\//g, '-')}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.alertService.success('Descarga iniciada', 'El archivo CSV fue generado correctamente.', true);
+      },
+      error: () => this.alertService.error('Error', 'No se pudo descargar el archivo.')
+    });
+  }
+
   aprobarMedico(doctor: DoctorPending) {
     this.procesandoId.set(doctor.id);
     this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, { action: 'approve' }).subscribe({
@@ -84,10 +133,7 @@ export class AdminPanelComponent implements OnInit {
         this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'approved' } : d));
         this.alertService.success('Aprobado', `La cuenta de ${doctor.nombres} fue aprobada. Se le notificó por correo.`, true);
       },
-      error: () => {
-        this.procesandoId.set(null);
-        this.alertService.error('Error', 'No se pudo aprobar la cuenta.')
-      }
+      error: () => { this.procesandoId.set(null); this.alertService.error('Error', 'No se pudo aprobar la cuenta.'); }
     });
   }
 
@@ -102,8 +148,7 @@ export class AdminPanelComponent implements OnInit {
     if (!doctor) return;
     this.procesandoId.set(doctor.id);
     this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, {
-      action: 'reject',
-      reason: this.motivoRechazo() || null
+      action: 'reject', reason: this.motivoRechazo() || null
     }).subscribe({
       next: () => {
         this.procesandoId.set(null);
@@ -111,10 +156,7 @@ export class AdminPanelComponent implements OnInit {
         this.mostrarModalRechazo.set(false);
         this.alertService.success('Rechazado', `La cuenta de ${doctor.nombres} fue rechazada. Se le notificó por correo.`, true);
       },
-      error: () => {
-        this.procesandoId.set(null);
-        this.alertService.error('Error', 'No se pudo rechazar la cuenta.')
-      }
+      error: () => { this.procesandoId.set(null); this.alertService.error('Error', 'No se pudo rechazar la cuenta.'); }
     });
   }
 
@@ -129,37 +171,4 @@ export class AdminPanelComponent implements OnInit {
     if (status === 'rejected') return 'status-rejected';
     return 'status-pending';
   }
-
-  descargarDesacuerdos() {
-  this.http.get(`${this.apiUrl}/admin/export/desacuerdos`, {
-    responseType: 'blob'
-  }).subscribe({
-    next: (blob) => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `desacuerdos_${new Date().toLocaleDateString('es-PE').replace(/\//g, '-')}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    },
-    error: () => this.alertService.error('Error', 'No se pudo descargar el archivo.')
-  });
-}
-
-verResumenDesacuerdos() {
-  this.http.get(`${this.apiUrl}/admin/export/resumen-desacuerdos`).subscribe({
-    next: (data: any) => {
-      const total = data.total_desacuerdos;
-      const top = data.motivos_frecuentes.slice(0, 3)
-        .map((m: any) => `• ${m.motivo} (${m.cantidad})`)
-        .join('\n');
-      this.alertService.success(
-        `Total: ${total} desacuerdos`,
-        top || 'Sin desacuerdos registrados',
-        true
-      );
-    },
-    error: () => this.alertService.error('Error', 'No se pudo obtener el resumen.')
-  });
-}
 }

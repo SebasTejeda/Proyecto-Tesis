@@ -17,9 +17,7 @@
     <div class="stat-card">
       <div class="stat-header">
         <div class="stat-label">Tasa de Confirmación</div>
-        <div class="stat-icon-box green">
-          <i class="pi pi-check-circle"></i>
-        </div>
+        <div class="stat-icon-box green"><i class="pi pi-check-circle"></i></div>
       </div>
       <div class="stat-value">{{ tasaConfirmacion() }}%</div>
       <div class="stat-change">Concordancia con el modelo</div>
@@ -27,9 +25,7 @@
     <div class="stat-card">
       <div class="stat-header">
         <div class="stat-label">Tasa de Desacuerdo</div>
-        <div class="stat-icon-box coral">
-          <i class="pi pi-times-circle"></i>
-        </div>
+        <div class="stat-icon-box coral"><i class="pi pi-times-circle"></i></div>
       </div>
       <div class="stat-value">{{ tasaDesacuerdo() }}%</div>
       <div class="stat-change warn-text">Para mejorar el modelo</div>
@@ -47,92 +43,111 @@
   <!-- Gestión de médicos -->
   <div class="section-card">
     <div class="section-header">
-      <h2 class="section-title">
-        <i class="pi pi-users"></i> Gestión de Especialistas
-      </h2>
+      <h2 class="section-title"><i class="pi pi-users"></i> Gestión de Especialistas</h2>
       <div class="section-tabs">
-        <span class="tab-badge pending-badge"
-          >{{ medicosPendientes.length }} pendientes</span
-        >
-        <span class="tab-badge approved-badge"
-          >{{ medicosAprobados.length }} aprobados</span
-        >
-        <span class="tab-badge rejected-badge"
-          >{{ medicosRechazados.length }} rechazados</span
-        >
+        <span class="tab-badge pending-badge">{{ medicosPendientes.length }} pendientes</span>
+        <span class="tab-badge approved-badge">{{ medicosAprobados.length }} aprobados</span>
+        <span class="tab-badge rejected-badge">{{ medicosRechazados.length }} rechazados</span>
       </div>
     </div>
 
     @if (isLoadingDoctors()) {
-      <div class="loading-state">
-        <i class="pi pi-spin pi-spinner"></i> Cargando médicos...
-      </div>
+      <div class="loading-state"><i class="pi pi-spin pi-spinner"></i> Cargando médicos...</div>
     } @else if (todosMedicos().length === 0) {
-      <div class="empty-state">
-        <i class="pi pi-inbox"></i>
-        <p>No hay médicos registrados aún.</p>
-      </div>
+      <div class="empty-state"><i class="pi pi-inbox"></i><p>No hay médicos registrados aún.</p></div>
     } @else {
       <div class="doctors-list">
         @for (doctor of todosMedicos(); track doctor.id) {
-          <div
-            class="doctor-card"
+          <div class="doctor-card"
             [class.card-pending]="doctor.account_status === 'pending'"
             [class.card-approved]="doctor.account_status === 'approved'"
-            [class.card-rejected]="doctor.account_status === 'rejected'"
-          >
-            <div class="doctor-avatar">
-              {{ doctor.nombres.charAt(0) }}{{ doctor.apellidos.charAt(0) }}
-            </div>
-
+            [class.card-rejected]="doctor.account_status === 'rejected'">
+            <div class="doctor-avatar">{{ doctor.nombres.charAt(0) }}{{ doctor.apellidos.charAt(0) }}</div>
             <div class="doctor-info">
-              <span class="doctor-name"
-                >{{ doctor.nombres }} {{ doctor.apellidos }}</span
-              >
+              <span class="doctor-name">{{ doctor.nombres }} {{ doctor.apellidos }}</span>
               <span class="doctor-email">{{ doctor.email }}</span>
-              <span class="doctor-code">
-                <i class="pi pi-id-card"></i> Colegiatura:
-                {{ doctor.codigo_colegiatura || "No registrada" }}
-              </span>
+              <span class="doctor-code"><i class="pi pi-id-card"></i> Colegiatura: {{ doctor.codigo_colegiatura || 'No registrada' }}</span>
             </div>
-
             <div class="doctor-meta">
-              <span
-                class="status-badge"
-                [ngClass]="getStatusClass(doctor.account_status)"
-              >
-                {{ getStatusLabel(doctor.account_status) }}
-              </span>
-              <span class="doctor-date">{{
-                doctor.created_at | date: "dd/MM/yyyy"
-              }}</span>
+              <span class="status-badge" [ngClass]="getStatusClass(doctor.account_status)">{{ getStatusLabel(doctor.account_status) }}</span>
+              <span class="doctor-date">{{ doctor.created_at | date:'dd/MM/yyyy' }}</span>
             </div>
-
-            @if (doctor.account_status === "pending") {
+            @if (doctor.account_status === 'pending') {
               <div class="doctor-actions">
-                <button
-                  class="btn-approve"
-                  (click)="aprobarMedico(doctor)"
-                  [disabled]="procesandoId() === doctor.id"
-                >
-                  @if (procesandoId() === doctor.id) {
-                    <i class="pi pi-spin pi-spinner"></i> Procesando...
-                  } @else {
-                    <i class="pi pi-check"></i> Aprobar
-                  }
+                <button class="btn-approve" (click)="aprobarMedico(doctor)" [disabled]="procesandoId() === doctor.id">
+                  @if (procesandoId() === doctor.id) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
+                  @else { <i class="pi pi-check"></i> Aprobar }
                 </button>
-
-                <button
-                  class="btn-reject"
-                  (click)="abrirModalRechazo(doctor)"
-                  [disabled]="procesandoId() === doctor.id"
-                >
+                <button class="btn-reject" (click)="abrirModalRechazo(doctor)" [disabled]="procesandoId() === doctor.id">
                   <i class="pi pi-times"></i> Rechazar
                 </button>
               </div>
             }
           </div>
         }
+      </div>
+    }
+  </div>
+
+  <!-- Resumen de desacuerdos del modelo -->
+  <div class="section-card desacuerdos-card">
+    <div class="section-header">
+      <h2 class="section-title"><i class="pi pi-chart-pie"></i> Desacuerdos del Modelo</h2>
+      <button class="btn-download-csv" (click)="descargarDesacuerdos()">
+        <i class="pi pi-download"></i> Descargar CSV
+      </button>
+    </div>
+
+    @if (isLoadingResumen()) {
+      <div class="loading-state"><i class="pi pi-spin pi-spinner"></i> Cargando resumen...</div>
+    } @else if (!resumenDesacuerdos() || resumenDesacuerdos()!.total_desacuerdos === 0) {
+      <div class="empty-state">
+        <i class="pi pi-check-circle" style="color:#10b981"></i>
+        <p>Sin desacuerdos registrados aún. El modelo está siendo bien aceptado.</p>
+      </div>
+    } @else {
+      <div class="desacuerdos-body">
+        <!-- Totales -->
+        <div class="desacuerdos-totales">
+          <div class="total-badge">
+            <span class="total-num">{{ resumenDesacuerdos()!.total_desacuerdos }}</span>
+            <span class="total-label">desacuerdos totales</span>
+          </div>
+          <div class="versiones-list">
+            @for (v of versionesModelo; track v.version) {
+              <span class="version-badge">
+                <i class="pi pi-tag"></i> {{ v.version }}: {{ v.cantidad }} caso(s)
+              </span>
+            }
+          </div>
+        </div>
+
+        <!-- Motivos con barras -->
+        <div class="motivos-list">
+          <p class="motivos-titulo">Motivos más frecuentes:</p>
+          @for (m of resumenDesacuerdos()!.motivos_frecuentes; track m.motivo; let i = $index) {
+            <div class="motivo-item">
+              <div class="motivo-header">
+                <span class="motivo-rank">{{ i + 1 }}</span>
+                <span class="motivo-texto">{{ m.motivo }}</span>
+                <span class="motivo-count">{{ m.cantidad }}</span>
+              </div>
+              <div class="motivo-bar-bg">
+                <div class="motivo-bar-fill"
+                  [style.width.%]="(m.cantidad / maxMotivo) * 100"
+                  [class.bar-top]="i === 0"
+                  [class.bar-mid]="i === 1"
+                  [class.bar-low]="i > 1">
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <p class="desacuerdos-hint">
+          <i class="pi pi-info-circle"></i>
+          Descarga el CSV para usar estos casos en el reentrenamiento del modelo.
+        </p>
       </div>
     }
   </div>
@@ -146,17 +161,10 @@
         <span>Ver Historial Completo</span>
         <small>Todas las ejecuciones del modelo</small>
       </a>
-
       <button class="action-card" (click)="descargarDesacuerdos()">
         <i class="pi pi-download"></i>
         <span>Exportar Desacuerdos</span>
         <small>CSV para reentrenamiento del modelo</small>
-      </button>
-
-      <button class="action-card" (click)="verResumenDesacuerdos()">
-        <i class="pi pi-chart-pie"></i>
-        <span>Resumen de Desacuerdos</span>
-        <small>Motivos más frecuentes por versión</small>
       </button>
     </div>
   </div>
@@ -166,40 +174,22 @@
 @if (mostrarModalRechazo()) {
   <div class="modal-overlay" (click)="mostrarModalRechazo.set(false)">
     <div class="modal-box" (click)="$event.stopPropagation()">
-      <h3 class="modal-title">
-        <i class="pi pi-times-circle"></i> Rechazar cuenta
-      </h3>
+      <h3 class="modal-title"><i class="pi pi-times-circle"></i> Rechazar cuenta</h3>
       <p class="modal-subtitle">
-        Estás rechazando la cuenta de
-        <strong
-          >{{ doctorSeleccionado()?.nombres }}
-          {{ doctorSeleccionado()?.apellidos }}</strong
-        >. Se le notificará por correo.
+        Estás rechazando la cuenta de <strong>{{ doctorSeleccionado()?.nombres }} {{ doctorSeleccionado()?.apellidos }}</strong>. Se le notificará por correo.
       </p>
       <div class="form-group">
         <label class="form-label">Motivo del rechazo (opcional)</label>
-        <textarea
-          class="form-textarea"
-          rows="3"
+        <textarea class="form-textarea" rows="3"
           [value]="motivoRechazo()"
           (input)="motivoRechazo.set($any($event.target).value)"
-          placeholder="Ej: El código de colegiatura no corresponde al especialista registrado..."
-        ></textarea>
+          placeholder="Ej: El código de colegiatura no corresponde al especialista registrado..."></textarea>
       </div>
       <div class="modal-footer">
-        <button class="btn-cancel" (click)="mostrarModalRechazo.set(false)">
-          Cancelar
-        </button>
-        <button
-          class="btn-confirm-reject"
-          (click)="confirmarRechazo()"
-          [disabled]="procesandoId() !== null"
-        >
-          @if (procesandoId() !== null) {
-            <i class="pi pi-spin pi-spinner"></i> Procesando...
-          } @else {
-            <i class="pi pi-times"></i> Confirmar Rechazo
-          }
+        <button class="btn-cancel" (click)="mostrarModalRechazo.set(false)">Cancelar</button>
+        <button class="btn-confirm-reject" (click)="confirmarRechazo()" [disabled]="procesandoId() !== null">
+          @if (procesandoId() !== null) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
+          @else { <i class="pi pi-times"></i> Confirmar Rechazo }
         </button>
       </div>
     </div>
