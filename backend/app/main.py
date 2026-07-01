@@ -11,7 +11,7 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from .database import engine
 from . import models
-from .routers import evaluations_final, patients, auth, users
+from .routers import evaluations_final, patients, auth, users, activity_logs
 
 load_dotenv()
 
@@ -56,3 +56,4 @@ app.include_router(users.router, prefix="/users", tags=["Usuarios"])
 app.include_router(patients.router, prefix="/patients", tags=["Pacientes"])
 app.include_router(evaluations_final.router, prefix="/evaluations", tags=["Evaluaciones"])
 app.include_router(export_desacuerdos.router, prefix="/admin/export", tags=["Admin"])
+app.include_router(activity_logs.router, prefix="/admin/logs", tags=["Admin Logs"])

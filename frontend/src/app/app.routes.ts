@@ -17,6 +17,7 @@ import { EvaluationComponent } from './pages/evaluation/evaluation';
 import { AuditoriaComponent } from './pages/auditoria/auditoria';
 import { AdminPanelComponent } from './pages/admin-panel/admin-panel.component';
 import { PendingApprovalComponent } from './pages/pending-approval/pending-approval.component';
+import { ActividadComponent } from './pages/actividad/actividad.component';
 
 export const routes: Routes = [
   // Rutas públicas
@@ -45,10 +46,12 @@ export const routes: Routes = [
     component: AdminLayoutComponent,
     canActivate: [authGuard, adminGuard],
     children: [
-      { path: '',          component: AdminPanelComponent },
-      { path: 'historial', component: AuditoriaComponent },
+      { path: '',           component: AdminPanelComponent },
+      { path: 'historial',  component: AuditoriaComponent },
+      { path: 'actividad',  component: ActividadComponent },
     ],
   },
+
   {
     path: 'pending-approval',
     component: PendingApprovalComponent,

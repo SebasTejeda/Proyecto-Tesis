@@ -1,0 +1,74 @@
+<div class="actividad-page fade-in">
+  <div class="page-header">
+    <h1 class="page-title">Registro de Actividad</h1>
+    <p class="page-subtitle">Trazabilidad completa de acciones en el sistema</p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-bar">
+    <div class="filtro-grupo">
+      <i class="pi pi-filter"></i>
+      <select [(ngModel)]="filtroAccion" class="filtro-select"
+        (change)="filtroAccion.set($any($event.target).value)">
+        <option value="">Todas las acciones</option>
+        @for (a of acciones(); track a.key) {
+          <option [value]="a.key">{{ a.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="filtro-grupo">
+      <i class="pi pi-search"></i>
+      <input type="text" class="filtro-input" placeholder="Buscar por usuario o IP..."
+        [value]="filtroBusqueda()"
+        (input)="filtroBusqueda.set($any($event.target).value)">
+    </div>
+    @if (filtroAccion() || filtroBusqueda()) {
+      <button class="btn-limpiar" (click)="limpiarFiltros()">
+        <i class="pi pi-times"></i> Limpiar
+      </button>
+    }
+    <span class="total-registros">{{ logsFiltrados().length }} registro(s)</span>
+  </div>
+
+  <!-- Tabla de logs -->
+  <div class="logs-card">
+    @if (isLoading()) {
+      <div class="loading-state">
+        <i class="pi pi-spin pi-spinner"></i> Cargando registros...
+      </div>
+    } @else if (logsFiltrados().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-list"></i>
+        <p>No hay registros de actividad disponibles.</p>
+      </div>
+    } @else {
+      <div class="logs-list">
+        @for (log of logsFiltrados(); track log.id) {
+          <div class="log-item">
+            <div class="log-icon" [ngClass]="getAccionClass(log.accion_key)">
+              <i class="pi" [ngClass]="getAccionIcon(log.accion_key)"></i>
+            </div>
+            <div class="log-info">
+              <div class="log-main">
+                <span class="log-accion" [ngClass]="getAccionClass(log.accion_key)">
+                  {{ log.accion }}
+                </span>
+                <span class="log-usuario">{{ log.usuario_nombre }}</span>
+                <span class="log-email">{{ log.usuario_email }}</span>
+              </div>
+              <div class="log-meta">
+                <span class="log-detalle" [title]="log.detalle">
+                  <i class="pi pi-info-circle"></i> {{ log.detalle }}
+                </span>
+              </div>
+            </div>
+            <div class="log-right">
+              <span class="log-fecha">{{ formatearFecha(log.fecha) }}</span>
+              <span class="log-ip"><i class="pi pi-desktop"></i> {{ log.ip }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>
