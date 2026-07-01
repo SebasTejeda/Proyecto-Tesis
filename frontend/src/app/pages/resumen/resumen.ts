@@ -3,6 +3,7 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
+import * as XLSX from 'xlsx';
 import { PatientService } from '../../services/patients/patient';
 import { EvaluationService } from '../../services/evaluation/evaluation';
 import { AlertService } from '../../services/alert/alert';
@@ -17,7 +18,7 @@ interface PatientRow extends Patient {
   fecha_raw: Date;
   riesgo: string;
   shap_values: Record<string, number> | null;
-  total_evaluaciones: number; // para conteo correcto por mes
+  total_evaluaciones: number;
 }
 
 @Component({
@@ -33,7 +34,7 @@ export class ResumenComponent implements OnInit {
   private alertService = inject(AlertService);
 
   pacientes = signal<PatientRow[]>([]);
-  todasEvaluaciones = signal<EvaluationResponse[]>([]); // todas las evals para conteo real
+  todasEvaluaciones = signal<EvaluationResponse[]>([]);
   isLoading = signal<boolean>(true);
 
   mesSeleccionado = signal<number>(new Date().getMonth());
@@ -52,7 +53,6 @@ export class ResumenComponent implements OnInit {
 
   totalPacientes = computed(() => this.pacientes().length);
 
-  // Cuenta TODAS las evaluaciones del mes — no solo una por paciente
   evaluacionesDelMes = computed(() => {
     const mes = this.mesSeleccionado();
     const anio = new Date().getFullYear();
@@ -63,20 +63,17 @@ export class ResumenComponent implements OnInit {
     }).length;
   });
 
-  // Casos alto riesgo filtrados por mes
   casosAltoRiesgo = computed(() => {
     const mes = this.mesSeleccionado();
     const anio = new Date().getFullYear();
     return this.todasEvaluaciones().filter(e => {
       const fecha = this.parsearFecha(e.date);
       if (!fecha) return false;
-      const esMes = fecha.getMonth() === mes && fecha.getFullYear() === anio;
-      const esAlto = e.model_prediction?.severity === 'Moderado/Alto';
-      return esMes && esAlto;
+      return fecha.getMonth() === mes && fecha.getFullYear() === anio
+        && e.model_prediction?.severity === 'Moderado/Alto';
     }).length;
   });
 
-  // Solo pacientes CON evaluaciones, filtrados por riesgo
   pacientesFiltrados = computed(() => {
     const filtro = this.filtroRiesgo();
     const conEval = this.pacientes().filter(p => p.riesgo !== 'Sin evaluar');
@@ -113,6 +110,7 @@ export class ResumenComponent implements OnInit {
 
   cargarPacientes() {
     this.isLoading.set(true);
+    this.todasEvaluaciones.set([]); // resetear antes de cargar
     this.patientService.getPatients().pipe(
       switchMap((pacientes: Patient[]) => {
         if (!pacientes || pacientes.length === 0) return of([]);
@@ -125,7 +123,6 @@ export class ResumenComponent implements OnInit {
               const riesgoReal = prediction?.severity ?? 'Sin evaluar';
               const fechaDate = this.parsearFecha(ultimaEval?.date ?? null);
 
-              // Guardar todas las evaluaciones para el conteo correcto
               const todasActuales = this.todasEvaluaciones();
               this.todasEvaluaciones.set([...todasActuales, ...evaluaciones]);
 
@@ -133,9 +130,8 @@ export class ResumenComponent implements OnInit {
                 ...p,
                 edad: this.calcularEdad(p.fecha_nacimiento),
                 fecha_ultima_eval: fechaDate
-                  ? fechaDate.toLocaleDateString('es-PE', {
-                      timeZone: 'America/Lima', month: 'short', day: 'numeric'
-                    }) : 'No registrada',
+                  ? fechaDate.toLocaleDateString('es-PE', { timeZone: 'America/Lima', month: 'short', day: 'numeric' })
+                  : 'No registrada',
                 fecha_raw: fechaDate ?? new Date(0),
                 riesgo: riesgoReal,
                 shap_values: prediction?.shap_values ?? null,
@@ -167,5 +163,38 @@ export class ResumenComponent implements OnInit {
     if (r.includes('leve')) return 'badge-mod';
     if (r === 'ninguno') return 'badge-low';
     return 'badge-none';
+  }
+
+  // ── Exportar a Excel ─────────────────────────────────────────────────────
+  exportarExcel() {
+    const data = this.pacientes().map(p => ({
+      'Nombre Completo':     p.nombre_completo,
+      'DNI':                 p.dni,
+      'Edad':                p.edad,
+      'Sexo':                p.sexo,
+      'Teléfono':            p.telefono ?? '--',
+      'Fecha Registro':      p.created_at ? new Date(p.created_at).toLocaleDateString('es-PE') : '--',
+      'Última Evaluación':   p.fecha_ultima_eval,
+      'Nivel de Riesgo':     p.riesgo,
+      'Total Evaluaciones':  p.total_evaluaciones,
+      'Factores Principales': this.getTopFactores(p.shap_values),
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+
+    // Ancho de columnas
+    ws['!cols'] = [
+      { wch: 28 }, { wch: 12 }, { wch: 8 }, { wch: 12 },
+      { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 16 },
+      { wch: 14 }, { wch: 40 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Pacientes');
+
+    const fecha = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+    XLSX.writeFile(wb, `NeuroMind_Pacientes_${fecha}.xlsx`);
+
+    this.alertService.success('Excel Generado', 'El archivo fue descargado correctamente.', true);
   }
 }

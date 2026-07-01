@@ -1,7 +1,7 @@
 <div class="auth-page">
   <div class="auth-container">
     <div class="auth-card">
-      
+
       <div class="logo-container">
         <div class="logo-icon">N</div>
         <div class="logo-text">NeuroMind AI</div>
@@ -10,17 +10,36 @@
       <h2 class="auth-title">Iniciar Sesión</h2>
       <p class="auth-subtitle">Accede a tu cuenta profesional</p>
 
+      <!-- Banner de cuenta bloqueada -->
+      @if (isBloqueado()) {
+        <div class="alert-banner locked-banner">
+          <i class="pi pi-lock"></i>
+          <div>
+            <strong>Cuenta bloqueada temporalmente</strong>
+            <p>{{ mensajeBloqueo() }}</p>
+          </div>
+        </div>
+      }
+
+      <!-- Advertencia de intentos restantes -->
+      @if (intentosRestantes() !== null && !isBloqueado()) {
+        <div class="alert-banner warning-banner">
+          <i class="pi pi-exclamation-triangle"></i>
+          <div>
+            <strong>Contraseña incorrecta</strong>
+            <p>Te quedan <strong>{{ intentosRestantes() }}</strong> intento(s) antes de bloquear la cuenta.</p>
+          </div>
+        </div>
+      }
+
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
-        
+
         <div class="form-group">
           <label class="form-label">Correo Electrónico</label>
-          <input 
-            type="email" 
-            class="form-input" 
+          <input type="email" class="form-input"
             [class.input-error]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
             formControlName="email"
             placeholder="doctor@ejemplo.com">
-          
           @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
             <span class="error-text">Ingresa un correo electrónico válido</span>
           }
@@ -28,13 +47,10 @@
 
         <div class="form-group">
           <label class="form-label">Contraseña</label>
-          <input 
-            type="password" 
-            class="form-input" 
+          <input type="password" class="form-input"
             [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
             formControlName="password"
             placeholder="••••••••">
-            
           @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
             <span class="error-text">La contraseña es obligatoria</span>
           }
@@ -47,21 +63,28 @@
           </label>
           <a routerLink="/recovery" class="auth-link">¿Olvidaste tu contraseña?</a>
         </div>
-        
-        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading()">
+
+        <button type="submit" class="btn-primary"
+          [disabled]="loginForm.invalid || isLoading() || isBloqueado()">
           @if (isLoading()) {
             Cargando...
+          } @else if (isBloqueado()) {
+            Cuenta bloqueada
           } @else {
             Iniciar Sesión
           }
         </button>
 
-        <div class="separator">
-          <span>o continúa con</span>
-        </div>
-        
+        @if (isBloqueado()) {
+          <button type="button" class="btn-retry" (click)="limpiarBloqueo()">
+            <i class="pi pi-refresh"></i> Intentar con otra cuenta
+          </button>
+        }
+
+        <div class="separator"><span>o continúa con</span></div>
+
         <div id="google-btn" style="display: flex; justify-content: center;"></div>
-        
+
       </form>
 
       <div class="auth-footer">

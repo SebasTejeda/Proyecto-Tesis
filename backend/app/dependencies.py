@@ -29,4 +29,20 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None:
         raise credentials_exception
+
     return user
+
+
+def log_activity(db: Session, user_id: int, action: str, detail: str = None, ip: str = None):
+    """Helper para registrar actividad desde cualquier router."""
+    try:
+        log = models.ActivityLog(
+            user_id=user_id,
+            action=action,
+            detail=detail,
+            ip_address=ip
+        )
+        db.add(log)
+        db.commit()
+    except Exception as e:
+        print(f"Error guardando log: {e}")

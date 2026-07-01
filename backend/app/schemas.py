@@ -9,6 +9,7 @@ class Token(BaseModel):
     token_type: str
     user_id: int
     role: str
+    account_status: str = 'pending'
 
 class TokenData(BaseModel):
     email: Optional[str] = None
@@ -42,6 +43,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     role: str
+    account_status: str = "pending"
     is_active: bool
     created_at: datetime
     nombres: Optional[str] = None
@@ -50,6 +52,24 @@ class UserResponse(UserBase):
     picture: Optional[str] = None
     is_verified: bool = False
     google_id: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# Schema para aprobar o rechazar un médico
+class AccountStatusUpdate(BaseModel):
+    action: str  # "approve" | "reject"
+    reason: Optional[str] = None  # motivo de rechazo (opcional)
+
+# Schema para listar médicos pendientes en el panel admin
+class DoctorPendingResponse(BaseModel):
+    id: int
+    nombres: Optional[str] = None
+    apellidos: Optional[str] = None
+    email: str
+    codigo_colegiatura: Optional[str] = None
+    account_status: str
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -137,8 +157,8 @@ class EvaluationCreate(BaseModel):
     model_features: ModelFeaturesCreate
 
 class DoctorAgreementUpdate(BaseModel):
-    doctor_agreement: str                        # "confirmed" | "rejected"
-    disagreement_reason: Optional[str] = None    # motivo si rejected
+    doctor_agreement: str
+    disagreement_reason: Optional[str] = None
 
 class EvaluationResponse(BaseModel):
     id: int

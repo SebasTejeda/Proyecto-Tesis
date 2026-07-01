@@ -2,8 +2,8 @@ import random
 import cloudinary.uploader
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
 from sqlalchemy.orm import Session
+from typing import List
 
-# Importaciones de tu arquitectura
 from ..database import get_db
 from ..dependencies import get_current_user
 from .. import models, schemas, utils, email_utils
@@ -11,14 +11,12 @@ from .. import models, schemas, utils, email_utils
 router = APIRouter()
 
 
-@router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED, summary="Registrar un nuevo usuario")
+@router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 async def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    """Crea una cuenta nueva para un médico y envía el correo de verificación."""
-    db_user = db.query(models.User).filter(
-        models.User.email == user.email).first()
+    """Registra un médico nuevo. Queda en estado 'pending' hasta que el admin lo apruebe."""
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        raise HTTPException(
-            status_code=400, detail="El correo ya está registrado")
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
     codigo = str(random.randint(1000, 9999))
     hashed_password = utils.HashUtils.get_password_hash(user.password)
@@ -30,32 +28,29 @@ async def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db))
         apellidos=user.apellidos,
         codigo_colegiatura=user.codigo_colegiatura,
         is_verified=False,
-        verification_code=codigo
+        verification_code=codigo,
+        account_status="pending",  # siempre empieza pendiente
+        role="Doctor"
     )
 
     try:
         db.add(nuevo_usuario)
         db.commit()
         db.refresh(nuevo_usuario)
-
         await email_utils.enviar_correo_verificacion(user.email, codigo)
-
     except Exception as e:
-        db.delete(nuevo_usuario)
-        db.commit()
-        raise HTTPException(
-            status_code=500, detail=f"Error al crear el usuario: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al crear el usuario: {str(e)}")
 
     return nuevo_usuario
 
 
-@router.get("/me", response_model=schemas.UserResponse, summary="Obtener perfil actual")
+@router.get("/me", response_model=schemas.UserResponse)
 def read_users_me(current_user: models.User = Depends(get_current_user)):
-    """Retorna los datos del médico que está autenticado actualmente."""
     return current_user
 
 
-@router.put("/me", response_model=schemas.UserResponse, summary="Actualizar perfil y foto")
+@router.put("/me", response_model=schemas.UserResponse)
 async def update_user_me(
     nombres: str = Form(...),
     apellidos: str = Form(...),
@@ -64,36 +59,97 @@ async def update_user_me(
     current_user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Actualiza la información básica del usuario y sube una nueva foto a Cloudinary si se proporciona."""
     try:
-        # 1. Actualizar los campos de texto
         current_user.nombres = nombres
         current_user.apellidos = apellidos
         current_user.codigo_colegiatura = codigo_colegiatura
 
-        # 2. Si viene una foto, validarla y subirla a Cloudinary
         if foto and foto.filename:
             if not foto.content_type.startswith("image/"):
-                raise HTTPException(
-                    status_code=400, detail="El archivo debe ser una imagen válida.")
-
-            # Subir a la nube
+                raise HTTPException(status_code=400, detail="El archivo debe ser una imagen válida.")
             upload_result = cloudinary.uploader.upload(
                 foto.file,
                 folder="neuromind_profiles",
                 public_id=f"perfil_{current_user.id}",
                 overwrite=True
             )
-
-            # Guardar la URL segura
             current_user.picture = upload_result.get("secure_url")
 
-        # 3. Guardar todo en PostgreSQL
         db.commit()
         db.refresh(current_user)
         return current_user
-
     except Exception as e:
         db.rollback()
-        raise HTTPException(
-            status_code=500, detail=f"Error al actualizar el perfil: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el perfil: {str(e)}")
+
+
+# ── Endpoints de administración de cuentas ────────────────────────────────────
+
+@router.get("/admin/pending", response_model=List[schemas.DoctorPendingResponse])
+def listar_medicos_pendientes(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Admin: lista todos los médicos con cuenta pendiente de aprobación."""
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Solo administradores pueden acceder.")
+
+    pendientes = db.query(models.User).filter(
+        models.User.role == "Doctor",
+        models.User.account_status == "pending",
+        models.User.is_verified == True  # solo los que ya verificaron su correo
+    ).order_by(models.User.created_at.desc()).all()
+
+    return pendientes
+
+
+@router.get("/admin/all-doctors", response_model=List[schemas.DoctorPendingResponse])
+def listar_todos_medicos(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Admin: lista todos los médicos con cualquier estado."""
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Solo administradores pueden acceder.")
+
+    doctores = db.query(models.User).filter(
+        models.User.role == "Doctor"
+    ).order_by(models.User.created_at.desc()).all()
+
+    return doctores
+
+
+@router.patch("/admin/{user_id}/status")
+async def actualizar_estado_cuenta(
+    user_id: int,
+    data: schemas.AccountStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Admin: aprueba o rechaza la cuenta de un médico."""
+    if current_user.role != "Admin":
+        raise HTTPException(status_code=403, detail="Solo administradores pueden acceder.")
+
+    if data.action not in ("approve", "reject"):
+        raise HTTPException(status_code=400, detail="Acción inválida. Use 'approve' o 'reject'.")
+
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+
+    if data.action == "approve":
+        user.account_status = "approved"
+        db.commit()
+        try:
+            await email_utils.enviar_correo_aprobacion(user.email, user.nombres)
+        except Exception as e:
+            print(f"Error enviando correo de aprobación: {e}")
+        return {"message": f"Cuenta de {user.nombres} aprobada correctamente."}
+    else:
+        user.account_status = "rejected"
+        db.commit()
+        try:
+            await email_utils.enviar_correo_rechazo(user.email, user.nombres, data.reason)
+        except Exception as e:
+            print(f"Error enviando correo de rechazo: {e}")
+        return {"message": f"Cuenta de {user.nombres} rechazada."}

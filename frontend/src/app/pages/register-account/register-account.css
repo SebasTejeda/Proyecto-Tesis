@@ -251,3 +251,42 @@
   left: -80px;
   /* animation: float 15s infinite reverse ease-in-out; <--- ELIMINADO */
 }
+
+/* ── Paso 3: Cuenta pendiente de aprobación ── */
+.pending-container { text-align: center; }
+
+.pending-icon {
+  width: 72px; height: 72px;
+  background: #fff7ed; color: #f97316;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; margin: 0 auto 20px auto;
+}
+
+.pending-info {
+  text-align: left;
+  display: flex; flex-direction: column; gap: 16px;
+  margin: 24px 0; background: #f8fafc;
+  border-radius: 12px; padding: 20px;
+}
+
+.pending-step { display: flex; align-items: flex-start; gap: 14px; }
+
+.step-dot {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+.step-dot.done    { background: #dcfce7; color: #166534; }
+.step-dot.pending { background: #fff7ed; color: #f97316; }
+.step-dot.inactive{ background: #f1f5f9; color: #94a3b8; }
+
+.step-text { display: flex; flex-direction: column; gap: 2px; padding-top: 4px; }
+.step-text strong { font-size: 0.9rem; color: #1e293b; }
+.step-text span   { font-size: 0.8rem; color: #64748b; }
+
+.pending-note {
+  background: #eff6ff; color: #1d4ed8;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 0.85rem; display: flex; align-items: center; gap: 8px;
+  margin-bottom: 20px; text-align: left;
+}

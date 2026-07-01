@@ -596,8 +596,8 @@
   .info-group.full { grid-column: span 1; }
 
   /* Ocultar la columna de 'Factores de riesgo' en móviles pequeños para ganar espacio */
-  :host ::ng-deep .modern-table .p-datatable-thead > tr > th:nth-child(3),
-  :host ::ng-deep .modern-table .p-datatable-tbody > tr > td:nth-child(3) { 
+  :host ::ng-deep .modern-table .p-datatable-thead > tr > th:nth-child(4),
+  :host ::ng-deep .modern-table .p-datatable-tbody > tr > td:nth-child(4) { 
     display: none; 
   }
 .row-actions { 
@@ -804,3 +804,168 @@
     gap: 12px;
     width: 100%;
 }
+
+/* ── Bloque 2: Marca visual de desacuerdo ── */
+
+/* Fila con desacuerdo — fondo sutil rojizo */
+:host ::ng-deep .modern-table .p-datatable-tbody > tr.row-rejected {
+  background-color: #fff8f8 !important;
+  border-left: 3px solid #fca5a5;
+}
+
+/* Pills de conformidad en la tabla */
+.agreement-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 50px;
+  font-size: 0.73rem; font-weight: 600; white-space: nowrap;
+}
+.agreement-pill.confirmed { background: #dcfce7; color: #166534; }
+.agreement-pill.rejected  { background: #fee2e2; color: #b91c1c; }
+.agreement-pill.pending   { background: #f1f5f9; color: #64748b; }
+
+/* Nota de razón de desacuerdo bajo los factores */
+.disagreement-note {
+  margin-top: 4px;
+  font-size: 0.75rem; color: #b91c1c;
+  display: flex; align-items: flex-start; gap: 4px;
+  font-style: italic;
+}
+
+/* Banner de desacuerdo en el modal de detalle */
+.disagreement-banner {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #fef2f2; border: 1px solid #fca5a5;
+  border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 16px;
+  color: #b91c1c;
+}
+.disagreement-banner i { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+.disagreement-banner strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+.disagreement-banner span { font-size: 0.82rem; opacity: 0.85; }
+
+/* ── Bloque 4: Filtros y comparación ── */
+
+/* Header del historial con controles */
+.history-actions {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+
+.filtro-nivel-select {
+  padding: 6px 12px; border: 1px solid #e2e8f0;
+  border-radius: 8px; background: #f8fafc;
+  font-size: 0.85rem; color: #334155;
+  cursor: pointer; outline: none; transition: all 0.2s;
+}
+.filtro-nivel-select:focus { border-color: #3b82f6; background: white; }
+
+.btn-compare {
+  padding: 6px 14px; border: 1px solid #6366f1;
+  border-radius: 8px; background: #eff0ff;
+  color: #4338ca; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+}
+.btn-compare:hover:not(:disabled) { background: #e0e7ff; }
+.btn-compare:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Modal de comparación */
+.compare-container { padding: 4px 0; }
+
+.compare-diff-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 10px;
+  margin-bottom: 20px; font-size: 0.9rem;
+}
+.compare-diff-banner i { font-size: 1.1rem; flex-shrink: 0; }
+.diff-worse  { background: #fee2e2; color: #b91c1c; }
+.diff-better { background: #dcfce7; color: #166534; }
+.diff-equal  { background: #f1f5f9; color: #64748b; }
+
+.compare-grid {
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: start;
+}
+
+.compare-col { background: #f8fafc; border-radius: 12px; padding: 16px; }
+
+.compare-col-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+}
+
+.compare-label {
+  font-weight: 700; font-size: 0.85rem; padding: 3px 10px;
+  border-radius: 50px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.label-a { background: #dbeafe; color: #1d4ed8; }
+.label-b { background: #fce7f3; color: #9d174d; }
+
+.btn-change-eval {
+  background: none; border: 1px solid #e2e8f0; padding: 4px 10px;
+  border-radius: 6px; font-size: 0.78rem; color: #64748b;
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+}
+.btn-change-eval:hover { background: white; color: #334155; }
+
+.compare-date { font-size: 0.82rem; color: #64748b; margin-bottom: 6px; }
+.compare-factores { font-size: 0.8rem; color: #475569; margin-top: 8px; line-height: 1.5; }
+
+.compare-separator {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 1.2rem; color: #94a3b8;
+  padding-top: 40px;
+}
+
+/* Selector de evaluación */
+.eval-selector {
+  margin-top: 20px; padding: 16px;
+  background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: 12px;
+}
+.eval-selector-title { font-size: 0.88rem; color: #92400e; margin: 0 0 10px 0; }
+.eval-selector-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.eval-selector-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; background: white;
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  font-size: 0.82rem; cursor: pointer; transition: all 0.2s;
+}
+.eval-selector-item:hover { border-color: #6366f1; background: #eff0ff; }
+.eval-selector-item.selected-a { border-color: #1d4ed8; background: #dbeafe; }
+.eval-selector-item.selected-b { border-color: #9d174d; background: #fce7f3; }
+
+@media (max-width: 600px) {
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-separator { padding: 8px 0; }
+  .history-actions { flex-direction: column; align-items: flex-start; }
+  .filtro-nivel-select, .btn-compare { width: 100%; justify-content: center; }
+}
+
+.seguimiento-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 18px; border-radius: 12px;
+  margin-bottom: 16px; border: 1px solid transparent;
+  flex-wrap: wrap;
+}
+ 
+.seguimiento-urgente { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.seguimiento-vencido { background: #fff7ed; border-color: #fde68a; color: #92400e; }
+.seguimiento-normal  { background: #eff6ff; border-color: #93c5fd; color: #1e40af; }
+.seguimiento-ok      { background: #f0fdf4; border-color: #86efac; color: #166534; }
+ 
+.seguimiento-icon {
+  width: 44px; height: 44px; flex-shrink: 0;
+  border-radius: 50%; background: rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+}
+ 
+.seguimiento-info { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 180px; }
+.seguimiento-info strong { font-size: 0.88rem; font-weight: 700; }
+.seguimiento-info span   { font-size: 0.8rem; opacity: 0.85; line-height: 1.4; }
+ 
+.btn-nueva-eval-seguimiento {
+  padding: 7px 14px; border: none; border-radius: 8px;
+  background: rgba(255,255,255,0.8); font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  color: inherit; transition: all 0.2s; white-space: nowrap;
+}
+.btn-nueva-eval-seguimiento:hover { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }

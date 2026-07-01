@@ -927,3 +927,24 @@ input[type=range]::-webkit-slider-thumb:hover {
     min-width: 100%; 
   }
 }
+
+.confidence-warning {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: 10px; padding: 14px 16px;
+  margin: 12px 0; color: #92400e;
+}
+.confidence-warning i { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; color: #f59e0b; }
+.confidence-warning strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+.confidence-warning p { margin: 0; font-size: 0.82rem; opacity: 0.85; }
+ 
+/* ── Bloque 5: Derivación ── */
+.referral-suggestion {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: #eff6ff; border: 1px solid #93c5fd;
+  border-radius: 10px; padding: 14px 16px;
+  margin: 12px 0; color: #1e40af;
+}
+.referral-suggestion i { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; color: #3b82f6; }
+.referral-suggestion strong { display: block; font-size: 0.9rem; margin-bottom: 2px; }
+.referral-suggestion p { margin: 0; font-size: 0.82rem; opacity: 0.85; }

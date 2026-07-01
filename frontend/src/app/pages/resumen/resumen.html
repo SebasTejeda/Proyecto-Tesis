@@ -4,18 +4,20 @@
     <p class="page-subtitle">Resumen de actividad clínica</p>
   </div>
 
-        <div class="mes-filter">
-        <select [(ngModel)]="mesSeleccionado" class="mes-select-inline"
-          (change)="mesSeleccionado.set(+$any($event.target).value)">
-          @for (mes of meses; track $index) {
-            <option [value]="$index">{{ mes }}</option>
-          }
-        </select>
-      </div>
+  <div class="mes-filter">
+    <select
+      [(ngModel)]="mesSeleccionado"
+      class="mes-select-inline"
+      (change)="mesSeleccionado.set(+$any($event.target).value)"
+    >
+      @for (mes of meses; track $index) {
+      <option [value]="$index">{{ mes }}</option>
+      }
+    </select>
+  </div>
 
   <!-- Tarjetas de estadísticas -->
   <div class="stats-grid">
-
     <!-- Tarjeta 1: Pacientes totales — sin filtro de mes -->
     <div class="stat-card">
       <div class="stat-header">
@@ -35,57 +37,68 @@
       <!-- Selector de mes integrado en la tarjeta -->
 
       <div class="stat-value">{{ evaluacionesDelMes() }}</div>
-      <div class="stat-change">Total de evaluaciones en {{ meses[mesSeleccionado()] }}</div>
+      <div class="stat-change">
+        Total de evaluaciones en {{ meses[mesSeleccionado()] }}
+      </div>
     </div>
 
     <!-- Tarjeta 3: Casos alto riesgo — también filtrado por mes -->
     <div class="stat-card">
       <div class="stat-header">
-        <div class="stat-label">Alto Riesgo en {{ meses[mesSeleccionado()] }}</div>
-        <div class="stat-icon-box coral"><i class="pi pi-exclamation-triangle"></i></div>
+        <div class="stat-label">
+          Alto Riesgo en {{ meses[mesSeleccionado()] }}
+        </div>
+        <div class="stat-icon-box coral">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
       </div>
       <div class="stat-value">{{ casosAltoRiesgo() }}</div>
       <div class="stat-change warn-text">Casos Moderado/Alto del mes</div>
     </div>
-
   </div>
-
-  <!-- Tabla de pacientes evaluados -->
   <div class="section-card">
     <div class="section-header">
       <h2 class="section-title">Últimos Pacientes Evaluados</h2>
-
       <div class="header-controls">
-        <!-- Filtro por nivel de riesgo -->
+        <button class="btn-excel" (click)="exportarExcel()">
+          <i class="pi pi-file-excel"></i> Exportar Excel
+        </button>
         <div class="filtro-riesgo">
-          <i class="pi pi-filter" style="color: #94a3b8;"></i>
-          <select [(ngModel)]="filtroRiesgo" class="filtro-select"
-            (change)="filtroRiesgo.set($any($event.target).value)">
+          <i class="pi pi-filter" style="color: #94a3b8"></i>
+          <select
+            [(ngModel)]="filtroRiesgo"
+            class="filtro-select"
+            (change)="filtroRiesgo.set($any($event.target).value)"
+          >
             <option value="todos">Todos los niveles</option>
             <option value="Ninguno">Sin riesgo</option>
             <option value="Leve">Leve</option>
             <option value="Moderado/Alto">Moderado/Alto</option>
           </select>
         </div>
-
         <div class="search-box">
           <i class="pi pi-search search-icon-i"></i>
-          <input type="text"
+          <input
+            type="text"
             (input)="dt.filterGlobal($any($event.target).value, 'contains')"
             placeholder="Buscar paciente..."
-            class="search-input"/>
+            class="search-input"
+          />
         </div>
       </div>
     </div>
 
-    <p-table #dt
+    <p-table
+      #dt
       [value]="pacientesFiltrados()"
-      [paginator]="true" [rows]="10"
-      [resizableColumns]="true" columnResizeMode="expand"
+      [paginator]="true"
+      [rows]="10"
+      [resizableColumns]="true"
+      columnResizeMode="expand"
       [globalFilterFields]="['nombre_completo', 'riesgo', 'dni']"
       [tableStyle]="{ 'min-width': '60rem' }"
-      [loading]="isLoading()">
-
+      [loading]="isLoading()"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="nombre_completo" pResizableColumn>
@@ -111,7 +124,7 @@
           </td>
           <td>{{ p.fecha_ultima_eval }}</td>
           <td>{{ p.edad }} {{ p.edad !== '--' ? 'años' : '' }}</td>
-          <td style="font-size: 0.85rem; color: #475569;">
+          <td style="font-size: 0.85rem; color: #475569">
             {{ getTopFactores(p.shap_values) }}
           </td>
           <td>

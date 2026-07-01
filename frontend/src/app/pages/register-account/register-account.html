@@ -1,6 +1,5 @@
 <div class="auth-page">
   <div class="auth-container">
-
     <div class="auth-card fade-in">
 
       <div class="auth-header">
@@ -14,7 +13,6 @@
         <p class="auth-subtitle">Únete a nuestra red de especialistas</p>
 
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
-
           <div class="form-grid">
             <div class="form-group">
               <label class="form-label">Nombres</label>
@@ -24,7 +22,6 @@
                 <span class="error-msg">Mínimo 2 caracteres</span>
               }
             </div>
-
             <div class="form-group">
               <label class="form-label">Apellidos</label>
               <input type="text" class="form-input" formControlName="apellidos" placeholder="Pérez"
@@ -93,13 +90,8 @@
           <div class="auth-form">
             <div class="form-group">
               <label class="form-label" style="text-align: center;">Código de 4 dígitos</label>
-              <input
-                type="text"
-                class="form-input"
-                [formControl]="verificationCode"
-                placeholder="0000"
-                maxlength="4"
-                inputmode="numeric"
+              <input type="text" class="form-input" [formControl]="verificationCode"
+                placeholder="0000" maxlength="4" inputmode="numeric"
                 style="text-align: center; letter-spacing: 8px; font-size: 24px; font-weight: bold;"
                 [class.input-error]="verificationCode.invalid && verificationCode.touched"
                 (keyup.enter)="onVerifyCode()">
@@ -111,16 +103,66 @@
             </div>
 
             <button (click)="onVerifyCode()" class="btn-submit" [disabled]="verificationCode.invalid || isLoading()">
-              @if (isLoading()) { Verificando... } @else { Verificar y Entrar }
+              @if (isLoading()) { Verificando... } @else { Verificar Código }
             </button>
 
             <div class="auth-footer">
-              <p>
-                ¿No recibiste el código?
+              <p>¿No recibiste el código?
                 <a href="javascript:void(0)" (click)="currentStep.set(1)" class="link-primary">Intentar de nuevo</a>
               </p>
             </div>
           </div>
+        </div>
+      }
+
+      <!-- ── PASO 3: Cuenta pendiente de aprobación ── -->
+      @if (currentStep() === 3) {
+        <div class="fade-in pending-container">
+          <div class="pending-icon">
+            <i class="pi pi-clock"></i>
+          </div>
+          <h2 class="auth-title">¡Correo Verificado!</h2>
+          <p class="auth-subtitle">Tu cuenta está siendo revisada</p>
+
+          <div class="pending-info">
+            <div class="pending-step">
+              <div class="step-dot done"><i class="pi pi-check"></i></div>
+              <div class="step-text">
+                <strong>Registro completado</strong>
+                <span>Tu información fue registrada correctamente</span>
+              </div>
+            </div>
+            <div class="pending-step">
+              <div class="step-dot done"><i class="pi pi-check"></i></div>
+              <div class="step-text">
+                <strong>Correo verificado</strong>
+                <span>Tu dirección de correo fue confirmada</span>
+              </div>
+            </div>
+            <div class="pending-step">
+              <div class="step-dot pending"><i class="pi pi-clock"></i></div>
+              <div class="step-text">
+                <strong>Revisión del administrador</strong>
+                <span>Verificaremos tu código de colegiatura y credenciales</span>
+              </div>
+            </div>
+            <div class="pending-step">
+              <div class="step-dot inactive"><i class="pi pi-lock-open"></i></div>
+              <div class="step-text">
+                <strong>Acceso al sistema</strong>
+                <span>Recibirás un correo cuando tu cuenta sea aprobada</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="pending-note">
+            <i class="pi pi-info-circle"></i>
+            El proceso de verificación puede tomar hasta 24-48 horas hábiles.
+          </p>
+
+          <a routerLink="/login" class="btn-submit" style="text-align:center; text-decoration:none; display:block;">
+            Volver al Inicio de Sesión
+          </a>
         </div>
       }
 

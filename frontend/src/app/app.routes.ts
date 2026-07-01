@@ -6,7 +6,7 @@ import { SettingsComponent } from './pages/settings/settings';
 import { ChangePasswordComponent } from './pages/change-password/change-password';
 import { authGuard } from './guards/auth.guard';
 import { publicGuard } from './guards/public.guard';
-import { adminGuard, doctorGuard } from './guards/admin.guard';
+import { adminGuard, doctorGuard, pendingGuard } from './guards/admin.guard';
 import { PatientDetailComponent } from './pages/patient-detail/patient-detail';
 import { NotFoundComponent } from './pages/not-found/not-found';
 import { MainLayoutComponent } from './layout/main-layout/main-layout';
@@ -15,7 +15,9 @@ import { ResumenComponent } from './pages/resumen/resumen';
 import { RegisterComponent } from './pages/register/register';
 import { EvaluationComponent } from './pages/evaluation/evaluation';
 import { AuditoriaComponent } from './pages/auditoria/auditoria';
-import { AdminPanelComponent } from './pages/admin-panel/admin-panel';
+import { AdminPanelComponent } from './pages/admin-panel/admin-panel.component';
+import { PendingApprovalComponent } from './pages/pending-approval/pending-approval.component';
+import { ActividadComponent } from './pages/actividad/actividad.component';
 
 export const routes: Routes = [
   // Rutas públicas
@@ -44,9 +46,16 @@ export const routes: Routes = [
     component: AdminLayoutComponent,
     canActivate: [authGuard, adminGuard],
     children: [
-      { path: '',          component: AdminPanelComponent },
-      { path: 'historial', component: AuditoriaComponent },
+      { path: '',           component: AdminPanelComponent },
+      { path: 'historial',  component: AuditoriaComponent },
+      { path: 'actividad',  component: ActividadComponent },
     ],
+  },
+
+  {
+    path: 'pending-approval',
+    component: PendingApprovalComponent,
+    canActivate: [authGuard, pendingGuard]
   },
 
   { path: '',   redirectTo: 'login', pathMatch: 'full' },

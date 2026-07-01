@@ -13,7 +13,8 @@ class User(Base):
     nombres = Column(String)
     apellidos = Column(String)
     codigo_colegiatura = Column(String, nullable=True)
-    role = Column(String, default="Doctor")  # "Doctor" | "Admin"
+    role = Column(String, default="Doctor")
+    account_status = Column(String, default="pending")
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     google_id = Column(String, nullable=True)
@@ -22,7 +23,26 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
 
+    # Bloqueo por intentos fallidos
+    failed_login_attempts = Column(Integer, default=0)
+    locked_until = Column(DateTime, nullable=True)  # NULL = no bloqueado
+
     patients = relationship("Patient", back_populates="doctor")
+    activity_logs = relationship("ActivityLog", back_populates="user")
+
+
+class ActivityLog(Base):
+    """Registro de actividad del usuario en el sistema."""
+    __tablename__ = "activity_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
+    action = Column(String, nullable=False)       # "login" | "logout" | "evaluation_created" | etc.
+    detail = Column(String, nullable=True)         # detalle adicional
+    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="activity_logs")
 
 
 class Patient(Base):
@@ -50,9 +70,9 @@ class Evaluation(Base):
     date = Column(DateTime, default=datetime.utcnow)
     status = Column(String, default="Pendiente")
     doctor_notes = Column(String, nullable=True)
-    doctor_agreement = Column(String, nullable=True)       # "confirmed" | "rejected" | null
-    disagreement_reason = Column(String, nullable=True)    # razón de desacuerdo
-    model_version = Column(String, default="v1.0")         # versión del modelo usado
+    doctor_agreement = Column(String, nullable=True)
+    disagreement_reason = Column(String, nullable=True)
+    model_version = Column(String, default="v1.0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     patient = relationship("Patient", back_populates="evaluations")

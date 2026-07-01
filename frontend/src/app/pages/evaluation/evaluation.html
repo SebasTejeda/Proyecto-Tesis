@@ -230,6 +230,29 @@
       </div>
     </div>
 
+    <!-- Bloque 5 — Advertencia baja confianza -->
+    @if (bajaConfianza()) {
+      <div class="confidence-warning">
+        <i class="pi pi-exclamation-triangle"></i>
+        <div>
+          <strong>Resultado en zona de incertidumbre</strong>
+          <p>El modelo tiene baja confianza en este diagnóstico (probabilidad entre 40-60%). Se recomienda complementar con una evaluación clínica adicional.</p>
+        </div>
+      </div>
+    }
+
+    <!-- Bloque 5 — Sugerencia de derivación -->
+    @if (sugerirDerivacion()) {
+      <div class="referral-suggestion">
+        <i class="pi pi-send"></i>
+        <div>
+          <strong>Se sugiere derivación a psiquiatra</strong>
+          <p>El nivel Moderado/Alto detectado indica que el paciente podría beneficiarse de una evaluación especializada. Considere coordinar una derivación.</p>
+        </div>
+      </div>
+    }
+
+
     <hr class="divider">
 
     <div class="xai-section">
