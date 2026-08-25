@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ViewChild } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { TableModule } from 'primeng/table';
+import { Table, TableModule } from 'primeng/table';
 import { FormsModule } from '@angular/forms';
 import * as XLSX from 'xlsx';
 import { PatientService } from '../../services/patients/patient';
@@ -32,6 +32,8 @@ export class ResumenComponent implements OnInit {
   private patientService = inject(PatientService);
   private evalService = inject(EvaluationService);
   private alertService = inject(AlertService);
+
+  @ViewChild('dt') dt?: Table;
 
   pacientes = signal<PatientRow[]>([]);
   todasEvaluaciones = signal<EvaluationResponse[]>([]);
@@ -167,7 +169,8 @@ export class ResumenComponent implements OnInit {
 
   // ── Exportar a Excel ─────────────────────────────────────────────────────
   exportarExcel() {
-    const data = this.pacientes().map(p => ({
+    const filas = (this.dt?.filteredValue as PatientRow[] | null) ?? this.pacientesFiltrados();
+    const data = filas.map(p => ({
       'Nombre Completo':     p.nombre_completo,
       'DNI':                 p.dni,
       'Edad':                p.edad,

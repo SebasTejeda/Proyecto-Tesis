@@ -65,8 +65,8 @@ async def update_user_me(
         current_user.codigo_colegiatura = codigo_colegiatura
 
         if foto and foto.filename:
-            if not foto.content_type.startswith("image/"):
-                raise HTTPException(status_code=400, detail="El archivo debe ser una imagen válida.")
+            if foto.content_type not in ("image/jpeg", "image/png"):
+                raise HTTPException(status_code=400, detail="Formato no soportado, use JPG o PNG")
             upload_result = cloudinary.uploader.upload(
                 foto.file,
                 folder="neuromind_profiles",

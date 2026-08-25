@@ -15,6 +15,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth/auth';
 import { Patient } from '../../models/patients';
 import { EvaluationResponse } from '../../models/evaluations';
+import { fechaNacimientoValidator } from '../../validators/fecha-nacimiento.validator';
 
 @Component({
   selector: 'app-patient-detail',
@@ -33,6 +34,8 @@ export class PatientDetailComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
 
+  readonly maxFechaNacimiento = new Date().toISOString().split('T')[0];
+
   patient = signal<Patient | null>(null);
   historial = signal<EvaluationResponse[]>([]);
   isLoading = signal(true);
@@ -48,7 +51,7 @@ export class PatientDetailComponent implements OnInit {
   editForm = this.fb.nonNullable.group({
     nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
     dni:             ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
-    fecha_nacimiento:['', [Validators.required]],
+    fecha_nacimiento:['', [Validators.required, fechaNacimientoValidator()]],
     sexo:            ['', [Validators.required]],
     telefono:        [''],
   });
@@ -207,12 +210,16 @@ export class PatientDetailComponent implements OnInit {
     if (!dataPaciente) return;
     const pred = evaluacion.model_prediction;
     const edad = this.calcularEdad(dataPaciente.fecha_nacimiento);
-    this.pdfService.generateEvaluationReport(
-      { ...dataPaciente, edad },
-      { riesgoPorcentaje: pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0, riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase() },
-      pred?.shap_values ? this.buildShapData(pred.shap_values) : { labels: ['Sin datos'], datasets: [{ data: [0] }] }
-    );
-    this.alertService.success('PDF Generado', 'La evaluación fue exportada.', true);
+    try {
+      this.pdfService.generateEvaluationReport(
+        { ...dataPaciente, edad },
+        { riesgoPorcentaje: pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0, riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase() },
+        pred?.shap_values ? this.buildShapData(pred.shap_values) : { labels: ['Sin datos'], datasets: [{ data: [0] }] }
+      );
+      this.alertService.success('PDF Generado', 'La evaluación fue exportada.', true);
+    } catch (err: any) {
+      this.alertService.error('No se pudo generar el PDF', err?.message ?? 'Faltan datos de la evaluación para generar el informe.');
+    }
   }
 
   exportarHistorialCompleto() {

@@ -178,12 +178,30 @@
       <h3 class="col-title" style="margin-bottom: 12px;">👨‍⚕️ Observaciones de la Entrevista</h3>
       <div class="form-group full-width" style="margin-bottom: 25px;">
         <textarea formControlName="doctor_notes" class="form-input" rows="4"
+          [maxlength]="DOCTOR_NOTES_MAX_LENGTH"
           style="width:100%;border-radius:10px;padding:15px;resize:vertical;"
           placeholder="Notas de la entrevista..."></textarea>
+        <span
+          [style.color]="(evalForm.get('doctor_notes')?.value?.length ?? 0) >= DOCTOR_NOTES_MAX_LENGTH ? '#ef4444' : '#94a3b8'"
+          style="font-size:12px;display:block;text-align:right;margin-top:4px;">
+          {{ evalForm.get('doctor_notes')?.value?.length ?? 0 }} / {{ DOCTOR_NOTES_MAX_LENGTH }}
+        </span>
       </div>
 
-      <div class="button-wrapper" style="text-align:center;">
-        <button type="submit" class="btn-analyze" [disabled]="isLoading()">
+      @if (draftDisponible()) {
+        <div class="draft-banner" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 15px;margin-bottom:20px;">
+          <span style="font-size:13px;color:#92400e;"><i class="pi pi-info-circle"></i> Se cargó un borrador guardado previamente.</span>
+          <button type="button" class="btn-secondary" (click)="descartarBorrador()" style="font-size:12px;">
+            <i class="pi pi-trash"></i> Descartar borrador
+          </button>
+        </div>
+      }
+
+      <div class="button-wrapper" style="text-align:center;display:flex;gap:12px;justify-content:center;">
+        <button type="button" class="btn-secondary" (click)="guardarBorrador()">
+          <i class="pi pi-save" style="margin-right:8px;"></i> Guardar borrador
+        </button>
+        <button type="submit" class="btn-analyze" [disabled]="isLoading() || evalForm.invalid">
           <i class="pi pi-microchip-ai" style="margin-right:10px;"></i>
           {{ isLoading() ? 'Ejecutando análisis...' : 'Ejecutar Análisis Predictivo' }}
         </button>
@@ -275,13 +293,16 @@
         </h3>
         <p class="xai-subtitle">Basadas en los factores con mayor impacto</p>
         @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
-          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
+          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level" style="cursor:pointer;" (click)="toggleRecomendacion(rec.id)">
             <div class="rec-header">
               <span class="rec-badge">{{ rec.priority }}°</span>
               <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
               <span class="rec-level">{{ rec.alert_level | titlecase }}</span>
+              <i class="pi" [ngClass]="isRecExpandida(rec.id) ? 'pi-chevron-up' : 'pi-chevron-down'" style="margin-left:auto;"></i>
             </div>
-            <p class="rec-text">{{ rec.recommendation }}</p>
+            @if (isRecExpandida(rec.id)) {
+              <p class="rec-text">{{ rec.recommendation }}</p>
+            }
           </div>
         }
       </div>

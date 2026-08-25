@@ -46,7 +46,7 @@ export class SettingsComponent implements OnInit {
     // 1. Cargar datos desde caché local para evitar parpadeos
     const cachedUser = this.authService.getUserData();
     if (cachedUser?.foto) this.userPhoto.set(cachedUser.foto);
-    
+
     const customPic = localStorage.getItem('custom_picture');
     if (customPic) this.userPhoto.set(customPic);
 
@@ -54,7 +54,7 @@ export class SettingsComponent implements OnInit {
     this.cargarDatosUsuario();
   }
 
-  cargarDatosUsuario() {    
+  cargarDatosUsuario() {
     this.isLoading.set(true);
 
     this.authService.getProfile().pipe(
@@ -91,22 +91,29 @@ export class SettingsComponent implements OnInit {
   }
 
   onFileSelected(event: any) {
-    const file: File = event.target.files[0];
-    
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) { // 2MB Max
-        this.alertService.error('Archivo muy grande', 'La imagen no debe superar los 2MB.');
-        return;
-      }
+  const file: File = event.target.files[0];
 
-      this.selectedFile = file;
-      this.isEditing.set(true);
-
-      const reader = new FileReader();
-      reader.onload = () => this.previewUrl.set(reader.result);
-      reader.readAsDataURL(file);
+  if (file) {
+    // ✅ Nueva validación: solo JPG o PNG
+    const formatosPermitidos = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!formatosPermitidos.includes(file.type)) {
+      this.alertService.error('Formato no soportado', 'Use JPG o PNG.');
+      return;
     }
+
+    if (file.size > 2 * 1024 * 1024) { // 2MB Max
+      this.alertService.error('Archivo muy grande', 'La imagen no debe superar los 2MB.');
+      return;
+    }
+
+    this.selectedFile = file;
+    this.isEditing.set(true);
+
+    const reader = new FileReader();
+    reader.onload = () => this.previewUrl.set(reader.result);
+    reader.readAsDataURL(file);
   }
+}
 
   activarEdicion() {
     this.backupData = {
@@ -122,7 +129,7 @@ export class SettingsComponent implements OnInit {
     this.nombres = this.backupData.nombres || '';
     this.apellidos = this.backupData.apellidos || '';
     this.codigo_colegiatura = this.backupData.codigo_colegiatura || '';
-    
+
     // Limpiamos la memoria de la foto temporal
     this.selectedFile = null;
     this.previewUrl.set(null);
@@ -138,7 +145,7 @@ export class SettingsComponent implements OnInit {
 
     this.isSaving.set(true);
     this.alertService.loading('Actualizando perfil en la nube...');
-    
+
     // CONSTRUCCIÓN DEL FORMDATA (Vital para archivos físicos)
     const formData = new FormData();
     formData.append('nombres', this.nombres);
@@ -148,7 +155,7 @@ export class SettingsComponent implements OnInit {
     if (this.selectedFile) {
       formData.append('foto', this.selectedFile);
     }
-    
+
     this.authService.updateProfile(formData).pipe(
       finalize(() => {
         this.isSaving.set(false);
@@ -157,7 +164,7 @@ export class SettingsComponent implements OnInit {
     ).subscribe({
       next: (response) => {
         this.alertService.success('¡Perfil Actualizado!', 'Tus datos se guardaron correctamente.', true);
-        
+
         // Reiniciamos estado de edición
         this.isEditing.set(false);
         this.selectedFile = null;
@@ -167,15 +174,15 @@ export class SettingsComponent implements OnInit {
         if (response.picture) {
           this.userPhoto.set(response.picture);
           localStorage.setItem('custom_picture', response.picture);
-          this.authService.fotoActualizada.next(response.picture); 
+          this.authService.fotoActualizada.next(response.picture);
         }
-        
+
         // Actualizamos el backup con los nuevos datos
-        this.backupData = { 
-          nombres: this.nombres, 
-          apellidos: this.apellidos, 
-          codigo_colegiatura: this.codigo_colegiatura 
-        }; 
+        this.backupData = {
+          nombres: this.nombres,
+          apellidos: this.apellidos,
+          codigo_colegiatura: this.codigo_colegiatura
+        };
       },
       error: () => this.alertService.error('Error', 'No se pudieron guardar los cambios. Intenta nuevamente.')
     });

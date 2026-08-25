@@ -1,6 +1,9 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
+
+
+DOCTOR_NOTES_MAX_LENGTH = 1000
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -84,7 +87,16 @@ class PatientBase(BaseModel):
     telefono: Optional[str] = None
 
 class PatientCreate(PatientBase):
-    pass
+    @field_validator("fecha_nacimiento")
+    @classmethod
+    def validar_fecha_nacimiento(cls, v: date) -> date:
+        hoy = date.today()
+        if v > hoy:
+            raise ValueError("La fecha de nacimiento no puede ser futura")
+        edad = hoy.year - v.year - ((hoy.month, hoy.day) < (v.month, v.day))
+        if edad < 18 or edad > 25:
+            raise ValueError("El paciente debe tener entre 18 y 25 años")
+        return v
 
 class PatientResponse(PatientBase):
     id: int
@@ -153,7 +165,7 @@ class RecommendationResponse(BaseModel):
 # ── Evaluations ───────────────────────────────────────────────────────────────
 class EvaluationCreate(BaseModel):
     patient_id: int
-    doctor_notes: Optional[str] = None
+    doctor_notes: Optional[str] = Field(default=None, max_length=DOCTOR_NOTES_MAX_LENGTH)
     model_features: ModelFeaturesCreate
 
 class DoctorAgreementUpdate(BaseModel):

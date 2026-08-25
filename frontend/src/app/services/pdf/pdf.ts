@@ -127,6 +127,12 @@ export class PdfService {
     resultado: EvaluationResult,
     shapData: ShapData,
   ) {
+    if (!resultado || !resultado.riesgoEtiqueta || resultado.riesgoEtiqueta === 'Pendiente') {
+      throw new Error(
+        'La evaluación aún no tiene un resultado del modelo. Espera a que finalice el análisis antes de exportar el PDF.',
+      );
+    }
+
     const doc = new jsPDF();
     const nombrePaciente =
       patient.nombre_completo || patient.nombre || 'Paciente Desconocido';

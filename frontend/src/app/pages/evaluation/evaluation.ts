@@ -48,6 +48,11 @@ export class EvaluationComponent implements OnInit {
     ).slice(0, 8);
   });
 
+  readonly DOCTOR_NOTES_MAX_LENGTH = 1000;
+
+  draftDisponible = signal(false);
+  draftFecha = signal<string | null>(null);
+
   riesgoBinario = signal<number>(0);
   riesgoEtiqueta = signal('Pendiente');
   riesgoPorcentaje = signal(0);
@@ -84,11 +89,11 @@ export class EvaluationComponent implements OnInit {
 
   evalForm = this.fb.nonNullable.group({
     patient_id:   [0, [Validators.required, Validators.min(1)]],
-    doctor_notes: [''],
+    doctor_notes: ['', [Validators.maxLength(this.DOCTOR_NOTES_MAX_LENGTH)]],
     model_features: this.fb.nonNullable.group({
-      horas_sueno: [7.0], vida_social: [2], frecuencia_ejercicio: [1],
-      redes_sociales: [2.0], nivel_estres: [3], calidad_sueno: [2],
-      soledad_percibida: [2], apoyo_familiar: [3], autoestima: [3], estado_civil: [0],
+      horas_sueno: [7.0, Validators.required], vida_social: [2, Validators.required], frecuencia_ejercicio: [1, Validators.required],
+      redes_sociales: [2.0, Validators.required], nivel_estres: [3, Validators.required], calidad_sueno: [2, Validators.required],
+      soledad_percibida: [2, Validators.required], apoyo_familiar: [3, Validators.required], autoestima: [3, Validators.required], estado_civil: [0, Validators.required],
     }),
   });
 
@@ -133,6 +138,7 @@ export class EvaluationComponent implements OnInit {
     this.evalForm.patchValue({ patient_id: p.id });
     this.mostrarDropdown.set(false);
     this.sinPacienteError.set(false);
+    this.cargarBorrador(p.id);
   }
 
   limpiarPaciente() {
@@ -140,6 +146,59 @@ export class EvaluationComponent implements OnInit {
     this.busquedaPaciente.set('');
     this.evalForm.patchValue({ patient_id: 0 });
     this.mostrarDropdown.set(false);
+    this.draftDisponible.set(false);
+    this.draftFecha.set(null);
+  }
+
+  // ── Borrador (localStorage) ─────────────────────────────────────────────
+  private draftKey(patientId: number): string {
+    const doctorId = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || 'anon';
+    return `neuromind_draft_eval_${doctorId}_${patientId}`;
+  }
+
+  private cargarBorrador(patientId: number) {
+    const raw = localStorage.getItem(this.draftKey(patientId));
+    if (!raw) { this.draftDisponible.set(false); this.draftFecha.set(null); return; }
+    try {
+      const borrador = JSON.parse(raw);
+      this.evalForm.patchValue({
+        doctor_notes: borrador.doctor_notes ?? '',
+        model_features: borrador.model_features ?? {},
+      });
+      this.draftDisponible.set(true);
+      this.draftFecha.set(borrador.fecha ?? null);
+    } catch {
+      localStorage.removeItem(this.draftKey(patientId));
+      this.draftDisponible.set(false);
+      this.draftFecha.set(null);
+    }
+  }
+
+  guardarBorrador() {
+    const patientId = this.pacienteSeleccionado()?.id;
+    if (!patientId) {
+      this.alertService.error('Sin paciente', 'Selecciona un paciente antes de guardar un borrador.');
+      return;
+    }
+    const raw = this.evalForm.getRawValue();
+    const borrador = { doctor_notes: raw.doctor_notes, model_features: raw.model_features, fecha: new Date().toISOString() };
+    localStorage.setItem(this.draftKey(patientId), JSON.stringify(borrador));
+    this.draftDisponible.set(true);
+    this.draftFecha.set(borrador.fecha);
+    this.alertService.success('Borrador guardado', 'Podrás continuar más tarde con estos datos.', true);
+  }
+
+  descartarBorrador() {
+    const patientId = this.pacienteSeleccionado()?.id;
+    if (patientId) localStorage.removeItem(this.draftKey(patientId));
+    this.draftDisponible.set(false);
+    this.draftFecha.set(null);
+  }
+
+  private limpiarBorrador(patientId: number) {
+    localStorage.removeItem(this.draftKey(patientId));
+    this.draftDisponible.set(false);
+    this.draftFecha.set(null);
   }
 
   onBusquedaFocus() { this.mostrarDropdown.set(true); }
@@ -157,14 +216,32 @@ export class EvaluationComponent implements OnInit {
     this.evalService.createEvaluation({
       patient_id: raw.patient_id, doctor_notes: raw.doctor_notes, model_features: raw.model_features,
     }).subscribe({
-      next: (response) => { this.isLoading.set(false); this.alertService.close(); this.mostrarResultados(response); },
-      error: (err) => { this.isLoading.set(false); this.alertService.close(); this.alertService.error('Error', 'Hubo un problema procesando la evaluación.'); console.error(err); },
+      next: (response) => {
+        this.isLoading.set(false);
+        this.alertService.close();
+        this.limpiarBorrador(raw.patient_id);
+        this.mostrarResultados(response);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        this.alertService.close();
+        console.error(err);
+        if (err.status === 503) {
+          this.alertService.confirm(
+            'El modelo no respondió',
+            'La evaluación se guardó pero el modelo no respondió. ¿Reintentar cálculo?',
+          ).then(reintentar => { if (reintentar) this.onSubmit(); });
+        } else {
+          this.alertService.error('Error', 'Hubo un problema procesando la evaluación.');
+        }
+      },
     });
   }
 
   mostrarResultados(response: EvaluationResponse) {
     this.ultimaEvaluacion.set(response);
     this.doctorAgreement.set(response.doctor_agreement ?? null);
+    this.expandedRecs.set(new Set());
     const pred = response.model_prediction;
     const prob = pred?.risk_probability ?? 0;
 
@@ -235,6 +312,19 @@ export class EvaluationComponent implements OnInit {
     };
   }
 
+  expandedRecs = signal<Set<number>>(new Set());
+
+  toggleRecomendacion(recId: number) {
+    const actuales = new Set(this.expandedRecs());
+    if (actuales.has(recId)) actuales.delete(recId);
+    else actuales.add(recId);
+    this.expandedRecs.set(actuales);
+  }
+
+  isRecExpandida(recId: number): boolean {
+    return this.expandedRecs().has(recId);
+  }
+
   getLabelFeature(key: string): string {
     const m: Record<string, string> = { horas_sueno: 'Horas de sueño', vida_social: 'Vida social', frecuencia_ejercicio: 'Frecuencia de ejercicio', redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida', apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima' };
     return m[key] ?? key;
@@ -243,8 +333,12 @@ export class EvaluationComponent implements OnInit {
   exportarPDF() {
     const selectedPatient = this.pacienteSeleccionado();
     if (!selectedPatient) return;
-    this.pdfService.generateEvaluationReport(selectedPatient, { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta() }, this.shapData);
-    this.alertService.success('Informe Generado', 'El PDF se ha guardado en tus descargas.', true);
+    try {
+      this.pdfService.generateEvaluationReport(selectedPatient, { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta() }, this.shapData);
+      this.alertService.success('Informe Generado', 'El PDF se ha guardado en tus descargas.', true);
+    } catch (err: any) {
+      this.alertService.error('No se pudo generar el PDF', err?.message ?? 'Faltan datos de la evaluación para generar el informe.');
+    }
   }
 
   async cerrarYVolver() {

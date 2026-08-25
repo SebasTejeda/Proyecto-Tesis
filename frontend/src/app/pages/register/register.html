@@ -33,11 +33,15 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Fecha de Nacimiento</label>
-            <input type="date" class="form-input"
+            <input type="date" class="form-input" max="{{ maxFechaNacimiento }}"
               [class.error-border]="registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched"
               formControlName="fecha_nacimiento">
-            @if (registerForm.get('fecha_nacimiento')?.invalid && registerForm.get('fecha_nacimiento')?.touched) {
+            @if (registerForm.get('fecha_nacimiento')?.errors?.['required'] && registerForm.get('fecha_nacimiento')?.touched) {
               <span class="error-msg">Campo requerido</span>
+            } @else if (registerForm.get('fecha_nacimiento')?.errors?.['fechaFutura'] && registerForm.get('fecha_nacimiento')?.touched) {
+              <span class="error-msg">La fecha de nacimiento no puede ser futura</span>
+            } @else if (registerForm.get('fecha_nacimiento')?.errors?.['edadFueraDeRango'] && registerForm.get('fecha_nacimiento')?.touched) {
+              <span class="error-msg">El paciente debe tener entre 18 y 25 años</span>
             }
           </div>
 
