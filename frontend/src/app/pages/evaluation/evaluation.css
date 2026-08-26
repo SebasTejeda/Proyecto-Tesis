@@ -913,8 +913,19 @@ input[type=range]::-webkit-slider-thumb:hover {
   .result-content { 
     overflow-x: hidden; 
   }
-  .shap-chart-container { 
-    overflow-x: auto; 
+  .shap-chart-container {
+    overflow-x: auto;
+  }
+  /* min-width va en el wrapper que Chart.js mide para su resize responsive
+     (el div position:relative que genera <p-chart>), no en el <canvas>:
+     Chart.js fija un width inline en el canvas basado en ese wrapper, y si
+     el canvas recibe su propio min-width por CSS queda un ancho de caja
+     distinto al que Chart.js usó para dibujar, y el gráfico se ve distorsionado. */
+  .shap-chart-container > p-chart {
+    display: block;
+  }
+  .shap-chart-container > p-chart > div {
+    min-width: 380px;
   }
 }
 
