@@ -273,17 +273,23 @@
 
     <hr class="divider">
 
-    <div class="xai-section">
-      <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Determinantes (SHAP)</h3>
-      <p class="xai-subtitle">Variables con mayor impacto en la predicción</p>
-      <div class="shap-chart-container">
-        <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
+    @if (shapData?.labels?.length > 0) {
+      <div class="xai-section">
+        <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Determinantes (SHAP)</h3>
+        <p class="xai-subtitle">Variables con mayor impacto en la predicción</p>
+        <div class="shap-chart-container">
+          <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
+          <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
+        </div>
       </div>
-      <div class="legend">
-        <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
-        <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
+    } @else {
+      <div class="xai-section">
+        <p class="xai-subtitle">No hay datos de explicabilidad disponibles para esta evaluación.</p>
       </div>
-    </div>
+    }
 
     @if (ultimaEvaluacion()?.recommendations?.length) {
       <hr class="divider">

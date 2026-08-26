@@ -41,12 +41,16 @@ export class EvaluationComponent implements OnInit {
   sinPacienteError = signal(false);
 
   pacientesFiltrados = computed(() => {
-    const q = this.busquedaPaciente().toLowerCase().trim();
+    const q = this.normalizar(this.busquedaPaciente().trim());
     if (!q) return this.pacientes().slice(0, 8);
     return this.pacientes().filter(p =>
-      p.nombre_completo.toLowerCase().includes(q) || p.dni.includes(q)
+      this.normalizar(p.nombre_completo).includes(q) || p.dni.includes(q)
     ).slice(0, 8);
   });
+
+  private normalizar(texto: string): string {
+    return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
 
   readonly DOCTOR_NOTES_MAX_LENGTH = 1000;
 
@@ -91,9 +95,16 @@ export class EvaluationComponent implements OnInit {
     patient_id:   [0, [Validators.required, Validators.min(1)]],
     doctor_notes: ['', [Validators.maxLength(this.DOCTOR_NOTES_MAX_LENGTH)]],
     model_features: this.fb.nonNullable.group({
-      horas_sueno: [7.0, Validators.required], vida_social: [2, Validators.required], frecuencia_ejercicio: [1, Validators.required],
-      redes_sociales: [2.0, Validators.required], nivel_estres: [3, Validators.required], calidad_sueno: [2, Validators.required],
-      soledad_percibida: [2, Validators.required], apoyo_familiar: [3, Validators.required], autoestima: [3, Validators.required], estado_civil: [0, Validators.required],
+      horas_sueno: [7.0, [Validators.required, Validators.min(0), Validators.max(24)]],
+      vida_social: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
+      frecuencia_ejercicio: [1, [Validators.required, Validators.min(0), Validators.max(2)]],
+      redes_sociales: [2.0, [Validators.required, Validators.min(0), Validators.max(24)]],
+      nivel_estres: [3, [Validators.required, Validators.min(1), Validators.max(5)]],
+      calidad_sueno: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
+      soledad_percibida: [2, [Validators.required, Validators.min(1), Validators.max(4)]],
+      apoyo_familiar: [3, [Validators.required, Validators.min(1), Validators.max(4)]],
+      autoestima: [3, [Validators.required, Validators.min(1), Validators.max(5)]],
+      estado_civil: [0, Validators.required],
     }),
   });
 
@@ -300,7 +311,8 @@ export class EvaluationComponent implements OnInit {
     };
     const entradas = shapValues ? Object.entries(shapValues).filter(([k]) => labelMap[k]) : [];
     const top6 = entradas.sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6);
-    const maxAbs = top6.length > 0 ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 1;
+    const maxAbsCalc = top6.length > 0 ? Math.max(...top6.map(([, v]) => Math.abs(v))) : 0;
+    const maxAbs = maxAbsCalc > 0 ? maxAbsCalc : 1;
     this.shapData = {
       labels: top6.map(([k]) => labelMap[k]),
       datasets: [{ label: 'Impacto (%)', data: top6.map(([, v]) => Math.round((v / maxAbs) * 100)), backgroundColor: top6.map(([, v]) => v >= 0 ? '#ef4444' : '#10b981'), borderRadius: 5 }],

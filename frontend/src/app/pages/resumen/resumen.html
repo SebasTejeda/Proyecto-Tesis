@@ -80,7 +80,7 @@
           <i class="pi pi-search search-icon-i"></i>
           <input
             type="text"
-            (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+            (input)="dt.filterGlobal(normalizarTexto($any($event.target).value), 'contains')"
             placeholder="Buscar paciente..."
             class="search-input"
           />
@@ -95,7 +95,7 @@
       [rows]="10"
       [resizableColumns]="true"
       columnResizeMode="expand"
-      [globalFilterFields]="['nombre_completo', 'riesgo', 'dni']"
+      [globalFilterFields]="['nombre_normalizado', 'riesgo', 'dni']"
       [tableStyle]="{ 'min-width': '60rem' }"
       [loading]="isLoading()"
     >

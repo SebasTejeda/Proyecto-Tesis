@@ -19,6 +19,7 @@ interface PatientRow extends Patient {
   riesgo: string;
   shap_values: Record<string, number> | null;
   total_evaluaciones: number;
+  nombre_normalizado: string;
 }
 
 @Component({
@@ -101,6 +102,10 @@ export class ResumenComponent implements OnInit {
     return new Date(corregida);
   }
 
+  normalizarTexto(texto: string): string {
+    return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
   getTopFactores(shap: Record<string, number> | null): string {
     if (!shap) return '--';
     const top3 = Object.entries(shap)
@@ -138,6 +143,7 @@ export class ResumenComponent implements OnInit {
                 riesgo: riesgoReal,
                 shap_values: prediction?.shap_values ?? null,
                 total_evaluaciones: evaluaciones.length,
+                nombre_normalizado: this.normalizarTexto(p.nombre_completo),
               };
               return row;
             })
