@@ -38,9 +38,11 @@
   border: 1px solid #e2e8f0;
   transition: all 0.2s; flex-wrap: wrap;
 }
-.card-pending  { border-left: 4px solid #f97316; background: #fffbf5; }
-.card-approved { border-left: 4px solid #10b981; background: #f0fdf4; }
-.card-rejected { border-left: 4px solid #ef4444; background: #fef2f2; opacity: 0.8; }
+.card-pending   { border-left: 4px solid #f97316; background: #fffbf5; }
+.card-approved  { border-left: 4px solid #10b981; background: #f0fdf4; }
+.card-rejected  { border-left: 4px solid #ef4444; background: #fef2f2; opacity: 0.8; }
+.card-suspended { border-left: 4px solid #a855f7; background: #faf5ff; }
+.card-deleted   { border-left: 4px solid #64748b; background: #f8fafc; opacity: 0.6; }
 
 .doctor-avatar {
   width: 48px; height: 48px; flex-shrink: 0;
@@ -56,9 +58,11 @@
 
 .doctor-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .status-badge { padding: 4px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; }
-.status-pending  { background: #fff7ed; color: #c2410c; }
-.status-approved { background: #dcfce7; color: #166534; }
-.status-rejected { background: #fee2e2; color: #b91c1c; }
+.status-pending   { background: #fff7ed; color: #c2410c; }
+.status-approved  { background: #dcfce7; color: #166534; }
+.status-rejected  { background: #fee2e2; color: #b91c1c; }
+.status-suspended { background: #f3e8ff; color: #7e22ce; }
+.status-deleted   { background: #e2e8f0; color: #475569; }
 .doctor-date { font-size: 0.75rem; color: #94a3b8; }
 
 .doctor-actions { display: flex; gap: 8px; }
@@ -74,6 +78,18 @@
   cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
 }
 .btn-reject:hover { background: #fecaca; }
+.btn-suspend {
+  padding: 7px 14px; border: none; border-radius: 8px;
+  background: #f3e8ff; color: #7e22ce; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-suspend:hover { background: #e9d5ff; }
+.btn-delete {
+  padding: 7px 14px; border: none; border-radius: 8px;
+  background: #e2e8f0; color: #475569; font-size: 0.82rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+}
+.btn-delete:hover { background: #cbd5e1; }
 
 /* Loading / Empty */
 .loading-state, .empty-state { text-align: center; padding: 3rem; color: #94a3b8; display: flex; flex-direction: column; align-items: center; gap: 10px; }
@@ -112,7 +128,7 @@
   .doctor-card { flex-direction: column; align-items: flex-start; }
   .doctor-meta { align-items: flex-start; }
   .doctor-actions { width: 100%; }
-  .btn-approve, .btn-reject { flex: 1; justify-content: center; }
+  .btn-approve, .btn-reject, .btn-suspend, .btn-delete { flex: 1; justify-content: center; }
 }
 
 button.action-card {

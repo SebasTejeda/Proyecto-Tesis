@@ -126,12 +126,13 @@ async def actualizar_estado_cuenta(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    """Admin: aprueba o rechaza la cuenta de un médico."""
+    """Admin: aprueba, rechaza, suspende, reactiva o elimina (lógicamente) la cuenta de un médico."""
     if current_user.role != "Admin":
         raise HTTPException(status_code=403, detail="Solo administradores pueden acceder.")
 
-    if data.action not in ("approve", "reject"):
-        raise HTTPException(status_code=400, detail="Acción inválida. Use 'approve' o 'reject'.")
+    acciones_validas = ("approve", "reject", "suspend", "delete", "reactivate")
+    if data.action not in acciones_validas:
+        raise HTTPException(status_code=400, detail=f"Acción inválida. Use una de: {', '.join(acciones_validas)}.")
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if not user:
@@ -145,7 +146,8 @@ async def actualizar_estado_cuenta(
         except Exception as e:
             print(f"Error enviando correo de aprobación: {e}")
         return {"message": f"Cuenta de {user.nombres} aprobada correctamente."}
-    else:
+
+    if data.action == "reject":
         user.account_status = "rejected"
         db.commit()
         try:
@@ -153,3 +155,30 @@ async def actualizar_estado_cuenta(
         except Exception as e:
             print(f"Error enviando correo de rechazo: {e}")
         return {"message": f"Cuenta de {user.nombres} rechazada."}
+
+    if data.action == "suspend":
+        user.account_status = "suspended"
+        db.commit()
+        try:
+            await email_utils.enviar_correo_suspension(user.email, user.nombres, data.reason)
+        except Exception as e:
+            print(f"Error enviando correo de suspensión: {e}")
+        return {"message": f"Cuenta de {user.nombres} suspendida."}
+
+    if data.action == "reactivate":
+        user.account_status = "approved"
+        db.commit()
+        try:
+            await email_utils.enviar_correo_aprobacion(user.email, user.nombres)
+        except Exception as e:
+            print(f"Error enviando correo de reactivación: {e}")
+        return {"message": f"Cuenta de {user.nombres} reactivada."}
+
+    # delete (borrado lógico: conserva la fila para no romper relaciones con pacientes/evaluaciones)
+    user.account_status = "deleted"
+    db.commit()
+    try:
+        await email_utils.enviar_correo_eliminacion(user.email, user.nombres, data.reason)
+    except Exception as e:
+        print(f"Error enviando correo de eliminación: {e}")
+    return {"message": f"Cuenta de {user.nombres} eliminada."}

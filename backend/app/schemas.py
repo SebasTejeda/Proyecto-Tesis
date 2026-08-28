@@ -61,8 +61,8 @@ class UserResponse(UserBase):
 
 # Schema para aprobar o rechazar un médico
 class AccountStatusUpdate(BaseModel):
-    action: str  # "approve" | "reject"
-    reason: Optional[str] = None  # motivo de rechazo (opcional)
+    action: str  # "approve" | "reject" | "suspend" | "delete" | "reactivate"
+    reason: Optional[str] = None  # motivo opcional (rechazo, suspensión o eliminación)
 
 # Schema para listar médicos pendientes en el panel admin
 class DoctorPendingResponse(BaseModel):

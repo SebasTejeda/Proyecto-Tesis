@@ -114,3 +114,57 @@ async def enviar_correo_rechazo(email_destino: EmailStr, nombre: str, motivo: Op
                             recipients=[email_destino], body=html, subtype=MessageType.html)
     await FastMail(conf).send_message(message)
     print(f"📧 Correo de rechazo enviado a {email_destino}")
+
+
+async def enviar_correo_suspension(email_destino: EmailStr, nombre: str, motivo: Optional[str] = None):
+    """Notifica al médico que su cuenta fue suspendida por el administrador."""
+    motivo_html = f"""
+        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 12px 16px; border-radius: 4px; margin: 16px 0;">
+            <strong>Motivo:</strong> {motivo}
+        </div>
+    """ if motivo else ""
+
+    html = f"""
+    <html><body style="font-family: Arial, sans-serif; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; border-top: 5px solid #f59e0b;">
+            <h2 style="color: #f59e0b; text-align: center;">Cuenta Suspendida</h2>
+            <p>Estimado/a <strong>{nombre}</strong>,</p>
+            <p>Tu cuenta en <strong>NeuroMind AI</strong> ha sido <strong>suspendida temporalmente</strong> por nuestro equipo de administración.</p>
+            {motivo_html}
+            <p>Si crees que hay un error o deseas más información, por favor contacta a nuestro equipo de soporte.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #999; text-align: center;">NeuroMind AI - Sistema de Apoyo al Diagnóstico</p>
+        </div>
+    </body></html>
+    """
+    message = MessageSchema(subject="Cuenta suspendida - NeuroMind AI",
+                            recipients=[email_destino], body=html, subtype=MessageType.html)
+    await FastMail(conf).send_message(message)
+    print(f"📧 Correo de suspensión enviado a {email_destino}")
+
+
+async def enviar_correo_eliminacion(email_destino: EmailStr, nombre: str, motivo: Optional[str] = None):
+    """Notifica al médico que su cuenta fue eliminada por el administrador."""
+    motivo_html = f"""
+        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 12px 16px; border-radius: 4px; margin: 16px 0;">
+            <strong>Motivo:</strong> {motivo}
+        </div>
+    """ if motivo else ""
+
+    html = f"""
+    <html><body style="font-family: Arial, sans-serif; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; border-top: 5px solid #ef4444;">
+            <h2 style="color: #ef4444; text-align: center;">Cuenta Eliminada</h2>
+            <p>Estimado/a <strong>{nombre}</strong>,</p>
+            <p>Tu cuenta en <strong>NeuroMind AI</strong> ha sido <strong>eliminada</strong> por nuestro equipo de administración y ya no podrás acceder al sistema.</p>
+            {motivo_html}
+            <p>Si crees que hay un error o deseas más información, por favor contacta a nuestro equipo de soporte.</p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="font-size: 12px; color: #999; text-align: center;">NeuroMind AI - Sistema de Apoyo al Diagnóstico</p>
+        </div>
+    </body></html>
+    """
+    message = MessageSchema(subject="Cuenta eliminada - NeuroMind AI",
+                            recipients=[email_destino], body=html, subtype=MessageType.html)
+    await FastMail(conf).send_message(message)
+    print(f"📧 Correo de eliminación enviado a {email_destino}")

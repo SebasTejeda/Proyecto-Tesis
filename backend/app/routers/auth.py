@@ -47,6 +47,13 @@ def login_para_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Cuenta suspendida o eliminada: no debe poder autenticarse
+    if user.account_status in ("suspended", "deleted"):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Esta cuenta ha sido suspendida o eliminada. Contacta al administrador."
+        )
+
     # Verificar si está bloqueado
     if user.locked_until and datetime.utcnow() < user.locked_until:
         minutos_restantes = int((user.locked_until - datetime.utcnow()).total_seconds() / 60) + 1
@@ -126,28 +133,27 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
     user = db.query(models.User).filter(models.User.email == email).first()
 
     if not user:
-        user = models.User(
-            email=email,
-            nombres=nombre_google,
-            apellidos=apellido_google,
-            google_id=google_id,
-            picture=foto,
-            password=None,
-            role="Doctor",
-            account_status="pending",
-            codigo_colegiatura=None,
-            is_verified=True,
-            is_active=True
+        raise HTTPException(
+            status_code=404,
+            detail="No existe una cuenta registrada con este correo. Debes registrarte primero con el formulario completo (incluye tu código de colegiatura)."
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    else:
-        if not user.google_id:
-            user.google_id = google_id
-            user.is_verified = True
-        user.picture = foto
-        db.commit()
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=403,
+            detail="Debes completar la verificación de tu correo (OTP) antes de poder iniciar sesión con Google."
+        )
+
+    if user.account_status in ("suspended", "deleted"):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Esta cuenta ha sido suspendida o eliminada. Contacta al administrador."
+        )
+
+    if not user.google_id:
+        user.google_id = google_id
+    user.picture = foto
+    db.commit()
 
     registrar_actividad(db, user.id, "login_google", "Inicio de sesión con Google", ip)
 

@@ -30,6 +30,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
 
+    if user.account_status in ("suspended", "deleted"):
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail="Esta cuenta ha sido suspendida o eliminada. Contacta al administrador."
+        )
+
     return user
 
 

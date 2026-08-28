@@ -58,6 +58,11 @@ export class AdminPanelComponent implements OnInit {
   motivoRechazo = signal('');
   procesandoId = signal<number | null>(null);
 
+  // Modal de eliminación (borrado lógico)
+  mostrarModalEliminar = signal(false);
+  doctorAEliminar = signal<DoctorPending | null>(null);
+  motivoEliminacion = signal('');
+
   get medicosAprobados() { return this.todosMedicos().filter(d => d.account_status === 'approved'); }
   get medicosPendientes() { return this.todosMedicos().filter(d => d.account_status === 'pending'); }
   get medicosRechazados() { return this.todosMedicos().filter(d => d.account_status === 'rejected'); }
@@ -160,15 +165,66 @@ export class AdminPanelComponent implements OnInit {
     });
   }
 
+  suspenderMedico(doctor: DoctorPending) {
+    this.procesandoId.set(doctor.id);
+    this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, { action: 'suspend' }).subscribe({
+      next: () => {
+        this.procesandoId.set(null);
+        this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'suspended' } : d));
+        this.alertService.success('Suspendido', `La cuenta de ${doctor.nombres} fue suspendida. Se le notificó por correo.`, true);
+      },
+      error: () => { this.procesandoId.set(null); this.alertService.error('Error', 'No se pudo suspender la cuenta.'); }
+    });
+  }
+
+  reactivarMedico(doctor: DoctorPending) {
+    this.procesandoId.set(doctor.id);
+    this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, { action: 'reactivate' }).subscribe({
+      next: () => {
+        this.procesandoId.set(null);
+        this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'approved' } : d));
+        this.alertService.success('Reactivado', `La cuenta de ${doctor.nombres} fue reactivada. Se le notificó por correo.`, true);
+      },
+      error: () => { this.procesandoId.set(null); this.alertService.error('Error', 'No se pudo reactivar la cuenta.'); }
+    });
+  }
+
+  abrirModalEliminar(doctor: DoctorPending) {
+    this.doctorAEliminar.set(doctor);
+    this.motivoEliminacion.set('');
+    this.mostrarModalEliminar.set(true);
+  }
+
+  confirmarEliminacion() {
+    const doctor = this.doctorAEliminar();
+    if (!doctor) return;
+    this.procesandoId.set(doctor.id);
+    this.http.patch(`${this.apiUrl}/users/admin/${doctor.id}/status`, {
+      action: 'delete', reason: this.motivoEliminacion() || null
+    }).subscribe({
+      next: () => {
+        this.procesandoId.set(null);
+        this.todosMedicos.update(list => list.map(d => d.id === doctor.id ? { ...d, account_status: 'deleted' } : d));
+        this.mostrarModalEliminar.set(false);
+        this.alertService.success('Eliminado', `La cuenta de ${doctor.nombres} fue eliminada. Se le notificó por correo.`, true);
+      },
+      error: () => { this.procesandoId.set(null); this.alertService.error('Error', 'No se pudo eliminar la cuenta.'); }
+    });
+  }
+
   getStatusLabel(status: string): string {
     if (status === 'approved') return 'Aprobado';
     if (status === 'rejected') return 'Rechazado';
+    if (status === 'suspended') return 'Suspendido';
+    if (status === 'deleted') return 'Eliminado';
     return 'Pendiente';
   }
 
   getStatusClass(status: string): string {
     if (status === 'approved') return 'status-approved';
     if (status === 'rejected') return 'status-rejected';
+    if (status === 'suspended') return 'status-suspended';
+    if (status === 'deleted') return 'status-deleted';
     return 'status-pending';
   }
 }

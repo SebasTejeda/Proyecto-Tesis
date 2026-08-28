@@ -79,10 +79,22 @@ export class LoginComponent implements OnInit {
           this.alertService.close();
           this.router.navigate(['/dashboard']);
         },
-        error: () => {
+        error: (err) => {
           this.isLoading.set(false);
           this.alertService.close();
-          this.alertService.error('Error de Acceso', 'No se pudo iniciar sesión con Google.');
+
+          const detail: string = err.error?.detail || '';
+
+          if (err.status === 404) {
+            // No existe una cuenta con este correo: debe registrarse primero
+            this.alertService.error('Cuenta no registrada', detail || 'Debes registrarte primero con el formulario completo.')
+              .then(() => this.router.navigate(['/register']));
+          } else if (err.status === 403) {
+            // Cuenta existente pero sin verificar el OTP del registro
+            this.alertService.error('Verificación pendiente', detail || 'Debes completar la verificación de tu correo antes de iniciar sesión con Google.');
+          } else {
+            this.alertService.error('Error de Acceso', detail || 'No se pudo iniciar sesión con Google.');
+          }
         }
       });
     });

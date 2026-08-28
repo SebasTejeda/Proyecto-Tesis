@@ -61,7 +61,9 @@
           <div class="doctor-card"
             [class.card-pending]="doctor.account_status === 'pending'"
             [class.card-approved]="doctor.account_status === 'approved'"
-            [class.card-rejected]="doctor.account_status === 'rejected'">
+            [class.card-rejected]="doctor.account_status === 'rejected'"
+            [class.card-suspended]="doctor.account_status === 'suspended'"
+            [class.card-deleted]="doctor.account_status === 'deleted'">
             <div class="doctor-avatar">{{ doctor.nombres.charAt(0) }}{{ doctor.apellidos.charAt(0) }}</div>
             <div class="doctor-info">
               <span class="doctor-name">{{ doctor.nombres }} {{ doctor.apellidos }}</span>
@@ -80,6 +82,25 @@
                 </button>
                 <button class="btn-reject" (click)="abrirModalRechazo(doctor)" [disabled]="procesandoId() === doctor.id">
                   <i class="pi pi-times"></i> Rechazar
+                </button>
+              </div>
+            }
+            @if (doctor.account_status === 'approved') {
+              <div class="doctor-actions">
+                <button class="btn-suspend" (click)="suspenderMedico(doctor)" [disabled]="procesandoId() === doctor.id">
+                  @if (procesandoId() === doctor.id) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
+                  @else { <i class="pi pi-pause-circle"></i> Suspender }
+                </button>
+                <button class="btn-delete" (click)="abrirModalEliminar(doctor)" [disabled]="procesandoId() === doctor.id">
+                  <i class="pi pi-trash"></i> Eliminar
+                </button>
+              </div>
+            }
+            @if (doctor.account_status === 'suspended') {
+              <div class="doctor-actions">
+                <button class="btn-approve" (click)="reactivarMedico(doctor)" [disabled]="procesandoId() === doctor.id">
+                  @if (procesandoId() === doctor.id) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
+                  @else { <i class="pi pi-play-circle"></i> Reactivar }
                 </button>
               </div>
             }
@@ -190,6 +211,32 @@
         <button class="btn-confirm-reject" (click)="confirmarRechazo()" [disabled]="procesandoId() !== null">
           @if (procesandoId() !== null) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
           @else { <i class="pi pi-times"></i> Confirmar Rechazo }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal de eliminación -->
+@if (mostrarModalEliminar()) {
+  <div class="modal-overlay" (click)="mostrarModalEliminar.set(false)">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <h3 class="modal-title"><i class="pi pi-trash"></i> Eliminar cuenta</h3>
+      <p class="modal-subtitle">
+        Estás eliminando (borrado lógico) la cuenta de <strong>{{ doctorAEliminar()?.nombres }} {{ doctorAEliminar()?.apellidos }}</strong>. No podrá iniciar sesión, pero su historial de pacientes y evaluaciones se conservará. Se le notificará por correo.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Motivo de la eliminación (opcional)</label>
+        <textarea class="form-textarea" rows="3"
+          [value]="motivoEliminacion()"
+          (input)="motivoEliminacion.set($any($event.target).value)"
+          placeholder="Ej: Solicitud del propio especialista, incumplimiento de políticas..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="mostrarModalEliminar.set(false)">Cancelar</button>
+        <button class="btn-confirm-reject" (click)="confirmarEliminacion()" [disabled]="procesandoId() !== null">
+          @if (procesandoId() !== null) { <i class="pi pi-spin pi-spinner"></i> Procesando... }
+          @else { <i class="pi pi-trash"></i> Confirmar Eliminación }
         </button>
       </div>
     </div>
