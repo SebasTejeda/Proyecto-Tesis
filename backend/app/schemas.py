@@ -102,6 +102,7 @@ class PatientResponse(PatientBase):
     id: int
     doctor_id: int
     created_at: datetime
+    origen: str = "clinico_real"
 
     class Config:
         from_attributes = True
@@ -168,9 +169,19 @@ class EvaluationCreate(BaseModel):
     doctor_notes: Optional[str] = Field(default=None, max_length=DOCTOR_NOTES_MAX_LENGTH)
     model_features: ModelFeaturesCreate
 
+SEVERITY_LEVELS = ("Ninguno", "Leve", "Moderado/Alto")
+
 class DoctorAgreementUpdate(BaseModel):
     doctor_agreement: str
     disagreement_reason: Optional[str] = None
+    doctor_severity_judgment: Optional[str] = None
+
+    @field_validator("doctor_severity_judgment")
+    @classmethod
+    def validar_severity_judgment(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in SEVERITY_LEVELS:
+            raise ValueError(f"doctor_severity_judgment debe ser uno de: {', '.join(SEVERITY_LEVELS)}")
+        return v
 
 class EvaluationResponse(BaseModel):
     id: int
@@ -181,8 +192,12 @@ class EvaluationResponse(BaseModel):
     doctor_notes: Optional[str] = None
     doctor_agreement: Optional[str] = None
     disagreement_reason: Optional[str] = None
+    doctor_severity_judgment: Optional[str] = None
     model_version: Optional[str] = "v1.0"
     created_at: datetime
+    fecha_evaluacion_clinica: datetime
+    fecha_revalidacion_tecnica: Optional[datetime] = None
+    original_evaluation_id: Optional[int] = None
 
     model_features: Optional[ModelFeaturesResponse] = None
     model_prediction: Optional[ModelPredictionResponse] = None

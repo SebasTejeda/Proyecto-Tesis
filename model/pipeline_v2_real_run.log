@@ -1,0 +1,192 @@
+==============================================================================
+Cargando dataset...
+Train: (19367, 15)  Test: (4842, 15)  Features: ['horas_sueno', 'vida_social', 'frecuencia_ejercicio', 'redes_sociales', 'nivel_estres', 'calidad_sueno', 'soledad_percibida', 'apoyo_familiar', 'autoestima', 'genero_2', 'estado_civil_1', 'estado_civil_2', 'estado_civil_3', 'estado_civil_4', 'estado_civil_5']
+scale_pos_weight v1 = 3.7133
+
+==============================================================================
+PASO 1 — Reproducción de la línea base v1
+==============================================================================
+
+--- v1 reproducido (umbral 0.5) ---
+   Accuracy:      86.86%
+   Precisión:     64.36%
+   Sensibilidad:  85.30%
+   Especificidad: 87.29%
+   F1:            0.7337
+   AUC-ROC:       0.9357
+   AUC-PR:        0.8570
+   Matriz conf.:  {'tn': 3330, 'fp': 485, 'fn': 151, 'tp': 876}
+
+Diferencia absoluta vs. referencia reportada: {'accuracy': 0.0, 'precision': 0.0, 'recall_sens': 0.0, 'especificidad': np.float64(0.0002), 'f1': 0.0, 'auc_roc': 0.0003}
+¿Coincide (tolerancia 1pp)? SI
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso1_baseline.json
+
+==============================================================================
+PASO 2 — Diagnóstico de calibración de probabilidades (v1)
+==============================================================================
+Brier score (v1, sin calibrar): 0.0901
+ECE aproximado (10 bins):       0.0967
+Calibrado (sigmoid ): Brier=0.0741  ECE=0.0373
+Calibrado (isotonic): Brier=0.0704  ECE=0.0069
+
+Mejor opción: isotonic  (mejora relativa de Brier: 21.8%)
+¿Se incorpora calibración al pipeline final? SI
+   -> guardado reportes_v2/reliability_diagram.png
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso2_calibracion.json
+
+==============================================================================
+PASO 3 — Búsqueda de hiperparámetros (Optuna, 5-fold CV, objetivo AUC-PR)
+==============================================================================
+
+HPO terminado en 60.5s (40 trials)
+Mejor AUC-PR (CV 5-fold, train): 0.8681
+Mejores hiperparámetros: {'max_depth': 4, 'learning_rate': 0.03805602005339975, 'n_estimators': 250, 'subsample': 0.6656659976671767, 'colsample_bytree': 0.8350958490071934, 'min_child_weight': 8, 'gamma': 4.442762480907914, 'reg_alpha': 0.3049699709929608, 'reg_lambda': 0.004545555350211625}
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso3_hpo_best_params.json
+
+==============================================================================
+PASO 4 — Comparación de resampling (scale_pos_weight vs SMOTE vs ambos)
+==============================================================================
+
+--- (a) scale_pos_weight  [CV AUC-PR=0.8681±0.0108] ---
+   Accuracy:      86.62%
+   Precisión:     63.58%
+   Sensibilidad:  86.37%
+   Especificidad: 86.68%
+   F1:            0.7325
+   AUC-ROC:       0.9385
+   AUC-PR:        0.8594
+   Matriz conf.:  {'tn': 3307, 'fp': 508, 'fn': 140, 'tp': 887}
+
+--- (b) SMOTE  [CV AUC-PR=0.8627±0.0100] ---
+   Accuracy:      87.55%
+   Precisión:     66.38%
+   Sensibilidad:  83.64%
+   Especificidad: 88.60%
+   F1:            0.7402
+   AUC-ROC:       0.9367
+   AUC-PR:        0.8546
+   Matriz conf.:  {'tn': 3380, 'fp': 435, 'fn': 168, 'tp': 859}
+
+--- (c) SMOTE + scale_pos_weight/2  [CV AUC-PR=0.8623±0.0098] ---
+   Accuracy:      84.45%
+   Precisión:     58.79%
+   Sensibilidad:  89.19%
+   Especificidad: 83.17%
+   F1:            0.7087
+   AUC-ROC:       0.9365
+   AUC-PR:        0.8538
+   Matriz conf.:  {'tn': 3173, 'fp': 642, 'fn': 111, 'tp': 916}
+
+Ganador por CV AUC-PR (train, sin tocar test para elegir): scale_pos_weight
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso4_resampling_comparacion.json
+
+==============================================================================
+Aplicando decisión de calibración al modelo ganador (pasos 2+3+4 combinados)
+==============================================================================
+Calibración aplicada al modelo final: isotonic
+
+--- Modelo final (pasos 2-4 combinados) @ umbral 0.5 ---
+   Accuracy:      90.46%
+   Precisión:     85.01%
+   Sensibilidad:  66.80%
+   Especificidad: 96.83%
+   F1:            0.7481
+   AUC-ROC:       0.9378
+   AUC-PR:        0.8471
+   Matriz conf.:  {'tn': 3694, 'fp': 121, 'fn': 341, 'tp': 686}
+
+==============================================================================
+PASO 5 — Ajuste de umbral (F1-óptimo y F2-óptimo) sobre el modelo final
+==============================================================================
+
+--- Umbral F1-óptimo = 0.4000 (F1=0.7548) ---
+   Accuracy:      90.46%
+   Precisión:     82.96%
+   Sensibilidad:  69.23%
+   Especificidad: 96.17%
+   F1:            0.7548
+   AUC-ROC:       0.9378
+   AUC-PR:        0.8471
+   Matriz conf.:  {'tn': 3669, 'fp': 146, 'fn': 316, 'tp': 711}
+
+--- Umbral F2-óptimo = 0.2389 (F2=0.8186) ---
+   Accuracy:      85.32%
+   Precisión:     60.33%
+   Sensibilidad:  89.87%
+   Especificidad: 84.09%
+   F1:            0.7219
+   AUC-ROC:       0.9378
+   AUC-PR:        0.8471
+   Matriz conf.:  {'tn': 3208, 'fp': 607, 'fn': 104, 'tp': 923}
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso5_umbral.json
+
+==============================================================================
+PASO 6 — Revisión SHAP y features de bajo aporte
+==============================================================================
+Ranking SHAP (|valor medio| en test):
+   apoyo_familiar         1.0783
+   calidad_sueno          0.9407
+   vida_social            0.3534
+   horas_sueno            0.3109
+   nivel_estres           0.2549
+   genero_2               0.1910
+   autoestima             0.1701
+   redes_sociales         0.0665
+   estado_civil_2         0.0598
+   estado_civil_1         0.0342
+   frecuencia_ejercicio   0.0326
+   estado_civil_5         0.0237
+   soledad_percibida      0.0232
+   estado_civil_3         0.0000
+   estado_civil_4         0.0000
+
+No se detectaron correlaciones sospechosas (>0.9) con el target — sin señales de fuga de datos.
+
+Features de bajo aporte (SHAP medio < 0.01): ['estado_civil_3', 'estado_civil_4']
+
+--- Sin ['estado_civil_3', 'estado_civil_4']  [CV AUC-PR=0.8676±0.0109] ---
+   Accuracy:      86.76%
+   Precisión:     63.92%
+   Sensibilidad:  86.27%
+   Especificidad: 86.89%
+   F1:            0.7344
+   AUC-ROC:       0.9386
+   AUC-PR:        0.8601
+   Matriz conf.:  {'tn': 3315, 'fp': 500, 'fn': 141, 'tp': 886}
+Diferencia de CV AUC-PR vs. modelo con todas las features: -0.0005
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso6_shap.json
+
+==============================================================================
+PASO 7 — Chequeo de umbral del modelo de Severidad
+==============================================================================
+F1 en umbral v1 (0.35):        0.8557
+F1 en umbral F1-óptimo (0.6154): 0.8736
+Diferencia: +0.0179
+Hay margen de mejora: se recomienda mover el umbral de severidad a 0.6154.
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\paso7_severidad_umbral.json
+
+==============================================================================
+TABLA COMPARATIVA FINAL (mismo test set, n=4842)
+==============================================================================
+
+v1 (baseline, umbral 0.5)
+   Acc=86.86%  Prec=64.36%  Sens=85.30%  Esp=87.29%  F1=0.7337  AUC-ROC=0.9357  AUC-PR=0.8570
+
+v2-threshold-only (mismo modelo v1, umbral recalibrado): ver model/ml_models_v2_threshold_only/umbrales_v2.json — no recalculado aquí
+
+v2 real - resampling=scale_pos_weight, HPO, calibrado(isotonic) @0.5
+   Acc=90.46%  Prec=85.01%  Sens=66.80%  Esp=96.83%  F1=0.7481  AUC-ROC=0.9378  AUC-PR=0.8471
+
+v2 real @ umbral F1-óptimo (0.4000)
+   Acc=90.46%  Prec=82.96%  Sens=69.23%  Esp=96.17%  F1=0.7548  AUC-ROC=0.9378  AUC-PR=0.8471
+
+v2 real @ umbral F2-óptimo (0.2389)
+   Acc=85.32%  Prec=60.33%  Sens=89.87%  Esp=84.09%  F1=0.7219  AUC-ROC=0.9378  AUC-PR=0.8471
+   -> guardado C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2\tabla_comparativa_final.json
+
+==============================================================================
+Exportando artefactos del v2 real...
+==============================================================================
+
+✅ Listo. Artefactos en C:\Users\tejed\Desktop\Proyecto-Tesis\model\ml_models_v2/, reportes en C:\Users\tejed\Desktop\Proyecto-Tesis\model\reportes_v2/
+   ATENCIÓN: risk_threshold quedó en el valor F1-óptimo por defecto — pendiente de confirmación (ver paso5_umbral.json).

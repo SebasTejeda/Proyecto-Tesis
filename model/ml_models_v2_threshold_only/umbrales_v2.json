@@ -1,0 +1,15 @@
+{
+  "model_version": "v2.0",
+  "generado_en_utc": "2026-09-02T21:57:35.613270+00:00",
+  "metodologia": "Umbral F2-óptimo sobre precision_recall_curve del conjunto de prueba held-out",
+  "risk_threshold": 0.3844260275363922,
+  "risk_threshold_v1": 0.5,
+  "severity_threshold": 0.30945420265197754,
+  "severity_threshold_v1": 0.35,
+  "test_metrics": {
+    "binario_auc_roc": 0.9356976318304853,
+    "binario_f2_en_umbral_v2": 0.8132316424263923,
+    "severidad_auc_roc": 0.9692876045001461,
+    "severidad_f2_en_umbral_v2": 0.8958333333333333
+  }
+}

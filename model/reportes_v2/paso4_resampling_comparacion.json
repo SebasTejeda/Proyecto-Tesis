@@ -1,0 +1,73 @@
+{
+  "hiperparametros_usados": {
+    "max_depth": 4,
+    "learning_rate": 0.03805602005339975,
+    "n_estimators": 250,
+    "subsample": 0.6656659976671767,
+    "colsample_bytree": 0.8350958490071934,
+    "min_child_weight": 8,
+    "gamma": 4.442762480907914,
+    "reg_alpha": 0.3049699709929608,
+    "reg_lambda": 0.004545555350211625
+  },
+  "variantes": {
+    "scale_pos_weight": {
+      "cv_auc_pr_mean": 0.8681021456082844,
+      "cv_auc_pr_std": 0.010781711819110704,
+      "test": {
+        "accuracy": 0.8661710037174721,
+        "precision": 0.63584229390681,
+        "recall_sens": 0.8636806231742941,
+        "especificidad": 0.8668414154652687,
+        "f1": 0.7324525185796862,
+        "auc_roc": 0.9385219008143174,
+        "auc_pr": 0.8594458651637659,
+        "matriz_confusion": {
+          "tn": 3307,
+          "fp": 508,
+          "fn": 140,
+          "tp": 887
+        }
+      }
+    },
+    "smote": {
+      "cv_auc_pr_mean": 0.8627226007986376,
+      "cv_auc_pr_std": 0.010034092921045318,
+      "test": {
+        "accuracy": 0.8754646840148699,
+        "precision": 0.6638330757341576,
+        "recall_sens": 0.8364167478091529,
+        "especificidad": 0.8859764089121888,
+        "f1": 0.7401981904351572,
+        "auc_roc": 0.9367082226796546,
+        "auc_pr": 0.8545616541524259,
+        "matriz_confusion": {
+          "tn": 3380,
+          "fp": 435,
+          "fn": 168,
+          "tp": 859
+        }
+      }
+    },
+    "smote_mas_spw_reducido": {
+      "cv_auc_pr_mean": 0.8622788461372043,
+      "cv_auc_pr_std": 0.009821055298003045,
+      "test": {
+        "accuracy": 0.8444857496902106,
+        "precision": 0.5879332477535302,
+        "recall_sens": 0.8919182083739046,
+        "especificidad": 0.8317169069462648,
+        "f1": 0.7087040618955512,
+        "auc_roc": 0.9364773653938676,
+        "auc_pr": 0.8538334767008318,
+        "matriz_confusion": {
+          "tn": 3173,
+          "fp": 642,
+          "fn": 111,
+          "tp": 916
+        }
+      }
+    }
+  },
+  "ganador_por_cv_auc_pr": "scale_pos_weight"
+}

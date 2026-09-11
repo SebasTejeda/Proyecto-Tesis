@@ -336,6 +336,7 @@
             <div>
               <strong>El especialista no concuerda con el diagnóstico</strong>
               <p>Razón: {{ ultimaEvaluacion()?.disagreement_reason ?? 'No especificada' }}</p>
+              <p>Clasificación real indicada: {{ ultimaEvaluacion()?.doctor_severity_judgment ?? 'No especificada' }}</p>
             </div>
           }
         </div>
@@ -390,9 +391,23 @@
         (input)="otherReason.set($any($event.target).value)"
         placeholder="Describe la razón de tu desacuerdo..."></textarea>
     }
+
+    <p class="disagreement-intro severity-intro">
+      ¿Cuál considera que es el nivel de riesgo real del paciente?
+    </p>
+    <div class="reason-options">
+      @for (option of SEVERITY_OPTIONS; track option) {
+        <label class="reason-option" [class.selected]="selectedSeverityJudgment() === option">
+          <input type="radio" name="severityJudgment" [value]="option" [checked]="selectedSeverityJudgment() === option"
+            (change)="selectedSeverityJudgment.set(option)">
+          <span>{{ option }}</span>
+        </label>
+      }
+    </div>
+
     <div class="disagreement-footer">
       <button class="btn-secondary" (click)="displayDisagreementModal.set(false)">Cancelar</button>
-      <button class="btn-disagree-confirm" (click)="confirmarDesacuerdo()" [disabled]="!selectedDisagreementReason()">
+      <button class="btn-disagree-confirm" (click)="confirmarDesacuerdo()" [disabled]="!selectedDisagreementReason() || !selectedSeverityJudgment()">
         <i class="pi pi-check"></i> Registrar desacuerdo
       </button>
     </div>

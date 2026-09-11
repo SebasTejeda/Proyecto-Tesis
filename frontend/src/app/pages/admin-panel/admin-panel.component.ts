@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { EvaluationService, EjecucionModelo } from '../../services/evaluation/evaluation';
+import { EvaluationService, EjecucionModelo, KappaReporte } from '../../services/evaluation/evaluation';
 import { AlertService } from '../../services/alert/alert';
 import { environment } from '../../../environments/environment';
 
@@ -52,6 +52,11 @@ export class AdminPanelComponent implements OnInit {
   resumenDesacuerdos = signal<ResumenDesacuerdos | null>(null);
   isLoadingResumen = signal(true);
 
+  // Confiabilidad del modelo — Kappa de Cohen
+  readonly SEVERITY_LEVELS = ['Ninguno', 'Leve', 'Moderado/Alto'];
+  kappaReporte = signal<KappaReporte | null>(null);
+  isLoadingKappa = signal(true);
+
   // Modal de rechazo
   mostrarModalRechazo = signal(false);
   doctorSeleccionado = signal<DoctorPending | null>(null);
@@ -82,6 +87,15 @@ export class AdminPanelComponent implements OnInit {
     this.cargarEstadisticas();
     this.cargarMedicos();
     this.cargarResumenDesacuerdos();
+    this.cargarKappa();
+  }
+
+  cargarKappa() {
+    this.isLoadingKappa.set(true);
+    this.evalService.getKappaConfiabilidad().subscribe({
+      next: (data) => { this.kappaReporte.set(data); this.isLoadingKappa.set(false); },
+      error: () => { this.isLoadingKappa.set(false); }
+    });
   }
 
   cargarEstadisticas() {

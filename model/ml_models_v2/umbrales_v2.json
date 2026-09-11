@@ -1,0 +1,25 @@
+{
+  "model_version": "v2.1",
+  "descripcion": "v2 real: HPO (Optuna) + comparación de resampling + calibración condicional, sobre el modelo de Detección. Severidad: mismo modelo v1, umbral revisado.",
+  "resampling_elegido": "scale_pos_weight",
+  "hiperparametros": {
+    "max_depth": 4,
+    "learning_rate": 0.03805602005339975,
+    "n_estimators": 250,
+    "subsample": 0.6656659976671767,
+    "colsample_bytree": 0.8350958490071934,
+    "min_child_weight": 8,
+    "gamma": 4.442762480907914,
+    "reg_alpha": 0.3049699709929608,
+    "reg_lambda": 0.004545555350211625
+  },
+  "calibracion_aplicada": "isotonic",
+  "features_excluidas_por_bajo_aporte": [],
+  "confirmado_por_usuario_el": "2026-09-02",
+  "criterio_umbral": "F2-óptimo — prioriza sensibilidad clínica (menos falsos negativos) sobre F1-óptimo, confirmado explícitamente por el usuario.",
+  "risk_threshold": 0.23891625615763548,
+  "risk_threshold_alternativo_f1_no_usado": 0.4,
+  "severity_threshold": 0.35,
+  "severity_threshold_f1_optimo_no_usado": 0.6153965592384338,
+  "nota_severity_threshold": "El umbral F1-óptimo (0.6154, +0.018 F1 sobre test n=1028) se probó y se DESCARTÓ: hacía caer el Kappa real de revalidación de 0.5497 a 0.3585 (n=17) por 2 casos límite (probabilidad de severidad entre 0.44 y 0.59). Se mantiene el umbral de v1 (0.35), confirmado por el usuario el 2026-09-02 tras ver el diagnóstico."
+}

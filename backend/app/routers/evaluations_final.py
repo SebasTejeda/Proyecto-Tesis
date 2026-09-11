@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, aliased
 from typing import List, Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -125,6 +125,9 @@ def update_doctor_agreement(
     if data.doctor_agreement == "rejected" and not data.disagreement_reason:
         raise HTTPException(status_code=400, detail="Debe indicar la razón de desacuerdo.")
 
+    if data.doctor_agreement == "rejected" and not data.doctor_severity_judgment:
+        raise HTTPException(status_code=422, detail="Debe indicar la clasificación de riesgo real del paciente.")
+
     evaluation = db.query(models.Evaluation).join(models.Patient).filter(
         models.Evaluation.id == evaluation_id,
         models.Patient.doctor_id == current_user.id
@@ -134,10 +137,135 @@ def update_doctor_agreement(
         raise HTTPException(status_code=404, detail="Evaluación no encontrada o acceso denegado")
 
     evaluation.doctor_agreement = data.doctor_agreement
-    evaluation.disagreement_reason = data.disagreement_reason if data.doctor_agreement == "rejected" else None
+    if data.doctor_agreement == "rejected":
+        evaluation.disagreement_reason = data.disagreement_reason
+        evaluation.doctor_severity_judgment = data.doctor_severity_judgment
+    else:
+        evaluation.disagreement_reason = None
+        evaluation.doctor_severity_judgment = (
+            evaluation.model_prediction.severity if evaluation.model_prediction else None
+        )
     db.commit()
     db.refresh(evaluation)
     return evaluation
+
+
+# ── Confiabilidad del modelo (Kappa de Cohen) ─────────────────────────────────
+
+SEVERITY_LEVELS = ["Ninguno", "Leve", "Moderado/Alto"]
+
+KAPPA_INTERPRETACION = [
+    (0.00, "Sin acuerdo"),
+    (0.20, "Insignificante"),
+    (0.40, "Aceptable"),
+    (0.60, "Moderado"),
+    (0.80, "Sustancial"),
+    (1.00, "Casi perfecto"),
+]
+
+
+def interpretar_kappa(kappa: Optional[float]) -> str:
+    if kappa is None:
+        return "Sin datos suficientes"
+    if kappa < 0:
+        return "Sin acuerdo"
+    for limite, etiqueta in KAPPA_INTERPRETACION:
+        if kappa <= limite:
+            return etiqueta
+    return "Casi perfecto"
+
+
+def calcular_kappa(y1: list, y2: list, categorias: list) -> dict:
+    n = len(y1)
+    if n == 0:
+        return {"kappa": None, "n": 0, "matriz_confusion": {}}
+
+    matriz = {c1: {c2: 0 for c2 in categorias} for c1 in categorias}
+    for a, b in zip(y1, y2):
+        matriz[a][b] += 1
+
+    p_o = sum(matriz[c][c] for c in categorias) / n
+
+    marg_modelo = {c: sum(matriz[c].values()) / n for c in categorias}
+    marg_especialista = {c: sum(matriz[c1][c] for c1 in categorias) / n for c in categorias}
+    p_e = sum(marg_modelo[c] * marg_especialista[c] for c in categorias)
+
+    kappa = (p_o - p_e) / (1 - p_e) if p_e != 1 else 1.0
+
+    return {
+        "kappa": round(kappa, 4),
+        "n": n,
+        "acuerdo_observado": round(p_o, 4),
+        "acuerdo_esperado_azar": round(p_e, 4),
+        "matriz_confusion": matriz,
+    }
+
+
+@router.get("/metrics/kappa", summary="Confiabilidad del modelo (Kappa de Cohen)")
+def get_kappa_confiabilidad(
+    model_version: str = "v1.0",
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """
+    Compara la clasificación del modelo contra el juicio real del especialista
+    usando el Kappa de Cohen. Admin ve todas las evaluaciones; el resto ve
+    solo las suyas.
+
+    - model_version="v1.0" (default): evaluaciones "en vivo". El juicio del
+      especialista (doctor_severity_judgment) vive en el mismo registro que
+      la predicción del modelo.
+    - cualquier otro tag (ej. "v2.1", "v2.0-threshold-only"): revalidaciones
+      retrospectivas. La predicción vive en el registro nuevo; el juicio del
+      especialista (ground truth) NO se duplicó ahí — se lee del registro
+      original vía original_evaluation_id.
+
+    Nota: esto ya no filtra por Patient.origen. El juicio del especialista
+    (doctor_agreement / doctor_severity_judgment) registrado sobre v1.0 se
+    trata como ground truth válido para esta métrica independientemente del
+    origen del paciente asociado.
+    """
+    if model_version != "v1.0":
+        Original = aliased(models.Evaluation)
+        query = (
+            db.query(models.Evaluation, models.ModelPrediction, Original)
+            .join(models.ModelPrediction, models.ModelPrediction.evaluation_id == models.Evaluation.id)
+            .join(Original, models.Evaluation.original_evaluation_id == Original.id)
+            .filter(
+                models.Evaluation.model_version == model_version,
+                models.ModelPrediction.severity.isnot(None),
+                Original.doctor_severity_judgment.isnot(None),
+            )
+        )
+        if current_user.role != "Admin":
+            query = query.filter(models.Evaluation.doctor_id == current_user.id)
+
+        filas = query.all()
+        y_modelo = [prediccion.severity for _, prediccion, _ in filas]
+        y_especialista = [original.doctor_severity_judgment for _, _, original in filas]
+    else:
+        query = (
+            db.query(models.Evaluation)
+            .join(models.ModelPrediction)
+            .filter(
+                models.Evaluation.doctor_agreement.isnot(None),
+                models.ModelPrediction.severity.isnot(None),
+                models.Evaluation.doctor_severity_judgment.isnot(None),
+                models.Evaluation.model_version == model_version,
+            )
+        )
+
+        if current_user.role != "Admin":
+            query = query.filter(models.Evaluation.doctor_id == current_user.id)
+
+        evaluaciones = query.all()
+        y_modelo = [ev.model_prediction.severity for ev in evaluaciones]
+        y_especialista = [ev.doctor_severity_judgment for ev in evaluaciones]
+
+    resultado = calcular_kappa(y_modelo, y_especialista, SEVERITY_LEVELS)
+    resultado["interpretacion"] = interpretar_kappa(resultado["kappa"])
+    resultado["model_version"] = model_version
+    return resultado
 
 
 # ── Historial del doctor (propio) ─────────────────────────────────────────────

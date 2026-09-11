@@ -1,0 +1,66 @@
+{
+  "ranking_shap_abs_medio": {
+    "apoyo_familiar": 1.078328251838684,
+    "calidad_sueno": 0.9407493472099304,
+    "vida_social": 0.35337311029434204,
+    "horas_sueno": 0.3109014332294464,
+    "nivel_estres": 0.25490134954452515,
+    "genero_2": 0.191035196185112,
+    "autoestima": 0.17011171579360962,
+    "redes_sociales": 0.0664873868227005,
+    "estado_civil_2": 0.059849079698324203,
+    "estado_civil_1": 0.03418463468551636,
+    "frecuencia_ejercicio": 0.03262536600232124,
+    "estado_civil_5": 0.023666366934776306,
+    "soledad_percibida": 0.02317517064511776,
+    "estado_civil_3": 0.0,
+    "estado_civil_4": 0.0
+  },
+  "correlaciones_con_target": {
+    "horas_sueno": -0.3103852772880211,
+    "vida_social": -0.37307512447060953,
+    "frecuencia_ejercicio": -0.08334106487405926,
+    "redes_sociales": 0.12766363272938153,
+    "nivel_estres": 0.30448818829768975,
+    "calidad_sueno": -0.5159253675799035,
+    "soledad_percibida": 0.3501979959888511,
+    "apoyo_familiar": -0.5198277542024259,
+    "autoestima": -0.21021001457607155,
+    "genero_2": 0.1031284592355337,
+    "estado_civil_1": -0.04275503388760762,
+    "estado_civil_2": -0.08470176341290953,
+    "estado_civil_3": 0.009857627855540224,
+    "estado_civil_4": 0.007154763636476479,
+    "estado_civil_5": 0.07469799479868976
+  },
+  "features_sospechosas_fuga": {},
+  "features_bajo_aporte": [
+    "estado_civil_3",
+    "estado_civil_4"
+  ],
+  "resultado_version_sin_features_bajo_aporte": {
+    "features_excluidas": [
+      "estado_civil_3",
+      "estado_civil_4"
+    ],
+    "cv_auc_pr_mean": 0.8675919735445019,
+    "cv_auc_pr_std": 0.01090234622605797,
+    "test": {
+      "accuracy": 0.8676166873192895,
+      "precision": 0.6392496392496393,
+      "recall_sens": 0.8627069133398247,
+      "especificidad": 0.8689384010484927,
+      "f1": 0.7343555739743058,
+      "auc_roc": 0.9385717986577352,
+      "auc_pr": 0.8600642092106824,
+      "matriz_confusion": {
+        "tn": 3315,
+        "fp": 500,
+        "fn": 141,
+        "tp": 886
+      }
+    },
+    "diferencia_cv_auc_pr_vs_modelo_completo": -0.0005101720637824547,
+    "se_adopta": false
+  }
+}
