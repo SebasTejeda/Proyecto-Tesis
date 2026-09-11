@@ -19,6 +19,15 @@ export interface EjecucionModelo {
   status: string;
 }
 
+export interface KappaReporte {
+  kappa: number | null;
+  n: number;
+  acuerdo_observado?: number;
+  acuerdo_esperado_azar?: number;
+  matriz_confusion: Record<string, Record<string, number>>;
+  interpretacion: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EvaluationService {
   private http = inject(HttpClient);
@@ -40,12 +49,22 @@ export class EvaluationService {
   updateAgreement(
     evaluationId: number,
     agreement: 'confirmed' | 'rejected',
-    disagreementReason?: string
+    disagreementReason?: string,
+    doctorSeverityJudgment?: string
   ): Observable<EvaluationResponse> {
     return this.http.patch<EvaluationResponse>(
       `${this.apiUrl}/evaluations/${evaluationId}/agreement`,
-      { doctor_agreement: agreement, disagreement_reason: disagreementReason ?? null }
+      {
+        doctor_agreement: agreement,
+        disagreement_reason: disagreementReason ?? null,
+        doctor_severity_judgment: doctorSeverityJudgment ?? null,
+      }
     );
+  }
+
+  // Confiabilidad del modelo — Kappa de Cohen
+  getKappaConfiabilidad(): Observable<KappaReporte> {
+    return this.http.get<KappaReporte>(`${this.apiUrl}/evaluations/metrics/kappa`);
   }
 
   // Doctor: su propio historial

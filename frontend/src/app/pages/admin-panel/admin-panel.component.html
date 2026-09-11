@@ -173,6 +173,67 @@
     }
   </div>
 
+  <!-- Confiabilidad del modelo (Kappa de Cohen) -->
+  <div class="section-card">
+    <div class="section-header">
+      <h2 class="section-title"><i class="pi pi-shield"></i> Confiabilidad del Modelo</h2>
+    </div>
+
+    @if (isLoadingKappa()) {
+      <div class="loading-state"><i class="pi pi-spin pi-spinner"></i> Calculando Kappa de Cohen...</div>
+    } @else if (!kappaReporte() || kappaReporte()!.n === 0) {
+      <div class="empty-state">
+        <i class="pi pi-info-circle"></i>
+        <p>Aún no hay suficientes evaluaciones con conformidad/desacuerdo registrados para calcular el Kappa.</p>
+      </div>
+    } @else {
+      <div class="kappa-body">
+        <div class="desacuerdos-totales">
+          <div class="total-badge">
+            <span class="total-num">{{ kappaReporte()!.kappa }}</span>
+            <span class="total-label">Kappa de Cohen — {{ kappaReporte()!.interpretacion }}</span>
+          </div>
+          <div class="versiones-list">
+            <span class="version-badge"><i class="pi pi-database"></i> n = {{ kappaReporte()!.n }} evaluaciones</span>
+            @if (kappaReporte()!.acuerdo_observado !== undefined) {
+              <span class="version-badge"><i class="pi pi-check"></i> Acuerdo observado: {{ (kappaReporte()!.acuerdo_observado! * 100).toFixed(1) }}%</span>
+            }
+            @if (kappaReporte()!.acuerdo_esperado_azar !== undefined) {
+              <span class="version-badge"><i class="pi pi-percentage"></i> Acuerdo esperado al azar: {{ (kappaReporte()!.acuerdo_esperado_azar! * 100).toFixed(1) }}%</span>
+            }
+          </div>
+        </div>
+
+        <p class="motivos-titulo">Matriz de confusión (modelo vs. especialista):</p>
+        <div class="table-responsive">
+          <table class="kappa-matrix-table">
+            <thead>
+              <tr>
+                <th>Modelo \ Especialista</th>
+                @for (cat of SEVERITY_LEVELS; track cat) { <th>{{ cat }}</th> }
+              </tr>
+            </thead>
+            <tbody>
+              @for (fila of SEVERITY_LEVELS; track fila) {
+                <tr>
+                  <th>{{ fila }}</th>
+                  @for (col of SEVERITY_LEVELS; track col) {
+                    <td [class.diagonal-cell]="fila === col">{{ kappaReporte()!.matriz_confusion[fila]?.[col] ?? 0 }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <p class="desacuerdos-hint">
+          <i class="pi pi-info-circle"></i>
+          Referencia (Landis &amp; Koch): &lt;0 Sin acuerdo · 0.00–0.20 Insignificante · 0.21–0.40 Aceptable · 0.41–0.60 Moderado · 0.61–0.80 Sustancial · 0.81–1.00 Casi perfecto.
+        </p>
+      </div>
+    }
+  </div>
+
   <!-- Accesos rápidos -->
   <div class="quick-actions">
     <h2 class="section-title">Accesos Rápidos</h2>

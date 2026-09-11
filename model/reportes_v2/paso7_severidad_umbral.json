@@ -1,0 +1,8 @@
+{
+  "umbral_v1": 0.35,
+  "f1_umbral_v1": 0.8557046979865772,
+  "umbral_f1_optimo": 0.6153965592384338,
+  "f1_umbral_optimo": 0.8736462093862816,
+  "diferencia_f1": 0.017941511399704346,
+  "cerca_del_optimo": 0.0
+}

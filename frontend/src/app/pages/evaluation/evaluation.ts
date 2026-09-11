@@ -70,6 +70,7 @@ export class EvaluationComponent implements OnInit {
   displayDisagreementModal = signal(false);
   selectedDisagreementReason = signal<string>('');
   otherReason = signal<string>('');
+  selectedSeverityJudgment = signal<string>('');
 
   readonly DISAGREEMENT_OPTIONS = [
     'El nivel de riesgo es mayor al indicado',
@@ -79,6 +80,8 @@ export class EvaluationComponent implements OnInit {
     'El modelo no considera información clínica relevante',
     'Otro',
   ];
+
+  readonly SEVERITY_OPTIONS = ['Ninguno', 'Leve', 'Moderado/Alto'];
 
   shapData: any;
   shapOptions: any;
@@ -276,7 +279,7 @@ export class EvaluationComponent implements OnInit {
     if (!evalId) return;
     this.isSavingAgreement.set(true);
     this.evalService.updateAgreement(evalId, 'confirmed').subscribe({
-      next: (updated) => { this.doctorAgreement.set(updated.doctor_agreement ?? null); this.isSavingAgreement.set(false); this.alertService.success('Registrado', 'Diagnóstico confirmado.', true); },
+      next: (updated) => { this.ultimaEvaluacion.set(updated); this.doctorAgreement.set(updated.doctor_agreement ?? null); this.isSavingAgreement.set(false); this.alertService.success('Registrado', 'Diagnóstico confirmado.', true); },
       error: () => { this.isSavingAgreement.set(false); this.alertService.error('Error', 'No se pudo registrar.'); },
     });
   }
@@ -284,6 +287,7 @@ export class EvaluationComponent implements OnInit {
   abrirModalDesacuerdo() {
     this.selectedDisagreementReason.set('');
     this.otherReason.set('');
+    this.selectedSeverityJudgment.set('');
     this.displayDisagreementModal.set(true);
   }
 
@@ -291,12 +295,14 @@ export class EvaluationComponent implements OnInit {
     const reason = this.selectedDisagreementReason() === 'Otro'
       ? this.otherReason().trim() : this.selectedDisagreementReason();
     if (!reason) { this.alertService.error('Requerido', 'Selecciona o escribe una razón.'); return; }
+    const severityJudgment = this.selectedSeverityJudgment();
+    if (!severityJudgment) { this.alertService.error('Requerido', 'Indica el nivel de riesgo real del paciente.'); return; }
     const evalId = this.ultimaEvaluacion()?.id;
     if (!evalId) return;
     this.isSavingAgreement.set(true);
     this.displayDisagreementModal.set(false);
-    this.evalService.updateAgreement(evalId, 'rejected', reason).subscribe({
-      next: (updated) => { this.doctorAgreement.set(updated.doctor_agreement ?? null); this.isSavingAgreement.set(false); this.alertService.success('Registrado', 'Desacuerdo registrado.', true); },
+    this.evalService.updateAgreement(evalId, 'rejected', reason, severityJudgment).subscribe({
+      next: (updated) => { this.ultimaEvaluacion.set(updated); this.doctorAgreement.set(updated.doctor_agreement ?? null); this.isSavingAgreement.set(false); this.alertService.success('Registrado', 'Desacuerdo registrado.', true); },
       error: () => { this.isSavingAgreement.set(false); this.alertService.error('Error', 'No se pudo registrar.'); },
     });
   }

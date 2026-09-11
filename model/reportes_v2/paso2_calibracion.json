@@ -1,0 +1,19 @@
+{
+  "resultados": {
+    "sin_calibrar": {
+      "brier": 0.09011071920394897,
+      "ece": 0.0967498825728221
+    },
+    "sigmoid": {
+      "brier": 0.07409523197492411,
+      "ece": 0.03727590955837022
+    },
+    "isotonic": {
+      "brier": 0.07043379232250979,
+      "ece": 0.006915124806981035
+    }
+  },
+  "mejor_metodo": "isotonic",
+  "mejora_relativa_brier": 0.21836388673032442,
+  "usar_calibracion_en_pipeline_final": true
+}

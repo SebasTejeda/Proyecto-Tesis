@@ -56,6 +56,8 @@ class Patient(Base):
     telefono = Column(String, nullable=True)
     doctor_id = Column(Integer, ForeignKey("usuarios.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+    # "clinico_real" | "sintetico_prueba" | "pendiente_verificacion"
+    origen = Column(String, nullable=False, default="clinico_real")
 
     doctor = relationship("User", back_populates="patients")
     evaluations = relationship("Evaluation", back_populates="patient")
@@ -72,11 +74,20 @@ class Evaluation(Base):
     doctor_notes = Column(String, nullable=True)
     doctor_agreement = Column(String, nullable=True)
     disagreement_reason = Column(String, nullable=True)
+    doctor_severity_judgment = Column(String, nullable=True)  # "Ninguno" | "Leve" | "Moderado/Alto"
     model_version = Column(String, default="v1.0")
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # Fecha real de la consulta clínica (para registros existentes, copiada de "date").
+    fecha_evaluacion_clinica = Column(DateTime, nullable=False, default=datetime.utcnow)
+    # Fecha de ejecución de una revalidación técnica retrospectiva. NULL en evaluaciones originales.
+    fecha_revalidacion_tecnica = Column(DateTime, nullable=True)
+    # En un registro de revalidación, apunta al registro original del que se copiaron las variables clínicas.
+    original_evaluation_id = Column(Integer, ForeignKey("evaluations.id"), nullable=True)
+
     patient = relationship("Patient", back_populates="evaluations")
     doctor = relationship("User", foreign_keys=[doctor_id])
+    original_evaluation = relationship("Evaluation", remote_side=[id], foreign_keys=[original_evaluation_id])
     model_features = relationship(
         "ModelFeatures", back_populates="evaluation",
         uselist=False, cascade="all, delete-orphan"
