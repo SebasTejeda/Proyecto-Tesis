@@ -178,7 +178,8 @@ export class ResumenComponent implements OnInit {
     const filas = (this.dt?.filteredValue as PatientRow[] | null) ?? this.pacientesFiltrados();
     const data = filas.map(p => ({
       'Nombre Completo':     p.nombre_completo,
-      'DNI':                 p.dni,
+      'Tipo Documento':      p.tipo_documento,
+      'N° Documento':        p.numero_documento,
       'Edad':                p.edad,
       'Sexo':                p.sexo,
       'Teléfono':            p.telefono ?? '--',
@@ -193,7 +194,7 @@ export class ResumenComponent implements OnInit {
 
     // Ancho de columnas
     ws['!cols'] = [
-      { wch: 28 }, { wch: 12 }, { wch: 8 }, { wch: 12 },
+      { wch: 28 }, { wch: 10 }, { wch: 14 }, { wch: 8 }, { wch: 12 },
       { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 16 },
       { wch: 14 }, { wch: 40 }
     ];

@@ -6,6 +6,7 @@ import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 import { PatientData } from '../../models/patients';
 import { fechaNacimientoValidator } from '../../validators/fecha-nacimiento.validator';
+import { numeroDocumentoValidator } from '../../validators/numero-documento.validator';
 
 @Component({
   selector: 'app-register',
@@ -25,11 +26,18 @@ export class RegisterComponent {
 
   registerForm = this.fb.nonNullable.group({
     nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
-    dni: ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
+    tipo_documento: ['DNI', Validators.required],
+    numero_documento: ['', [Validators.required, numeroDocumentoValidator()]],
     fecha_nacimiento: ['', [Validators.required, fechaNacimientoValidator()]],
     sexo: ['', Validators.required],
     telefono: ['', [Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')]]
   });
+
+  constructor() {
+    this.registerForm.get('tipo_documento')?.valueChanges.subscribe(() => {
+      this.registerForm.get('numero_documento')?.updateValueAndValidity();
+    });
+  }
 
   onSubmit() {
     if (this.registerForm.invalid) {
@@ -53,9 +61,9 @@ export class RegisterComponent {
       error: (err) => {
         this.isLoading.set(false);
         this.alertService.close();
-        const msg = err.error?.detail === 'El DNI ya está registrado.'
-          ? 'Este DNI ya pertenece a otro paciente.'
-          : 'No se pudo guardar el paciente en la base de datos.';
+        let msg = 'No se pudo guardar el paciente en la base de datos.';
+        if (err.error?.detail === 'El DNI ya está registrado.') msg = 'Este DNI ya pertenece a otro paciente.';
+        else if (err.error?.detail === 'El documento ya está registrado.') msg = 'Este documento ya pertenece a otro paciente.';
         this.alertService.error('Error', msg);
         console.error(err);
       }

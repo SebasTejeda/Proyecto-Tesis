@@ -1,4 +1,5 @@
 import random
+from datetime import datetime, timedelta
 import cloudinary.uploader
 from fastapi import APIRouter, Depends, HTTPException, status, Form, File, UploadFile
 from sqlalchemy.orm import Session
@@ -9,6 +10,8 @@ from ..dependencies import get_current_user
 from .. import models, schemas, utils, email_utils
 
 router = APIRouter()
+
+CODIGO_EXPIRACION_MINUTOS = 15
 
 
 @router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
@@ -29,6 +32,7 @@ async def crear_usuario(user: schemas.UserCreate, db: Session = Depends(get_db))
         codigo_colegiatura=user.codigo_colegiatura,
         is_verified=False,
         verification_code=codigo,
+        verification_code_expires_at=datetime.utcnow() + timedelta(minutes=CODIGO_EXPIRACION_MINUTOS),
         account_status="pending",  # siempre empieza pendiente
         role="Doctor"
     )

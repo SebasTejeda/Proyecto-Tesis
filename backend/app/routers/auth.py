@@ -8,6 +8,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from ..database import get_db
+from ..dependencies import get_current_user
 from .. import models, schemas, utils, email_utils
 from ..limiter import limiter
 
@@ -15,6 +16,7 @@ router = APIRouter()
 
 MAX_INTENTOS = 5
 BLOQUEO_MINUTOS = 15
+CODIGO_EXPIRACION_MINUTOS = 15
 
 
 def registrar_actividad(db: Session, user_id: int, action: str, detail: str = None, ip: str = None):
@@ -173,9 +175,8 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
 
 
 @router.post("/logout", summary="Registrar cierre de sesión")
-def logout(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends()):
+def logout(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     """Opcional — registra el logout en el log de actividad."""
-    from ..dependencies import get_current_user
     ip = request.client.host if request.client else "unknown"
     registrar_actividad(db, current_user.id, "logout", "Cierre de sesión", ip)
     return {"message": "Sesión cerrada correctamente"}
@@ -190,8 +191,11 @@ def verify_account(request: schemas.VerifyCodeRequest, db: Session = Depends(get
         return {"message": "Cuenta ya verificada"}
     if user.verification_code != request.codigo:
         raise HTTPException(status_code=400, detail="Código de verificación incorrecto")
+    if not user.verification_code_expires_at or datetime.utcnow() > user.verification_code_expires_at:
+        raise HTTPException(status_code=400, detail="El código de verificación ha expirado. Solicita uno nuevo.")
     user.is_verified = True
     user.verification_code = None
+    user.verification_code_expires_at = None
     db.commit()
     return {"message": "Cuenta verificada correctamente"}
 
@@ -208,6 +212,7 @@ async def forgot_password(request: schemas.EmailRequest, db: Session = Depends(g
         )
     codigo = str(random.randint(1000, 9999))
     user.recovery_code = codigo
+    user.recovery_code_expires_at = datetime.utcnow() + timedelta(minutes=CODIGO_EXPIRACION_MINUTOS)
     db.commit()
     try:
         await email_utils.enviar_correo_recuperacion(user.email, codigo)
@@ -224,6 +229,8 @@ def verify_recovery_code(request: schemas.VerifyCodeRequest, db: Session = Depen
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.recovery_code != request.codigo:
         raise HTTPException(status_code=400, detail="Código incorrecto o expirado")
+    if not user.recovery_code_expires_at or datetime.utcnow() > user.recovery_code_expires_at:
+        raise HTTPException(status_code=400, detail="El código ha expirado. Solicita uno nuevo.")
     return {"message": "Código válido"}
 
 
@@ -234,8 +241,11 @@ def reset_password(request: schemas.NewPasswordRequest, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.recovery_code != request.codigo:
         raise HTTPException(status_code=400, detail="Código inválido")
+    if not user.recovery_code_expires_at or datetime.utcnow() > user.recovery_code_expires_at:
+        raise HTTPException(status_code=400, detail="El código ha expirado. Solicita uno nuevo.")
     hashed_password = utils.HashUtils.get_password_hash(request.new_password)
     user.password = hashed_password
     user.recovery_code = None
+    user.recovery_code_expires_at = None
     db.commit()
     return {"message": "Contraseña actualizada correctamente"}

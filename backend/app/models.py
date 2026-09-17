@@ -20,8 +20,10 @@ class User(Base):
     google_id = Column(String, nullable=True)
     picture = Column(String, nullable=True)
     recovery_code = Column(String, nullable=True)
+    recovery_code_expires_at = Column(DateTime, nullable=True)
     is_verified = Column(Boolean, default=False)
     verification_code = Column(String, nullable=True)
+    verification_code_expires_at = Column(DateTime, nullable=True)
 
     # Bloqueo por intentos fallidos
     failed_login_attempts = Column(Integer, default=0)
@@ -50,7 +52,8 @@ class Patient(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nombre_completo = Column(String, index=True)
-    dni = Column(String, unique=True, nullable=False, index=True)
+    tipo_documento = Column(String, nullable=False, default="DNI")  # "DNI" | "CE"
+    numero_documento = Column(String, unique=True, nullable=False, index=True)
     fecha_nacimiento = Column(Date)
     sexo = Column(String)
     telefono = Column(String, nullable=True)

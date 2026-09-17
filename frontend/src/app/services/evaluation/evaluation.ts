@@ -8,7 +8,8 @@ export interface EjecucionModelo {
   evaluation_id: number;
   fecha: string;
   paciente_nombre: string;
-  paciente_dni: string;
+  paciente_documento: string;
+  paciente_tipo_documento: string;
   doctor_nombre: string;
   modelo: string;
   model_version: string;

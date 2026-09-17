@@ -106,8 +106,12 @@ export class ChangePasswordComponent implements OnInit {
         this.codigoGuardado.set(code);
         this.currentStep.set(2);
       },
-      error: () => {
-        this.alertService.error('Error', 'Código incorrecto o expirado.');
+      error: (err) => {
+        let msg = 'Código incorrecto o expirado.';
+        if (err.error?.detail) {
+          msg = typeof err.error.detail === 'string' ? err.error.detail : msg;
+        }
+        this.alertService.error('Error', msg);
       }
     })
   }
@@ -133,9 +137,13 @@ export class ChangePasswordComponent implements OnInit {
         this.alertService.success('Contraseña Actualizada', 'Tu clave ha sido modificada con éxito.');
         this.router.navigate(['/dashboard/settings']);
       },
-      error: () => {
+      error: (err) => {
         this.alertService.close();
-        this.alertService.error('Error', 'No se pudo actualizar la contraseña. Intenta nuevamente.');
+        let msg = 'No se pudo actualizar la contraseña. Intenta nuevamente.';
+        if (err.error?.detail) {
+          msg = typeof err.error.detail === 'string' ? err.error.detail : msg;
+        }
+        this.alertService.error('Error', msg);
       }
     })
   }

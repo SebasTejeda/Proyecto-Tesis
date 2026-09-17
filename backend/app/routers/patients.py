@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from typing import List
 
 from .. import schemas, models
@@ -8,10 +9,13 @@ from ..database import get_db
 
 router = APIRouter()
 
+def _mensaje_documento_duplicado(tipo_documento: str) -> str:
+    return "El DNI ya está registrado." if tipo_documento == "DNI" else "El documento ya está registrado."
+
 @router.post("/", response_model=schemas.PatientResponse, status_code=status.HTTP_201_CREATED)
 def create_patient(
-    patient: schemas.PatientCreate, 
-    db: Session = Depends(get_db), 
+    patient: schemas.PatientCreate,
+    db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     """Crea un nuevo paciente vinculado al doctor autenticado."""
@@ -20,15 +24,19 @@ def create_patient(
         fecha_nacimiento=patient.fecha_nacimiento,
         sexo=patient.sexo,
         telefono=patient.telefono,
-        dni=patient.dni,
+        tipo_documento=patient.tipo_documento,
+        numero_documento=patient.numero_documento,
         doctor_id=current_user.id
     )
-    
+
     try:
         db.add(new_patient)
         db.commit()
         db.refresh(new_patient)
         return new_patient
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=_mensaje_documento_duplicado(patient.tipo_documento))
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al registrar paciente: {str(e)}")
@@ -85,11 +93,15 @@ def update_patient(
     patient.fecha_nacimiento = patient_data.fecha_nacimiento
     patient.sexo = patient_data.sexo
     patient.telefono = patient_data.telefono
-    patient.dni = patient_data.dni
+    patient.tipo_documento = patient_data.tipo_documento
+    patient.numero_documento = patient_data.numero_documento
     try:
         db.commit()
         db.refresh(patient)
         return patient
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=_mensaje_documento_duplicado(patient_data.tipo_documento))
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")

@@ -3,7 +3,8 @@ export interface PatientData {
   fecha_nacimiento: string;
   sexo: string;
   telefono?: string;
-  dni:string;
+  tipo_documento: string;
+  numero_documento: string;
 }
 
 export interface Patient extends PatientData {

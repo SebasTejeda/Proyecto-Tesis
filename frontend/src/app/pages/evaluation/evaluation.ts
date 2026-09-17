@@ -44,7 +44,7 @@ export class EvaluationComponent implements OnInit {
     const q = this.normalizar(this.busquedaPaciente().trim());
     if (!q) return this.pacientes().slice(0, 8);
     return this.pacientes().filter(p =>
-      this.normalizar(p.nombre_completo).includes(q) || p.dni.includes(q)
+      this.normalizar(p.nombre_completo).includes(q) || p.numero_documento.includes(q)
     ).slice(0, 8);
   });
 

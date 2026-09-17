@@ -20,14 +20,32 @@
           }
         </div>
 
-        <div class="form-group full-width">
-          <label class="form-label">DNI</label>
-          <input type="text" class="form-input"
-            [class.error-border]="registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched"
-            formControlName="dni" placeholder="Ej: 12345678" maxlength="8" inputmode="numeric">
-          @if (registerForm.get('dni')?.invalid && registerForm.get('dni')?.touched) {
-            <span class="error-msg">El DNI debe tener exactamente 8 dígitos numéricos</span>
-          }
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tipo de Documento</label>
+            <select class="form-input" style="width: 100%;" formControlName="tipo_documento">
+              <option value="DNI">DNI</option>
+              <option value="CE">Carnet de Extranjería (CE)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">N.º de Documento</label>
+            <input type="text" class="form-input"
+              [class.error-border]="registerForm.get('numero_documento')?.invalid && registerForm.get('numero_documento')?.touched"
+              formControlName="numero_documento"
+              [placeholder]="registerForm.get('tipo_documento')?.value === 'CE' ? 'Ej: A1234567' : 'Ej: 12345678'"
+              [maxlength]="registerForm.get('tipo_documento')?.value === 'CE' ? 12 : 8">
+            @if (registerForm.get('numero_documento')?.invalid && registerForm.get('numero_documento')?.touched) {
+              <span class="error-msg">
+                @if (registerForm.get('tipo_documento')?.value === 'CE') {
+                  El CE debe ser alfanumérico, entre 9 y 12 caracteres
+                } @else {
+                  El DNI debe tener exactamente 8 dígitos numéricos
+                }
+              </span>
+            }
+          </div>
         </div>
 
         <div class="form-row">

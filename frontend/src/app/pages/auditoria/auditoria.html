@@ -62,7 +62,7 @@
     </div>
 
     <p-table #dt [value]="ejecuciones()" [paginator]="true" [rows]="10"
-      [globalFilterFields]="['paciente_nombre','paciente_dni','resultado','doctor_nombre','model_version']"
+      [globalFilterFields]="['paciente_nombre','paciente_documento','resultado','doctor_nombre','model_version']"
       [loading]="isLoading()" [tableStyle]="{ 'min-width': '100%' }" [scrollable]="true">
 
       <ng-template pTemplate="header">
@@ -85,7 +85,7 @@
           <td>
             <div class="paciente-cell">
               <span class="paciente-nombre">{{ e.paciente_nombre }}</span>
-              <span class="paciente-dni">DNI: {{ e.paciente_dni }}</span>
+              <span class="paciente-dni">{{ e.paciente_tipo_documento }} {{ e.paciente_documento }}</span>
             </div>
           </td>
           @if (isAdmin) {

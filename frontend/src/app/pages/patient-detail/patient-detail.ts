@@ -16,6 +16,7 @@ import { AuthService } from '../../services/auth/auth';
 import { Patient } from '../../models/patients';
 import { EvaluationResponse } from '../../models/evaluations';
 import { fechaNacimientoValidator } from '../../validators/fecha-nacimiento.validator';
+import { numeroDocumentoValidator } from '../../validators/numero-documento.validator';
 
 @Component({
   selector: 'app-patient-detail',
@@ -49,11 +50,12 @@ export class PatientDetailComponent implements OnInit {
 
   displayEditModal = signal(false);
   editForm = this.fb.nonNullable.group({
-    nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
-    dni:             ['', [Validators.required, Validators.pattern('^[0-9]{8}$')]],
-    fecha_nacimiento:['', [Validators.required, fechaNacimientoValidator()]],
-    sexo:            ['', [Validators.required]],
-    telefono:        [''],
+    nombre_completo:  ['', [Validators.required, Validators.minLength(3)]],
+    tipo_documento:   ['DNI', Validators.required],
+    numero_documento: ['', [Validators.required, numeroDocumentoValidator()]],
+    fecha_nacimiento: ['', [Validators.required, fechaNacimientoValidator()]],
+    sexo:             ['', [Validators.required]],
+    telefono:         [''],
   });
 
   // ── Filtros del historial ─────────────────────────────────────────────────
@@ -86,7 +88,12 @@ export class PatientDetailComponent implements OnInit {
     autoestima: 'Autoestima', estado_civil: 'Estado civil', genero: 'Género',
   };
 
-  constructor() { Chart.register(...registerables); }
+  constructor() {
+    Chart.register(...registerables);
+    this.editForm.get('tipo_documento')?.valueChanges.subscribe(() => {
+      this.editForm.get('numero_documento')?.updateValueAndValidity();
+    });
+  }
 
   ngOnInit() {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -354,7 +361,14 @@ export class PatientDetailComponent implements OnInit {
   abrirModalEditar() {
     const p = this.patient();
     if (p) {
-      this.editForm.patchValue({ nombre_completo: p.nombre_completo, dni: p.dni, fecha_nacimiento: p.fecha_nacimiento, sexo: p.sexo, telefono: p.telefono ?? '' });
+      this.editForm.patchValue({
+        nombre_completo: p.nombre_completo,
+        tipo_documento: p.tipo_documento,
+        numero_documento: p.numero_documento,
+        fecha_nacimiento: p.fecha_nacimiento,
+        sexo: p.sexo,
+        telefono: p.telefono ?? '',
+      });
       this.displayEditModal.set(true);
     }
   }
@@ -366,7 +380,12 @@ export class PatientDetailComponent implements OnInit {
     if (!id) return;
     this.patientService.updatePatient(id, this.editForm.getRawValue()).subscribe({
       next: () => { this.alertService.success('Actualizado', 'Datos modificados con éxito.', true); this.displayEditModal.set(false); this.cargarDatosReales(id); },
-      error: (err) => { this.alertService.error('Error', err.error?.detail === 'El DNI ya está registrado.' ? 'Este DNI ya pertenece a otro paciente.' : 'No se pudo actualizar el paciente.'); },
+      error: (err) => {
+        let msg = 'No se pudo actualizar el paciente.';
+        if (err.error?.detail === 'El DNI ya está registrado.') msg = 'Este DNI ya pertenece a otro paciente.';
+        else if (err.error?.detail === 'El documento ya está registrado.') msg = 'Este documento ya pertenece a otro paciente.';
+        this.alertService.error('Error', msg);
+      },
     });
   }
 

@@ -21,7 +21,8 @@ class EjecucionModeloResponse(BaseModel):
     evaluation_id: int
     fecha: datetime
     paciente_nombre: str
-    paciente_dni: str
+    paciente_documento: str
+    paciente_tipo_documento: str
     doctor_nombre: str
     modelo: str
     model_version: str
@@ -315,18 +316,19 @@ def _build_historial(evaluaciones, db) -> list:
         doctor = db.query(models.User).filter(models.User.id == ev.doctor_id).first()
         doctor_nombre = f"Dr/a. {doctor.nombres} {doctor.apellidos}" if doctor else "Desconocido"
         resultado.append(EjecucionModeloResponse(
-            evaluation_id     = ev.id,
-            fecha             = ev.date,
-            paciente_nombre   = ev.patient.nombre_completo if ev.patient else "Desconocido",
-            paciente_dni      = ev.patient.dni if ev.patient else "--",
-            doctor_nombre     = doctor_nombre,
-            modelo            = "XGBoost + SHAP",
-            model_version     = ev.model_version or "v1.0",
-            resultado         = ev.model_prediction.severity if ev.model_prediction else None,
-            risk_probability  = ev.model_prediction.risk_probability if ev.model_prediction else None,
-            doctor_agreement  = ev.doctor_agreement,
-            disagreement_reason = ev.disagreement_reason,
-            status            = ev.status,
+            evaluation_id           = ev.id,
+            fecha                   = ev.date,
+            paciente_nombre         = ev.patient.nombre_completo if ev.patient else "Desconocido",
+            paciente_documento      = ev.patient.numero_documento if ev.patient else "--",
+            paciente_tipo_documento = ev.patient.tipo_documento if ev.patient else "DNI",
+            doctor_nombre           = doctor_nombre,
+            modelo                  = "XGBoost + SHAP",
+            model_version           = ev.model_version or "v1.0",
+            resultado               = ev.model_prediction.severity if ev.model_prediction else None,
+            risk_probability        = ev.model_prediction.risk_probability if ev.model_prediction else None,
+            doctor_agreement        = ev.doctor_agreement,
+            disagreement_reason     = ev.disagreement_reason,
+            status                  = ev.status,
         ))
     return resultado
 

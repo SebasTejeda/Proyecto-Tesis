@@ -1,3 +1,4 @@
+import re
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
@@ -79,14 +80,36 @@ class DoctorPendingResponse(BaseModel):
 
 
 # ── Patients ──────────────────────────────────────────────────────────────────
+TIPOS_DOCUMENTO = ("DNI", "CE")
+
 class PatientBase(BaseModel):
     nombre_completo: str
-    dni: str
+    tipo_documento: str
+    numero_documento: str
     fecha_nacimiento: date
     sexo: str
     telefono: Optional[str] = None
 
 class PatientCreate(PatientBase):
+    @field_validator("tipo_documento")
+    @classmethod
+    def validar_tipo_documento(cls, v: str) -> str:
+        if v not in TIPOS_DOCUMENTO:
+            raise ValueError(f"tipo_documento debe ser uno de: {', '.join(TIPOS_DOCUMENTO)}")
+        return v
+
+    @field_validator("numero_documento")
+    @classmethod
+    def validar_numero_documento(cls, v: str, info) -> str:
+        tipo = info.data.get("tipo_documento")
+        if tipo == "DNI":
+            if not re.fullmatch(r"[0-9]{8}", v):
+                raise ValueError("El DNI debe tener exactamente 8 dígitos numéricos")
+        elif tipo == "CE":
+            if not re.fullmatch(r"[A-Za-z0-9]{9,12}", v):
+                raise ValueError("El Carnet de Extranjería debe ser alfanumérico, entre 9 y 12 caracteres")
+        return v
+
     @field_validator("fecha_nacimiento")
     @classmethod
     def validar_fecha_nacimiento(cls, v: date) -> date:
