@@ -73,13 +73,11 @@ async def create_evaluation(
 
         try:
             resultado = await modelo_predecir(features_data)
-        except ModelAPIError as e:
-            db.add(new_eval)
-            db.commit()
-            db.refresh(new_eval)
+        except ModelAPIError:
+            db.rollback()
             raise HTTPException(
                 status_code=503,
-                detail=f"Evaluación guardada pero el modelo no está disponible: {str(e)}"
+                detail="El servicio de análisis no está disponible. No se guardó ningún resultado."
             )
 
         new_eval.model_prediction = models.ModelPrediction(
@@ -353,7 +351,8 @@ def get_patient_evaluations(
         joinedload(models.Evaluation.model_prediction),
         joinedload(models.Evaluation.recommendations)
     ).filter(
-        models.Evaluation.patient_id == patient_id
+        models.Evaluation.patient_id == patient_id,
+        models.Evaluation.status == "Completado"
     ).order_by(models.Evaluation.date.desc()).all()
 
 

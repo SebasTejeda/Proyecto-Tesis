@@ -26,4 +26,8 @@ export class PatientService {
   updatePatient(id: number, patientData: any): Observable<Patient> {
     return this.http.put<Patient>(`${this.apiUrl}/patients/${id}`, patientData);
   }
+
+  registrarConsentimiento(id: number): Observable<Patient> {
+    return this.http.patch<Patient>(`${this.apiUrl}/patients/${id}/consent`, {});
+  }
 }

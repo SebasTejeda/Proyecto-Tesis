@@ -1,0 +1,26 @@
+@if (esModeradoAlto()) {
+  <div class="severity-warning">
+    <i class="pi pi-exclamation-triangle"></i>
+    <p>Nivel de riesgo moderado/alto detectado. Se recomienda priorizar el seguimiento clínico del paciente conforme al protocolo de su institución.</p>
+  </div>
+}
+
+@if (bajaConfianza()) {
+  <div class="confidence-warning">
+    <i class="pi pi-exclamation-triangle"></i>
+    <div>
+      <strong>Resultado en zona de incertidumbre</strong>
+      <p>El modelo tiene baja confianza en este diagnóstico (probabilidad entre 40-60%). Se recomienda complementar con una evaluación clínica adicional.</p>
+    </div>
+  </div>
+}
+
+@if (esModeradoAlto()) {
+  <div class="referral-suggestion">
+    <i class="pi pi-send"></i>
+    <div>
+      <strong>Se sugiere derivación a psiquiatra</strong>
+      <p>El nivel Moderado/Alto detectado indica que el paciente podría beneficiarse de una evaluación especializada. Considere coordinar una derivación.</p>
+    </div>
+  </div>
+}

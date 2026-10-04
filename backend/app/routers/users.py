@@ -12,6 +12,7 @@ from .. import models, schemas, utils, email_utils
 router = APIRouter()
 
 CODIGO_EXPIRACION_MINUTOS = 15
+FOTO_PERFIL_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
 
 
 @router.post("/", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
@@ -71,6 +72,13 @@ async def update_user_me(
         if foto and foto.filename:
             if foto.content_type not in ("image/jpeg", "image/png"):
                 raise HTTPException(status_code=400, detail="Formato no soportado, use JPG o PNG")
+
+            foto.file.seek(0, 2)  # ir al final para medir el tamaño real
+            tamano_bytes = foto.file.tell()
+            foto.file.seek(0)  # volver al inicio para que cloudinary lo lea completo
+            if tamano_bytes > FOTO_PERFIL_MAX_BYTES:
+                raise HTTPException(status_code=400, detail="El archivo supera el tamaño máximo permitido (2 MB)")
+
             upload_result = cloudinary.uploader.upload(
                 foto.file,
                 folder="neuromind_profiles",
@@ -82,6 +90,9 @@ async def update_user_me(
         db.commit()
         db.refresh(current_user)
         return current_user
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar el perfil: {str(e)}")

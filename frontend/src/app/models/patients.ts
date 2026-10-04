@@ -11,4 +11,6 @@ export interface Patient extends PatientData {
   id: number;
   doctor_id: number;
   created_at: string;
+  consentimiento_informado: boolean;
+  consentimiento_fecha: string | null;
 }

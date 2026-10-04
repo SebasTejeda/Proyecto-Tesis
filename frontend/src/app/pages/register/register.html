@@ -59,7 +59,7 @@
             } @else if (registerForm.get('fecha_nacimiento')?.errors?.['fechaFutura'] && registerForm.get('fecha_nacimiento')?.touched) {
               <span class="error-msg">La fecha de nacimiento no puede ser futura</span>
             } @else if (registerForm.get('fecha_nacimiento')?.errors?.['edadFueraDeRango'] && registerForm.get('fecha_nacimiento')?.touched) {
-              <span class="error-msg">El paciente debe tener entre 18 y 25 años</span>
+              <span class="error-msg">El paciente debe tener entre 18 y 25 años cumplidos</span>
             }
           </div>
 
@@ -83,7 +83,10 @@
           <label class="form-label">Teléfono <span style="color: #94a3b8; font-weight: 400;">(Opcional)</span></label>
           <input type="tel" class="form-input"
             [class.error-border]="registerForm.get('telefono')?.invalid && registerForm.get('telefono')?.touched"
-            formControlName="telefono" placeholder="+51 999 999 999">
+            formControlName="telefono" placeholder="Ej: 987654321" maxlength="9" inputmode="numeric">
+          @if (registerForm.get('telefono')?.invalid && (registerForm.get('telefono')?.dirty || registerForm.get('telefono')?.touched)) {
+            <span class="error-msg">Ingrese un número de celular válido de 9 dígitos que comience con 9</span>
+          }
         </div>
 
       </div>

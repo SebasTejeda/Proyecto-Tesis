@@ -2,6 +2,9 @@ import re
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
+from zoneinfo import ZoneInfo
+
+ZONA_HORARIA_CLINICA = ZoneInfo("America/Lima")
 
 
 DOCTOR_NOTES_MAX_LENGTH = 1000
@@ -113,12 +116,28 @@ class PatientCreate(PatientBase):
     @field_validator("fecha_nacimiento")
     @classmethod
     def validar_fecha_nacimiento(cls, v: date) -> date:
-        hoy = date.today()
+        # "Hoy" en America/Lima explícitamente — no el TZ del SO del servidor
+        # (que en producción suele ser UTC, y en Perú va 5 horas detrás).
+        hoy = datetime.now(ZONA_HORARIA_CLINICA).date()
         if v > hoy:
             raise ValueError("La fecha de nacimiento no puede ser futura")
+        # Años cumplidos: resta 1 si (mes, día) de hoy todavía no alcanza a
+        # (mes, día) de nacimiento. Para nacidos el 29 de feb., en años no
+        # bisiestos (mes, día)=(2,29) nunca es <= ningún (mes, día) real de
+        # ese año salvo el propio 29/2, así que la comparación cae del lado
+        # del 1 de marzo de forma natural (ver verificación en el chat).
         edad = hoy.year - v.year - ((hoy.month, hoy.day) < (v.month, v.day))
         if edad < 18 or edad > 25:
-            raise ValueError("El paciente debe tener entre 18 y 25 años")
+            raise ValueError("El paciente debe tener entre 18 y 25 años cumplidos")
+        return v
+
+    @field_validator("telefono")
+    @classmethod
+    def validar_telefono(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        if not re.fullmatch(r"9[0-9]{8}", v):
+            raise ValueError("Ingrese un número de celular válido de 9 dígitos que comience con 9")
         return v
 
 class PatientResponse(PatientBase):
@@ -126,6 +145,8 @@ class PatientResponse(PatientBase):
     doctor_id: int
     created_at: datetime
     origen: str = "clinico_real"
+    consentimiento_informado: bool = False
+    consentimiento_fecha: Optional[datetime] = None
 
     class Config:
         from_attributes = True

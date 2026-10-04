@@ -1,17 +1,51 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthResponse, RegisterData, UserResponse } from '../../models/auth';
+import { AlertService } from '../alert/alert';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
+  private router = inject(Router);
+  private alertService = inject(AlertService);
   private readonly apiUrl = environment.apiUrl;
   public fotoActualizada = new BehaviorSubject<string | null>(null);
+
+  // Evita mostrar la alerta / redirigir más de una vez para el mismo cierre
+  // de sesión (varias peticiones 401 simultáneas, o un 401 llegando casi al
+  // mismo tiempo que el evento "storage" de otra pestaña).
+  private sessionEndHandled = false;
+
+  constructor() {
+    // Si otra pestaña del mismo navegador borra el token (logout, sesión
+    // reemplazada, etc.), esta pestaña se entera vía el evento "storage"
+    // (solo se dispara en las pestañas QUE NO hicieron el cambio) y
+    // redirige de inmediato, sin esperar a que su propia siguiente
+    // petición falle con 401.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (event: StorageEvent) => {
+        if (event.key === 'token' && event.oldValue && !event.newValue) {
+          this.handleSessionEnded('Sesión finalizada', 'Tu sesión ha finalizado. Inicia sesión nuevamente.');
+        }
+      });
+    }
+  }
+
+  /** Cierra la sesión, avisa al usuario y redirige — una sola vez por cierre de sesión. */
+  handleSessionEnded(titulo: string, mensaje: string): void {
+    if (this.sessionEndHandled) return;
+    this.sessionEndHandled = true;
+
+    this.logout();
+    this.alertService.error(titulo, mensaje);
+    this.router.navigate(['/login']);
+  }
 
   getToken(): string | null {
     if (typeof window !== 'undefined') {
@@ -48,6 +82,7 @@ export class AuthService {
           storage.setItem('user_id', res.user_id.toString());
           storage.setItem('role', res.role);
           storage.setItem('account_status', (res as any).account_status ?? 'pending');
+          this.sessionEndHandled = false;
         }
       })
     );
@@ -60,6 +95,7 @@ export class AuthService {
         localStorage.setItem('user_id', res.user_id.toString());
         localStorage.setItem('role', res.role);
         localStorage.setItem('account_status', (res as any).account_status ?? 'pending');
+        this.sessionEndHandled = false;
       })
     );
   }

@@ -127,7 +127,8 @@ export class PdfService {
     resultado: EvaluationResult,
     shapData: ShapData,
   ) {
-    if (!resultado || !resultado.riesgoEtiqueta || resultado.riesgoEtiqueta === 'Pendiente') {
+    const etiqueta = (resultado?.riesgoEtiqueta ?? '').trim().toUpperCase();
+    if (!resultado || !resultado.modelPrediction || !etiqueta || etiqueta === 'PENDIENTE') {
       throw new Error(
         'La evaluación aún no tiene un resultado del modelo. Espera a que finalice el análisis antes de exportar el PDF.',
       );
@@ -181,12 +182,21 @@ export class PdfService {
     doc.text('FACTORES DETERMINANTES DEL ANÁLISIS', 15, yPos);
     doc.line(15, yPos + 2, 195, yPos + 2);
 
-    if (shapData?.labels?.length && shapData.datasets?.length) {
-      const valores = shapData.datasets[0].data;
-      const maxAbs = Math.max(...valores.map(Math.abs)) || 1;
+    // Empareja cada label con su valor y descarta cualquier entrada cuyo
+    // valor no sea un número finito real (null, undefined, NaN, strings no
+    // numéricos, etc.) — en vez de mostrarla como si fuera un dato válido.
+    const datosValidos: [string, number][] =
+      shapData?.labels?.length && shapData.datasets?.[0]?.data
+        ? shapData.labels
+            .map((label: string, i: number): [string, number] => [label, shapData.datasets[0].data[i]])
+            .filter(([, v]) => typeof v === 'number' && Number.isFinite(v))
+        : [];
 
-      const tableBody = shapData.labels.map((label: string, i: number) => {
-        const { nivel, tipo } = this.shapToLabel(valores[i], maxAbs);
+    if (datosValidos.length > 0) {
+      const maxAbs = Math.max(...datosValidos.map(([, v]) => Math.abs(v))) || 1;
+
+      const tableBody = datosValidos.map(([label, v]) => {
+        const { nivel, tipo } = this.shapToLabel(v, maxAbs);
         const rol =
           tipo === 'riesgo' ? 'Contribuye al riesgo' : 'Factor protector';
         return [label, nivel, rol];

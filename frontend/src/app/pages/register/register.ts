@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { AlertService } from '../../services/alert/alert';
 import { PatientService } from '../../services/patients/patient';
 import { PatientData } from '../../models/patients';
-import { fechaNacimientoValidator } from '../../validators/fecha-nacimiento.validator';
+import { fechaNacimientoValidator, hoyEnLimaISO } from '../../validators/fecha-nacimiento.validator';
 import { numeroDocumentoValidator } from '../../validators/numero-documento.validator';
 
 @Component({
@@ -22,7 +22,7 @@ export class RegisterComponent {
   private router = inject(Router);
 
   isLoading = signal(false);
-  readonly maxFechaNacimiento = new Date().toISOString().split('T')[0];
+  readonly maxFechaNacimiento = hoyEnLimaISO();
 
   registerForm = this.fb.nonNullable.group({
     nombre_completo: ['', [Validators.required, Validators.minLength(3)]],
@@ -30,7 +30,7 @@ export class RegisterComponent {
     numero_documento: ['', [Validators.required, numeroDocumentoValidator()]],
     fecha_nacimiento: ['', [Validators.required, fechaNacimientoValidator()]],
     sexo: ['', Validators.required],
-    telefono: ['', [Validators.pattern('^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$')]]
+    telefono: ['', [Validators.pattern('^9[0-9]{8}$')]]
   });
 
   constructor() {

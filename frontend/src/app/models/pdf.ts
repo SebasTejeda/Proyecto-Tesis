@@ -14,6 +14,7 @@ export interface EvaluationResult {
   riesgoPorcentaje: number;   // risk_probability * 100
   riesgoEtiqueta: string;     // severity del model_prediction
   riesgoBinario?: number;      // risk_binary (0 o 1)
+  modelPrediction?: ModelPredictionResponse | null; // presencia real del resultado del modelo
 }
 
 // Para el gráfico de barras SHAP en el PDF

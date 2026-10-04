@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ChartModule } from 'primeng/chart';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
@@ -13,11 +12,17 @@ import { AlertService } from '../../services/alert/alert';
 import { PdfService } from '../../services/pdf/pdf';
 import { Patient } from '../../models/patients';
 import { EvaluationCreate, EvaluationResponse } from '../../models/evaluations';
+import { ResultAlertsComponent } from '../../components/result-alerts/result-alerts';
+import { ShapChartComponent } from '../../components/shap-chart/shap-chart';
+import { ClinicalRecommendationsComponent } from '../../components/clinical-recommendations/clinical-recommendations';
 
 @Component({
   selector: 'app-evaluation',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ChartModule, DialogModule, ButtonModule, TooltipModule],
+  imports: [
+    CommonModule, ReactiveFormsModule, DialogModule, ButtonModule, TooltipModule,
+    ResultAlertsComponent, ShapChartComponent, ClinicalRecommendationsComponent,
+  ],
   templateUrl: './evaluation.html',
   styleUrls: ['./evaluation.css'],
 })
@@ -40,6 +45,11 @@ export class EvaluationComponent implements OnInit {
   mostrarDropdown = signal(false);
   sinPacienteError = signal(false);
 
+  // ── Consentimiento informado (Ley N.° 29733) — HU0021 ──────────────────────
+  mostrarConsentimiento = signal(false);
+  aceptoConsentimiento = signal(false);
+  guardandoConsentimiento = signal(false);
+
   pacientesFiltrados = computed(() => {
     const q = this.normalizar(this.busquedaPaciente().trim());
     if (!q) return this.pacientes().slice(0, 8);
@@ -57,15 +67,16 @@ export class EvaluationComponent implements OnInit {
   draftDisponible = signal(false);
   draftFecha = signal<string | null>(null);
 
+  // Fallos consecutivos del servicio de análisis (503) para el envío actual —
+  // se reinicia al completarse con éxito o al cambiar de paciente.
+  fallosConsecutivosModelo = signal(0);
+  readonly MAX_REINTENTOS_MODELO = 3;
+
   riesgoBinario = signal<number>(0);
   riesgoEtiqueta = signal('Pendiente');
   riesgoPorcentaje = signal(0);
   ultimaEvaluacion = signal<EvaluationResponse | null>(null);
   doctorAgreement = signal<string | null>(null);
-
-  // Bloque 5 — baja confianza y derivación
-  bajaConfianza = signal(false);          // true si probabilidad entre 40-60%
-  sugerirDerivacion = signal(false);      // true si nivel Moderado/Alto
 
   displayDisagreementModal = signal(false);
   selectedDisagreementReason = signal<string>('');
@@ -152,6 +163,9 @@ export class EvaluationComponent implements OnInit {
     this.evalForm.patchValue({ patient_id: p.id });
     this.mostrarDropdown.set(false);
     this.sinPacienteError.set(false);
+    this.mostrarConsentimiento.set(!p.consentimiento_informado);
+    this.aceptoConsentimiento.set(false);
+    this.fallosConsecutivosModelo.set(0);
     this.cargarBorrador(p.id);
   }
 
@@ -162,6 +176,26 @@ export class EvaluationComponent implements OnInit {
     this.mostrarDropdown.set(false);
     this.draftDisponible.set(false);
     this.draftFecha.set(null);
+    this.mostrarConsentimiento.set(false);
+    this.aceptoConsentimiento.set(false);
+    this.fallosConsecutivosModelo.set(0);
+  }
+
+  confirmarConsentimiento() {
+    const paciente = this.pacienteSeleccionado();
+    if (!paciente || !this.aceptoConsentimiento()) return;
+    this.guardandoConsentimiento.set(true);
+    this.patientService.registrarConsentimiento(paciente.id).subscribe({
+      next: (pacienteActualizado) => {
+        this.guardandoConsentimiento.set(false);
+        this.pacienteSeleccionado.set(pacienteActualizado);
+        this.mostrarConsentimiento.set(false);
+      },
+      error: () => {
+        this.guardandoConsentimiento.set(false);
+        this.alertService.error('Error', 'No se pudo registrar el consentimiento. Intenta de nuevo.');
+      },
+    });
   }
 
   // ── Borrador (localStorage) ─────────────────────────────────────────────
@@ -233,6 +267,7 @@ export class EvaluationComponent implements OnInit {
       next: (response) => {
         this.isLoading.set(false);
         this.alertService.close();
+        this.fallosConsecutivosModelo.set(0);
         this.limpiarBorrador(raw.patient_id);
         this.mostrarResultados(response);
       },
@@ -241,10 +276,20 @@ export class EvaluationComponent implements OnInit {
         this.alertService.close();
         console.error(err);
         if (err.status === 503) {
-          this.alertService.confirm(
-            'El modelo no respondió',
-            'La evaluación se guardó pero el modelo no respondió. ¿Reintentar cálculo?',
-          ).then(reintentar => { if (reintentar) this.onSubmit(); });
+          const fallos = this.fallosConsecutivosModelo() + 1;
+          this.fallosConsecutivosModelo.set(fallos);
+
+          if (fallos < this.MAX_REINTENTOS_MODELO) {
+            this.alertService.confirm(
+              'Servicio no disponible',
+              'El servicio de análisis no respondió. ¿Desea reintentar?',
+            ).then(reintentar => { if (reintentar) this.onSubmit(); });
+          } else {
+            this.alertService.error(
+              'Servicio no disponible',
+              'El servicio de análisis no está disponible en este momento. Los datos ingresados se conservan; intente nuevamente más tarde.',
+            );
+          }
         } else {
           this.alertService.error('Error', 'Hubo un problema procesando la evaluación.');
         }
@@ -255,20 +300,12 @@ export class EvaluationComponent implements OnInit {
   mostrarResultados(response: EvaluationResponse) {
     this.ultimaEvaluacion.set(response);
     this.doctorAgreement.set(response.doctor_agreement ?? null);
-    this.expandedRecs.set(new Set());
     const pred = response.model_prediction;
     const prob = pred?.risk_probability ?? 0;
 
     this.riesgoBinario.set(pred?.risk_binary ?? 0);
     this.riesgoEtiqueta.set(pred?.severity ?? 'Pendiente');
     this.riesgoPorcentaje.set(Math.round(prob * 100));
-
-    // Bloque 5 — detectar baja confianza (zona gris 40-60%)
-    const pct = prob * 100;
-    this.bajaConfianza.set(pct >= 40 && pct <= 60);
-
-    // Bloque 5 — sugerir derivación si nivel es Moderado/Alto
-    this.sugerirDerivacion.set(pred?.severity === 'Moderado/Alto');
 
     this.initShapChart(pred?.shap_values ?? null);
     this.displayModal.set(true);
@@ -330,29 +367,15 @@ export class EvaluationComponent implements OnInit {
     };
   }
 
-  expandedRecs = signal<Set<number>>(new Set());
-
-  toggleRecomendacion(recId: number) {
-    const actuales = new Set(this.expandedRecs());
-    if (actuales.has(recId)) actuales.delete(recId);
-    else actuales.add(recId);
-    this.expandedRecs.set(actuales);
-  }
-
-  isRecExpandida(recId: number): boolean {
-    return this.expandedRecs().has(recId);
-  }
-
-  getLabelFeature(key: string): string {
-    const m: Record<string, string> = { horas_sueno: 'Horas de sueño', vida_social: 'Vida social', frecuencia_ejercicio: 'Frecuencia de ejercicio', redes_sociales: 'Redes sociales', nivel_estres: 'Nivel de estrés', calidad_sueno: 'Calidad de sueño', soledad_percibida: 'Soledad percibida', apoyo_familiar: 'Apoyo familiar', autoestima: 'Autoestima' };
-    return m[key] ?? key;
-  }
-
   exportarPDF() {
     const selectedPatient = this.pacienteSeleccionado();
     if (!selectedPatient) return;
     try {
-      this.pdfService.generateEvaluationReport(selectedPatient, { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta() }, this.shapData);
+      this.pdfService.generateEvaluationReport(
+        selectedPatient,
+        { riesgoPorcentaje: this.riesgoPorcentaje(), riesgoEtiqueta: this.riesgoEtiqueta(), modelPrediction: this.ultimaEvaluacion()?.model_prediction ?? null },
+        this.shapData,
+      );
       this.alertService.success('Informe Generado', 'El PDF se ha guardado en tus descargas.', true);
     } catch (err: any) {
       this.alertService.error('No se pudo generar el PDF', err?.message ?? 'Faltan datos de la evaluación para generar el informe.');

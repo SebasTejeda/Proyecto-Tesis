@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -105,3 +106,28 @@ def update_patient(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
+
+@router.patch("/{patient_id}/consent", response_model=schemas.PatientResponse)
+def registrar_consentimiento(
+    patient_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    """Registra el consentimiento informado del paciente (Ley N.° 29733). Se pide una sola vez."""
+    patient = db.query(models.Patient).filter(
+        models.Patient.id == patient_id,
+        models.Patient.doctor_id == current_user.id
+    ).first()
+
+    if not patient:
+        raise HTTPException(status_code=404, detail="Paciente no encontrado o acceso denegado")
+
+    patient.consentimiento_informado = True
+    patient.consentimiento_fecha = datetime.utcnow()
+    try:
+        db.commit()
+        db.refresh(patient)
+        return patient
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error al registrar consentimiento: {str(e)}")

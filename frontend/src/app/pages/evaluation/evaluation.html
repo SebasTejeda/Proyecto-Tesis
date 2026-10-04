@@ -75,7 +75,31 @@
       </div>
     </div>
 
+    <!-- ── Consentimiento informado (Ley N.° 29733) — HU0021 ── -->
+    @if (pacienteSeleccionado() && mostrarConsentimiento()) {
+      <div class="consent-screen">
+        <div class="consent-icon"><i class="pi pi-shield"></i></div>
+        <h3 class="consent-title">Consentimiento Informado</h3>
+        <p class="consent-text">
+          Este paciente autoriza el tratamiento de su información de salud mental conforme a la
+          Ley N.° 29733 de Protección de Datos Personales, con fines exclusivos de evaluación y
+          seguimiento clínico. Este consentimiento se solicita una única vez por paciente.
+        </p>
+        <label class="consent-checkbox">
+          <input type="checkbox" [checked]="aceptoConsentimiento()"
+            (change)="aceptoConsentimiento.set($any($event.target).checked)">
+          <span>El paciente ha sido informado y autoriza el tratamiento de sus datos de salud.</span>
+        </label>
+        <button type="button" class="btn-analyze" [disabled]="!aceptoConsentimiento() || guardandoConsentimiento()"
+          (click)="confirmarConsentimiento()">
+          <i class="pi pi-check-circle" style="margin-right:8px;"></i>
+          {{ guardandoConsentimiento() ? 'Guardando...' : 'Continuar' }}
+        </button>
+      </div>
+    }
+
     <!-- ── Formulario de factores ── -->
+    @if (!mostrarConsentimiento()) {
     <form [formGroup]="evalForm" (ngSubmit)="onSubmit()">
       <hr class="divider-compact">
       <h3 class="col-title" style="margin-bottom: 16px;">📊 Factores Psicosociales y de Estilo de Vida</h3>
@@ -207,6 +231,7 @@
         </button>
       </div>
     </form>
+    }
   </div>
 </div>
 
@@ -248,70 +273,18 @@
       </div>
     </div>
 
-    <!-- Bloque 5 — Advertencia baja confianza -->
-    @if (bajaConfianza()) {
-      <div class="confidence-warning">
-        <i class="pi pi-exclamation-triangle"></i>
-        <div>
-          <strong>Resultado en zona de incertidumbre</strong>
-          <p>El modelo tiene baja confianza en este diagnóstico (probabilidad entre 40-60%). Se recomienda complementar con una evaluación clínica adicional.</p>
-        </div>
-      </div>
-    }
-
-    <!-- Bloque 5 — Sugerencia de derivación -->
-    @if (sugerirDerivacion()) {
-      <div class="referral-suggestion">
-        <i class="pi pi-send"></i>
-        <div>
-          <strong>Se sugiere derivación a psiquiatra</strong>
-          <p>El nivel Moderado/Alto detectado indica que el paciente podría beneficiarse de una evaluación especializada. Considere coordinar una derivación.</p>
-        </div>
-      </div>
-    }
-
+    <app-result-alerts
+      [severidad]="riesgoEtiqueta()"
+      [probabilidad]="ultimaEvaluacion()?.model_prediction?.risk_probability">
+    </app-result-alerts>
 
     <hr class="divider">
 
-    @if (shapData?.labels?.length > 0) {
-      <div class="xai-section">
-        <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Determinantes (SHAP)</h3>
-        <p class="xai-subtitle">Variables con mayor impacto en la predicción</p>
-        <div class="shap-chart-container">
-          <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="200px"></p-chart>
-        </div>
-        <div class="legend">
-          <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
-          <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
-        </div>
-      </div>
-    } @else {
-      <div class="xai-section">
-        <p class="xai-subtitle">No hay datos de explicabilidad disponibles para esta evaluación.</p>
-      </div>
-    }
+    <app-shap-chart [shapData]="shapData" [shapOptions]="shapOptions"></app-shap-chart>
 
     @if (ultimaEvaluacion()?.recommendations?.length) {
       <hr class="divider">
-      <div class="recommendations-section">
-        <h3 class="xai-title" style="margin-bottom:12px;">
-          <i class="pi pi-list-check"></i> Recomendaciones Clínicas
-        </h3>
-        <p class="xai-subtitle">Basadas en los factores con mayor impacto</p>
-        @for (rec of ultimaEvaluacion()!.recommendations!; track rec.id) {
-          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level" style="cursor:pointer;" (click)="toggleRecomendacion(rec.id)">
-            <div class="rec-header">
-              <span class="rec-badge">{{ rec.priority }}°</span>
-              <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
-              <span class="rec-level">{{ rec.alert_level | titlecase }}</span>
-              <i class="pi" [ngClass]="isRecExpandida(rec.id) ? 'pi-chevron-up' : 'pi-chevron-down'" style="margin-left:auto;"></i>
-            </div>
-            @if (isRecExpandida(rec.id)) {
-              <p class="rec-text">{{ rec.recommendation }}</p>
-            }
-          </div>
-        }
-      </div>
+      <app-clinical-recommendations [recommendations]="ultimaEvaluacion()?.recommendations"></app-clinical-recommendations>
     }
 
     <hr class="divider">

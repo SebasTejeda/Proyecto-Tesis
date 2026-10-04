@@ -15,13 +15,19 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth/auth';
 import { Patient } from '../../models/patients';
 import { EvaluationResponse } from '../../models/evaluations';
-import { fechaNacimientoValidator } from '../../validators/fecha-nacimiento.validator';
+import { fechaNacimientoValidator, hoyEnLimaISO } from '../../validators/fecha-nacimiento.validator';
 import { numeroDocumentoValidator } from '../../validators/numero-documento.validator';
+import { ResultAlertsComponent } from '../../components/result-alerts/result-alerts';
+import { ShapChartComponent } from '../../components/shap-chart/shap-chart';
+import { ClinicalRecommendationsComponent } from '../../components/clinical-recommendations/clinical-recommendations';
 
 @Component({
   selector: 'app-patient-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, ChartModule, TableModule, ButtonModule, DialogModule, ReactiveFormsModule, FormsModule],
+  imports: [
+    CommonModule, RouterModule, ChartModule, TableModule, ButtonModule, DialogModule, ReactiveFormsModule, FormsModule,
+    ResultAlertsComponent, ShapChartComponent, ClinicalRecommendationsComponent,
+  ],
   templateUrl: './patient-detail.html',
   styleUrls: ['./patient-detail.css'],
 })
@@ -35,7 +41,7 @@ export class PatientDetailComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
 
-  readonly maxFechaNacimiento = new Date().toISOString().split('T')[0];
+  readonly maxFechaNacimiento = hoyEnLimaISO();
 
   patient = signal<Patient | null>(null);
   historial = signal<EvaluationResponse[]>([]);
@@ -55,7 +61,7 @@ export class PatientDetailComponent implements OnInit {
     numero_documento: ['', [Validators.required, numeroDocumentoValidator()]],
     fecha_nacimiento: ['', [Validators.required, fechaNacimientoValidator()]],
     sexo:             ['', [Validators.required]],
-    telefono:         [''],
+    telefono:         ['', [Validators.pattern('^9[0-9]{8}$')]],
   });
 
   // ── Filtros del historial ─────────────────────────────────────────────────
@@ -220,8 +226,12 @@ export class PatientDetailComponent implements OnInit {
     try {
       this.pdfService.generateEvaluationReport(
         { ...dataPaciente, edad },
-        { riesgoPorcentaje: pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0, riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase() },
-        pred?.shap_values ? this.buildShapData(pred.shap_values) : { labels: ['Sin datos'], datasets: [{ data: [0] }] }
+        {
+          riesgoPorcentaje: pred?.risk_probability != null ? Math.round(pred.risk_probability * 100) : 0,
+          riesgoEtiqueta: (pred?.severity ?? 'Pendiente').toUpperCase(),
+          modelPrediction: pred ?? null,
+        },
+        pred?.shap_values ? this.buildShapData(pred.shap_values) : { labels: [], datasets: [] }
       );
       this.alertService.success('PDF Generado', 'La evaluación fue exportada.', true);
     } catch (err: any) {
@@ -361,7 +371,10 @@ export class PatientDetailComponent implements OnInit {
   abrirModalEditar() {
     const p = this.patient();
     if (p) {
-      this.editForm.patchValue({
+      // reset (no patchValue) para que el formulario vuelva a quedar
+      // pristine/untouched — si no, arrastra los errores/estado touched
+      // de una apertura anterior del modal.
+      this.editForm.reset({
         nombre_completo: p.nombre_completo,
         tipo_documento: p.tipo_documento,
         numero_documento: p.numero_documento,

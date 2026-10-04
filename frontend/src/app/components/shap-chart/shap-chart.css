@@ -1,0 +1,54 @@
+.xai-section {
+    text-align: left;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.xai-title {
+    margin: 0;
+    font-size: 1rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.xai-subtitle {
+    margin: 5px 0 15px 0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+/* Leyenda de colores */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.red { background: #ef4444; }
+.dot.green { background: #10b981; }
+
+/* Evita que Chart.js recorte las etiquetas del eje Y en pantallas angostas
+   (min-width va en el wrapper que Chart.js mide para su resize responsive
+   — el div position:relative que genera <p-chart> —, no en el <canvas>:
+   Chart.js fija un width inline en el canvas basado en ese wrapper, y si
+   el canvas recibe su propio min-width por CSS queda un ancho de caja
+   distinto al que Chart.js usó para dibujar, y el gráfico se ve distorsionado). */
+@media (max-width: 768px) {
+  .shap-chart-container {
+    overflow-x: auto;
+  }
+  .shap-chart-container > p-chart {
+    display: block;
+  }
+  .shap-chart-container > p-chart > div {
+    min-width: 380px;
+  }
+}

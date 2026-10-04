@@ -96,6 +96,8 @@ def login_para_access_token(
     # Login exitoso — resetear intentos fallidos
     user.failed_login_attempts = 0
     user.locked_until = None
+    # Sesión única: invalida cualquier token emitido antes de este login.
+    user.session_version = (user.session_version or 0) + 1
     db.commit()
 
     registrar_actividad(db, user.id, "login", "Inicio de sesión exitoso", ip)
@@ -103,7 +105,8 @@ def login_para_access_token(
     token_data = {
         "sub": user.email,
         "name": f"{user.nombres} {user.apellidos}",
-        "picture": user.picture if user.picture else ""
+        "picture": user.picture if user.picture else "",
+        "sv": user.session_version,
     }
     access_token = utils.HashUtils.create_access_token(data=token_data)
     return {
@@ -155,6 +158,8 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
     if not user.google_id:
         user.google_id = google_id
     user.picture = foto
+    # Sesión única: invalida cualquier token emitido antes de este login.
+    user.session_version = (user.session_version or 0) + 1
     db.commit()
 
     registrar_actividad(db, user.id, "login_google", "Inicio de sesión con Google", ip)
@@ -162,7 +167,8 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
     token_data = {
         "sub": user.email,
         "name": f"{user.nombres} {user.apellidos}",
-        "picture": user.picture
+        "picture": user.picture,
+        "sv": user.session_version,
     }
     access_token = utils.HashUtils.create_access_token(data=token_data)
     return {
@@ -176,8 +182,11 @@ def google_login(login_data: schemas.GoogleLoginRequest, db: Session = Depends(g
 
 @router.post("/logout", summary="Registrar cierre de sesión")
 def logout(request: Request, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
-    """Opcional — registra el logout en el log de actividad."""
+    """Registra el logout en el log de actividad e invalida el token en el servidor
+    (sesión única — ver session_version)."""
     ip = request.client.host if request.client else "unknown"
+    current_user.session_version = (current_user.session_version or 0) + 1
+    db.commit()
     registrar_actividad(db, current_user.id, "logout", "Cierre de sesión", ip)
     return {"message": "Sesión cerrada correctamente"}
 

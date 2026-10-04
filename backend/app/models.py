@@ -29,6 +29,11 @@ class User(Base):
     failed_login_attempts = Column(Integer, default=0)
     locked_until = Column(DateTime, nullable=True)  # NULL = no bloqueado
 
+    # Sesión única — se incrementa en cada login y en logout; el JWT lleva
+    # el valor vigente al momento de emitirse (claim "sv") y se compara en
+    # cada request. Un login nuevo o un logout invalida los tokens previos.
+    session_version = Column(Integer, nullable=False, default=0)
+
     patients = relationship("Patient", back_populates="doctor")
     activity_logs = relationship("ActivityLog", back_populates="user")
 
@@ -61,6 +66,9 @@ class Patient(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     # "clinico_real" | "sintetico_prueba" | "pendiente_verificacion"
     origen = Column(String, nullable=False, default="clinico_real")
+    # Consentimiento informado (Ley N.° 29733) — se pide una sola vez por paciente
+    consentimiento_informado = Column(Boolean, default=False, nullable=False)
+    consentimiento_fecha = Column(DateTime, nullable=True)
 
     doctor = relationship("User", back_populates="patients")
     evaluations = relationship("Evaluation", back_populates="patient")

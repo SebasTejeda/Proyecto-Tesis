@@ -49,7 +49,6 @@ FEATURE_LABELS = {
 # Recomendaciones clínicas por feature
 RECOMENDACIONES_BASE = {
     "horas_sueno": {
-        "alert_level": "alto",
         "recommendation": (
             "El paciente presenta un patrón de sueño insuficiente que está contribuyendo "
             "al riesgo depresivo. Se recomienda establecer una rutina de sueño con horarios "
@@ -58,7 +57,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "vida_social": {
-        "alert_level": "alto",
         "recommendation": (
             "El aislamiento social identificado es un factor de riesgo significativo. "
             "Se sugiere promover actividades grupales, integración a comunidades de interés "
@@ -66,7 +64,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "nivel_estres": {
-        "alert_level": "alto",
         "recommendation": (
             "El nivel de estrés elevado está impactando negativamente en el estado emocional. "
             "Se recomienda explorar técnicas de manejo del estrés como mindfulness, "
@@ -74,7 +71,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "calidad_sueno": {
-        "alert_level": "medio",
         "recommendation": (
             "La mala calidad del sueño está asociada al deterioro del estado de ánimo. "
             "Se sugiere implementar higiene del sueño: ambiente oscuro y fresco, evitar "
@@ -82,7 +78,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "soledad_percibida": {
-        "alert_level": "alto",
         "recommendation": (
             "La percepción de soledad frecuente es un predictor importante de depresión. "
             "Se recomienda evaluar la red de soporte social del paciente y considerar "
@@ -90,7 +85,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "apoyo_familiar": {
-        "alert_level": "medio",
         "recommendation": (
             "El bajo apoyo familiar percibido reduce la resiliencia ante situaciones de estrés. "
             "Se sugiere involucrar a la familia en el proceso terapéutico y explorar "
@@ -98,7 +92,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "autoestima": {
-        "alert_level": "medio",
         "recommendation": (
             "La baja autoestima identificada puede perpetuar el ciclo depresivo. "
             "Se recomienda trabajar en terapia cognitivo-conductual para identificar "
@@ -106,7 +99,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "redes_sociales": {
-        "alert_level": "bajo",
         "recommendation": (
             "El uso elevado de redes sociales se asocia a mayor exposición a contenido "
             "negativo y comparación social. Se sugiere establecer límites de tiempo en "
@@ -114,7 +106,6 @@ RECOMENDACIONES_BASE = {
         ),
     },
     "frecuencia_ejercicio": {
-        "alert_level": "bajo",
         "recommendation": (
             "La escasa actividad física está relacionada con peores indicadores de salud mental. "
             "Se recomienda incorporar al menos 30 minutos de ejercicio moderado 3 veces "
@@ -189,6 +180,13 @@ class XGBoostService:
         Solo considera features con SHAP positivo > umbral
         (features que aumentan el riesgo).
         Ordena por impacto descendente → mayor prioridad primero.
+
+        El alert_level ya no es fijo por variable: se calcula según el SHAP
+        de cada recomendación relativo al mayor SHAP positivo entre las
+        seleccionadas para esta evaluación (>= 66% del máximo → "alto",
+        >= 33% → "medio", el resto → "bajo"), para que la recomendación de
+        mayor prioridad (SHAP más alto) nunca salga con un nivel más bajo
+        que otra de menor prioridad.
         """
         # Mapear features con one-hot de vuelta a su nombre base
         # ej: "estado_civil_1" → "estado_civil" no tiene recomendación base
@@ -205,11 +203,24 @@ class XGBoostService:
         )[:max_recomendaciones]
 
         recomendaciones = []
+        if not features_ordenadas:
+            return recomendaciones
+
+        max_shap = features_ordenadas[0][1]  # mayor SHAP positivo entre las seleccionadas
+
         for priority, (feature, shap_val) in enumerate(features_ordenadas, start=1):
             rec = RECOMENDACIONES_BASE[feature]
+            ratio = shap_val / max_shap if max_shap > 0 else 0
+            if ratio >= 0.66:
+                alert_level = "alto"
+            elif ratio >= 0.33:
+                alert_level = "medio"
+            else:
+                alert_level = "bajo"
+
             recomendaciones.append({
                 "source_variable": feature,
-                "alert_level":     rec["alert_level"],
+                "alert_level":     alert_level,
                 "recommendation":  rec["recommendation"],
                 "priority":        priority,
             })

@@ -173,7 +173,7 @@
 <!-- ── Modal: Detalle evaluación ── -->
 <p-dialog [header]="'Detalle de Evaluación — ' + (selectedEval()?.date | date:'dd/MM/yyyy')"
   [visible]="displayModal()" (visibleChange)="displayModal.set($event)"
-  [modal]="true" [style]="{ width: '50vw', maxWidth: '620px' }"
+  [modal]="true" [style]="{ width: '95vw', maxWidth: '620px' }"
   [draggable]="false" [resizable]="false" [closable]="true">
   @if (selectedEval()) {
   <div class="result-content">
@@ -209,33 +209,18 @@
         }
       </div>
     </div>
+
+    <app-result-alerts
+      [severidad]="selectedEval()!.model_prediction?.severity"
+      [probabilidad]="selectedEval()!.model_prediction?.risk_probability">
+    </app-result-alerts>
+
     <hr class="modal-divider">
-    <div class="xai-section">
-      <h3 class="xai-title"><i class="pi pi-bolt"></i> Factores Clave (SHAP)</h3>
-      <p class="xai-subtitle">Impacto relativo de cada factor</p>
-      <div class="shap-chart-container">
-        <p-chart type="bar" [data]="shapData" [options]="shapOptions" height="220px"></p-chart>
-      </div>
-      <div class="legend">
-        <span class="legend-item"><span class="dot red"></span> Aumenta riesgo</span>
-        <span class="legend-item"><span class="dot green"></span> Disminuye riesgo</span>
-      </div>
-    </div>
+    <app-shap-chart [shapData]="shapData" [shapOptions]="shapOptions"></app-shap-chart>
+
     @if (selectedEval()?.recommendations?.length) {
       <hr class="modal-divider">
-      <div class="recommendations-section">
-        <h3 class="xai-title" style="margin-bottom:12px"><i class="pi pi-list-check"></i> Recomendaciones Clínicas</h3>
-        @for (rec of selectedEval()!.recommendations!; track rec.id) {
-          <div class="rec-item" [ngClass]="'rec-' + rec.alert_level">
-            <div class="rec-header">
-              <span class="rec-badge">{{ rec.priority }}°</span>
-              <strong>{{ getLabelFeature(rec.source_variable) }}</strong>
-              <span class="rec-level">{{ rec.alert_level }}</span>
-            </div>
-            <p class="rec-text">{{ rec.recommendation }}</p>
-          </div>
-        }
-      </div>
+      <app-clinical-recommendations [recommendations]="selectedEval()?.recommendations"></app-clinical-recommendations>
     }
     <hr class="modal-divider">
     <div class="notes-section">
@@ -380,7 +365,7 @@
         @if (editForm.get('fecha_nacimiento')?.errors?.['fechaFutura'] && editForm.get('fecha_nacimiento')?.touched) {
           <span style="color:#ef4444;font-size:12px">La fecha de nacimiento no puede ser futura</span>
         } @else if (editForm.get('fecha_nacimiento')?.errors?.['edadFueraDeRango'] && editForm.get('fecha_nacimiento')?.touched) {
-          <span style="color:#ef4444;font-size:12px">El paciente debe tener entre 18 y 25 años</span>
+          <span style="color:#ef4444;font-size:12px">El paciente debe tener entre 18 y 25 años cumplidos</span>
         }
       </div>
       <div class="form-group">
@@ -394,7 +379,11 @@
     </div>
     <div class="form-group" style="margin-bottom:25px">
       <label class="form-label">Teléfono</label>
-      <input type="tel" class="form-input" formControlName="telefono" style="width:100%">
+      <input type="tel" class="form-input" formControlName="telefono" maxlength="9" inputmode="numeric" style="width:100%"
+        [class.error-border]="editForm.get('telefono')?.invalid && editForm.get('telefono')?.touched">
+      @if (editForm.get('telefono')?.invalid && (editForm.get('telefono')?.dirty || editForm.get('telefono')?.touched)) {
+        <span style="color:#ef4444;font-size:12px">Ingrese un número de celular válido de 9 dígitos que comience con 9</span>
+      }
     </div>
     <div style="display:flex;justify-content:flex-end;gap:10px">
       <button type="button" class="btn-secondary" (click)="displayEditModal.set(false)">Cancelar</button>

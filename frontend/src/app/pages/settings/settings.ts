@@ -102,7 +102,7 @@ export class SettingsComponent implements OnInit {
     }
 
     if (file.size > 2 * 1024 * 1024) { // 2MB Max
-      this.alertService.error('Archivo muy grande', 'La imagen no debe superar los 2MB.');
+      this.alertService.error('Archivo muy grande', 'El archivo supera el tamaño máximo permitido (2 MB)');
       return;
     }
 
